@@ -4,7 +4,7 @@
 "private": true,
 "scripts": {
 "start": "node index.js",
-"build": "echo "no build"",
-"test": "echo "no tests""
+"build": "echo \"no build\"",
+"test": "echo \"no tests\""
 }
 }
