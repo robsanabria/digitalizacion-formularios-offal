@@ -1,0 +1,49 @@
+```mermaid
+flowchart TB
+  subgraph Usuario
+    U[Usuario (Navegador)]
+  end
+
+  subgraph Azure
+    WA[WebApp (Azure)\nNode.js + React]
+    AD[Azure AD / Microsoft 365\nSSO (OAuth2/OpenID Connect)]
+    DI[Document Intelligence\n(Entrenado)]
+    BLOB[Blob Container\n(Adjuntos, imágenes, PDFs)]
+    SQL[Azure SQL Database\n(metas, rutas, historial)]
+  end
+
+  subgraph DevOps
+    GH[GitHub Repo]
+    CI[GitHub Actions CI/CD]
+  end
+
+  U -->|Accede / SSO| WA
+  WA -->|Auth| AD
+  WA -->|Enviar documento (PDF/imagen)| DI
+  DI -->|Campos extraídos| WA
+  WA -->|Guardar adjunto| BLOB
+  WA -->|Guardar metadatos (path, fields)| SQL
+  WA -->|Solicita datos / estado| SQL
+  WA -->|Despliegue| CI
+  GH --> CI
+  CI --> WA
+
+  %% Operaciones y permisos
+  subgraph Operaciones
+    Ops[Administración: crear contenedor, asignar permisos, revisar DB perms]
+  end
+  Ops --> BLOB
+  Ops --> SQL
+
+  classDef az fill:#eef2ff,stroke:#0369a1;
+  class Azure az
+
+  %% Notas
+  click DI "https://learn.microsoft.com/azure/applied-ai-services/form-recognizer/" "Document Intelligence"
+```
+
+## Descripción
+- WebApp alojada en Azure expone UI y backend Node.js/React; usa SSO de Microsoft 365 para autenticación.
+- Document Intelligence (instancia entrenada) se usa para reconocer y extraer campos de formularios y etiquetas.
+- Adjuntos e imágenes se guardan en un Blob Container; la base de datos SQL guarda solo metadatos y rutas.
+- CI/CD: repo en GitHub y GitHub Actions despliegan la WebApp.

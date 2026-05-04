@@ -1,0 +1,142 @@
+```mermaid
+flowchart LR
+  subgraph BaseDeDatos
+    U[Usuarios]
+    R[Solicitudes]
+    A[Adjuntos]
+    S[Aprobaciones]
+    H[Historial]
+  end
+
+  %% Relaciones (foreign keys)
+  U -->|Solicitó| R
+  R -->|tiene adjuntos| A
+  R -->|tiene aprobaciones| S
+  R -->|entradas de historial| H
+  S -->|decisión de| U
+
+  %% Actores y casos de uso
+  subgraph Actores
+    SolCal["Solicitante / Calidad"]
+    Sis["Sistemas"]
+    Adm["Administrador"]
+  end
+
+  subgraph CasosDeUso
+    CR[Crear solicitud]
+    UA[Subir adjunto]
+    CA[Registrar aprobación]
+    ENV[Enviar]
+    TRANS[Transición (aprobar/parcial/rechazar)]
+    EXP[Exportar / Imprimir PDF]
+  end
+
+  %% Actores -> Casos de uso
+  SolCal --> CR
+  SolCal --> UA
+  SolCal --> CA
+  SolCal -->|revisa| TRANS
+  Sis -->|verifica| TRANS
+  SolCal --> EXP
+
+  %% Casos de uso -> BD
+  CR --> R
+  UA --> A
+  CA --> S
+  ENV --> R
+  TRANS --> R
+  EXP --> R
+
+  classDef bd fill:#f3f4f6,stroke:#333,stroke-width:1px
+  class U,R,A,S,H bd
+
+  %% Notas: validaciones
+  note_right of A: Azure Image Intelligence valida calidad y texto
+  note_right of S: Registro de aprobación (aprobado / no aprobado). PNG opcional; metadatos en `Signatures`
+
+```
+
+## Descripción
+- `Users` / `Usuarios`: identidad y rol mapeados desde Microsoft 365 (se almacenan en la tabla `Users`).
+- `Requests` / `Solicitudes`: entidad central; referencia a `Users` vía `RequestedBy`. Las solicitudes de creación/modificación llegarán típicamente como PDFs escaneados y se almacenan como `Attachments`.
+- `Attachments` / `Adjuntos`: archivos subidos asociados a una solicitud; validados por `Azure Image Intelligence` antes de aceptarse. Se soportan PDFs escaneados (formato habitual para solicitudes de creación/modificación), imágenes y otros formatos permitidos.
+- `Signatures` / `Aprobaciones`: registro de decisión (aprobado / no aprobado) y comentario; la imagen PNG es opcional y sólo para trazabilidad adicional.
+- `RequestHistory` / `Historial`: registros de evento para auditoría (transiciones, subidas, aprobaciones).
+
+## Casos de uso principales (resumen)
+- Crear solicitud: el `Solicitante/Calidad` crea un registro en la tabla `Requests` (habitualmente subiendo un PDF escaneado).
+- Subir adjuntos: el `Solicitante/Calidad` o `Sistemas` sube archivos que generan filas en `Attachments` y disparan validación automática (`Azure Image Intelligence`).
+- Registrar aprobación: `Sistemas` y `Calidad` registran decisiones (tilde aprobado/no aprobado) en `Signatures`; ambas aprobaciones son necesarias para completar la aprobación final.
+- Transición: `Sistemas` realiza verificaciones técnicas subiendo fotos de etiquetas en planta; `Calidad` revisa y valida. Cada acción queda registrada en `RequestHistory`.
+- Exportar/Imprimir: generar PDF a partir de la `Solicitud` y sus `Adjuntos`; puede guardarse como un nuevo `Attachment` o retornarse como stream.
+
+## Diagrama ER — Tablas y relaciones
+```mermaid
+erDiagram
+    USERS {
+      UNIQUEIDENTIFIER UserId PK
+      NVARCHAR(150) UserName
+      NVARCHAR(256) Email
+      NVARCHAR(50) Role
+      DATETIME2 CreatedAt
+    }
+
+    REQUESTS {
+      UNIQUEIDENTIFIER RequestId PK
+      DATETIME2 CreatedAt
+      DATETIME2 SubmittedAt
+      UNIQUEIDENTIFIER RequestedBy FK
+      NVARCHAR(50) RequestedByRole
+      DATE PresentationDate
+      NVARCHAR(MAX) Reason
+      NVARCHAR(100) SenasaType
+      NVARCHAR(300) ProductName
+      NVARCHAR(200) Destination
+      NVARCHAR(100) Code
+      NVARCHAR(100) SenasaCode
+      NVARCHAR(200) Printers
+      NVARCHAR(MAX) ShortDescription
+      BIT CheckFormat
+      BIT CheckPrintPoint
+      NVARCHAR(50) Status
+    }
+
+    ATTACHMENTS {
+      UNIQUEIDENTIFIER AttachmentId PK
+      UNIQUEIDENTIFIER RequestId FK
+      NVARCHAR(260) FileName
+      NVARCHAR(1024) FilePath
+      NVARCHAR(100) ContentType
+      BIGINT FileSize
+      UNIQUEIDENTIFIER UploadedBy FK
+      DATETIME2 UploadedAt
+    }
+
+    SIGNATURES {
+      UNIQUEIDENTIFIER SignatureId PK
+      UNIQUEIDENTIFIER RequestId FK
+      UNIQUEIDENTIFIER UserId FK
+      NVARCHAR(50) Role
+      NVARCHAR(1024) SignaturePath
+      VARBINARY(MAX) SignatureData
+      NVARCHAR(MAX) Comment
+      NVARCHAR(50) Result
+      DATETIME2 SignedAt
+    }
+
+    REQUESTHISTORY {
+      BIGINT HistoryId PK
+      UNIQUEIDENTIFIER RequestId FK
+      NVARCHAR(100) EventType
+      UNIQUEIDENTIFIER EventBy FK
+      DATETIME2 EventAt
+      NVARCHAR(MAX) Details
+    }
+
+    USERS ||--o{ REQUESTS : "RequestedBy"
+    REQUESTS ||--o{ ATTACHMENTS : "has"
+    REQUESTS ||--o{ SIGNATURES : "has"
+    REQUESTS ||--o{ REQUESTHISTORY : "has"
+    USERS ||--o{ SIGNATURES : "signs"
+    USERS ||--o{ REQUESTHISTORY : "events"
+```

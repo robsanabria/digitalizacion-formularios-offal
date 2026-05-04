@@ -1,0 +1,37 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Run build (if exists)
+        run: |
+          npm run build --if-present
+
+      - name: Deploy to Azure WebApp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: '.'
+
+# Notes:
+# - Set repository secrets: AZURE_WEBAPP_NAME and AZURE_WEBAPP_PUBLISH_PROFILE (publish profile contents).
+# - For a fully automated approach with a Service Principal use the `azure/login` action and `AZURE_CREDENTIALS` secret.

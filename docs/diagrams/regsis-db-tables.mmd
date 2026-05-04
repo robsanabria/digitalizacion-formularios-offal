@@ -1,0 +1,26 @@
+```mermaid
+flowchart TB
+  subgraph Tablas_SQL
+    Users["Users\n- UserId (PK, UNIQUEIDENTIFIER)\n- UserName NVARCHAR(150)\n- Email NVARCHAR(256)\n- Role NVARCHAR(50)\n- CreatedAt DATETIME2"]
+    Requests["Requests\n- RequestId (PK, UNIQUEIDENTIFIER)\n- CreatedAt DATETIME2\n- SubmittedAt DATETIME2\n- RequestedBy (FK -> Users.UserId)\n- PresentationDate DATE\n- SenasaType NVARCHAR(100)\n- ProductName NVARCHAR(300)\n- Status NVARCHAR(50)"]
+    Attachments["Attachments\n- AttachmentId (PK)\n- RequestId (FK -> Requests.RequestId)\n- FileName NVARCHAR(260)\n- FilePath NVARCHAR(1024)\n- ContentType NVARCHAR(100)\n- FileSize BIGINT\n- UploadedBy (FK -> Users.UserId)"]
+    Signatures["Signatures / Aprobaciones\n- SignatureId (PK)\n- RequestId (FK -> Requests.RequestId)\n- UserId (FK -> Users.UserId)\n- Role NVARCHAR(50)\n- Result NVARCHAR(50)\n- Comment NVARCHAR(MAX)\n- SignedAt DATETIME2"]
+    RequestHistory["RequestHistory\n- HistoryId (PK, IDENTITY)\n- RequestId (FK -> Requests.RequestId)\n- EventType NVARCHAR(100)\n- EventBy (FK -> Users.UserId)\n- EventAt DATETIME2\n- Details NVARCHAR(MAX)"]
+  end
+
+  Users -->|1:n| Requests
+  Requests -->|1:n| Attachments
+  Requests -->|1:n| Signatures
+  Requests -->|1:n| RequestHistory
+  Users -->|1:n| Attachments
+  Users -->|1:n| Signatures
+  Users -->|1:n| RequestHistory
+
+  classDef table fill:#f8fafc,stroke:#0f172a
+  class Users,Requests,Attachments,Signatures,RequestHistory table
+
+```
+
+## Notas
+- `FilePath` apunta al Blob Container (Azure) o al share SMB si on‑prem.
+- Para extracción automática de campos desde PDFs escaneados usar `Document Intelligence` antes de guardar metadatos.
