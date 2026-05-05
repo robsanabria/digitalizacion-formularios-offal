@@ -13,17 +13,17 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-// Health Check
-app.get('/api/health', (req, res) => {
+// Salud del Servicio
+app.get('/api/salud', (req, res) => {
     res.json({ 
-        status: 'ok', 
+        estado: 'ok', 
         timestamp: new Date().toISOString(),
-        service: 'regsis-007-api'
+        servicio: 'api-regsis-007'
     });
 });
 
 // Rutas (se agregarán más adelante)
-// app.use('/api/requests', require('./routes/requests'));
+// app.use('/api/solicitudes', require('./routes/solicitudes'));
 
 // Servir archivos estáticos del Frontend (React)
 app.use(express.static(path.join(__dirname, '../client/dist')));
