@@ -52,4 +52,4 @@ jobs:
           app-name: 'controlEtiquetas'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CED03AF9EF0248A680136EDF7B26256F }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
