@@ -29,12 +29,19 @@ app.get('/api/salud', (req, res) => {
 // Rutas (se agregarán más adelante)
 // app.use('/api/solicitudes', require('./routes/solicitudes'));
 
+const fs = require('fs');
+
 // Servir archivos estáticos del Frontend (React)
-app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.static(staticPath));
 
 // Manejar cualquier otra ruta con el index.html de React
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    const indexPath = path.join(staticPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Frontend no compilado. Por favor, ejecute el build.');
+    }
 });
 
 app.listen(PORT, () => {
