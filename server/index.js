@@ -7,6 +7,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const path = require('path');
+const staticPath = path.join(__dirname, '../client/dist');
+
+console.log(`Iniciando servidor en puerto: ${PORT}`);
+console.log(`Ruta de archivos estáticos: ${staticPath}`);
 
 // Middlewares
 app.use(cors());
