@@ -3,8 +3,10 @@
 "version": "0.0.1",
 "private": true,
 "scripts": {
-"start": "node index.js",
-"build": "echo \"no build\"",
-"test": "echo \"no tests\""
+"start": "node server/index.js",
+"build": "cd client && npm install && npm run build",
+"server-install": "cd server && npm install",
+"client-install": "cd client && npm install",
+"install-all": "npm run server-install && npm run client-install"
 }
 }
