@@ -12,9 +12,8 @@ Estado inicial:
 
 Primeros pasos recomendados:
 1. Clonar este repo localmente.
-2. Añadir el scaffold (backend + frontend) o pedir que yo lo genere.
-3. Crear recursos en Azure (Storage account + container `regsis-attachments`, Document Intelligence, App Service/App Registration si aplica).
-4. Configurar secretos en GitHub (AZURE_WEBAPP_PUBLISH_PROFILE, AZURE_CREDENTIALS si se usa service principal).
-5. Habilitar CI/CD (archivo `.github/workflows/ci-cd.yml` incluido como plantilla).
+2. Añadir el scaffold (backend + frontend) 
+3. Crear recursos en Azure (Storage account + container `regsis-attachments`, Document Intelligence, App Service/App Registration si aplica). <- En curso
+4. Configurar secretos en GitHub (AZURE_WEBAPP_PUBLISH_PROFILE, AZURE_CREDENTIALS si se usa service principal). <- En curso
+5. Habilitar CI/CD (archivo `.github/workflows/ci-cd.yml` incluido como plantilla). <- En curso
 
-Si querés, puedo generar el scaffold inicial (backend Express + ejemplo de llamada a Document Intelligence) y el `package.json`.
