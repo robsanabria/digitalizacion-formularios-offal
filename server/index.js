@@ -12,6 +12,10 @@ const staticPath = path.join(__dirname, '../client/dist');
 console.log(`Iniciando servidor en puerto: ${PORT}`);
 console.log(`Ruta de archivos estáticos: ${staticPath}`);
 
+if (!process.env.DB_SERVER) {
+    console.warn('ADVERTENCIA: DB_SERVER no está definido en las variables de entorno.');
+}
+
 // Middlewares
 app.use(cors());
 app.use(express.json());
