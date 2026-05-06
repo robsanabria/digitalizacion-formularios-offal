@@ -23,8 +23,8 @@ app.use(morgan('dev'));
 
 // Salud del Servicio
 app.get('/api/salud', (req, res) => {
-    res.json({ 
-        estado: 'ok', 
+    res.json({
+        estado: 'ok',
         timestamp: new Date().toISOString(),
         servicio: 'api-regsis-007'
     });
@@ -39,7 +39,7 @@ const fs = require('fs');
 app.use(express.static(staticPath));
 
 // Manejar cualquier otra ruta con el index.html de React
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     const indexPath = path.join(staticPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
