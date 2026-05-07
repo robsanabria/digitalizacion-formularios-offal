@@ -37,7 +37,7 @@ const createSolicitud = async (req, res) => {
 
     try {
         const pool = await poolPromise;
-        await pool.request()
+        const result = await pool.request()
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
             .input('rolSolicitante', sql.NVarChar, rolSolicitante)
             .input('fechaPresentacion', sql.Date, fechaPresentacion)
