@@ -159,10 +159,26 @@ const addAdjunto = async (req, res) => {
     }
 };
 
+const getAdjuntosBySolicitud = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+        const result = await pool.request()
+            .input('solicitudId', sql.UniqueIdentifier, id)
+            .query('SELECT * FROM Adjuntos WHERE SolicitudId = @solicitudId');
+        
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener adjuntos', detalle: err.message });
+    }
+};
+
 module.exports = {
     getSolicitudes,
     getSolicitudById,
     createSolicitud,
     updateSolicitud,
-    addAdjunto
+    addAdjunto,
+    getAdjuntosBySolicitud
 };

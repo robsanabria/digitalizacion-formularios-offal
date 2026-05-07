@@ -12,6 +12,7 @@ router.post('/', solicitudesController.createSolicitud);
 router.put('/:id', solicitudesController.updateSolicitud);
 
 // Rutas para adjuntos
+router.get('/:id/adjuntos', solicitudesController.getAdjuntosBySolicitud);
 router.post('/:id/adjuntos', upload.single('archivo'), solicitudesController.addAdjunto);
 
 module.exports = router;

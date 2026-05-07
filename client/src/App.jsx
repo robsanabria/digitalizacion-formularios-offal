@@ -3,11 +3,14 @@ import { motion } from 'framer-motion';
 import { Layout, PlusCircle, List, Activity, Settings, User } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
+import DetalleSolicitud from './components/DetalleSolicitud';
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const fetchSolicitudes = async () => {
     setLoading(true);
@@ -75,6 +78,13 @@ function App() {
           onCreated={fetchSolicitudes}
         />
 
+        {/* Panel de Detalle */}
+        <DetalleSolicitud 
+          solicitudId={selectedSolicitudId} 
+          isOpen={isDetailOpen} 
+          onClose={() => setIsDetailOpen(false)} 
+        />
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <StatCard label="Total Solicitudes" value={solicitudes.length} color="var(--primary)" />
@@ -123,7 +133,15 @@ function App() {
                         {s.FechaCreacion ? new Date(s.FechaCreacion).toLocaleDateString() : '-'}
                       </td>
                       <td className="py-4">
-                        <button className="text-primary hover:underline font-medium">Ver detalles</button>
+                        <button 
+                          onClick={() => {
+                            setSelectedSolicitudId(s.SolicitudId);
+                            setIsDetailOpen(true);
+                          }}
+                          className="text-primary hover:underline font-medium"
+                        >
+                          Ver detalles
+                        </button>
                       </td>
                     </motion.tr>
                   ))}
