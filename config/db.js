@@ -13,15 +13,16 @@ const dbConfig = {
     }
 };
 
-const poolPromise = new sql.ConnectionPool(dbConfig)
-    .connect()
+const poolPromise = sql.connect(dbConfig)
     .then(pool => {
         console.log('✅ Conectado a SQL Server');
         return pool;
     })
     .catch(err => {
-        console.error('❌ Error de conexión a la base de datos:', err);
-        // No cerramos el proceso para que Azure pueda mantener la app viva y ver logs
+        console.error('❌ Error de conexión a SQL Server:', err.message);
+        // No lanzamos el error para evitar que la app crashee, 
+        // pero devolvemos null para que el controlador pueda manejarlo.
+        return null; 
     });
 
 module.exports = {

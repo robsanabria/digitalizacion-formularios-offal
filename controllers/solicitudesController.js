@@ -4,6 +4,7 @@ const storageService = require('../services/storageService');
 const getSolicitudes = async (req, res) => {
     try {
         const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request().query('SELECT * FROM Solicitudes ORDER BY FechaCreacion DESC');
         res.json(result.recordset);
     } catch (err) {
@@ -15,6 +16,7 @@ const getSolicitudById = async (req, res) => {
     const { id } = req.params;
     try {
         const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .query('SELECT * FROM Solicitudes WHERE SolicitudId = @id');
@@ -37,6 +39,7 @@ const createSolicitud = async (req, res) => {
 
     try {
         const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request()
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
             .input('rolSolicitante', sql.NVarChar, rolSolicitante)
@@ -80,6 +83,7 @@ const updateSolicitud = async (req, res) => {
 
     try {
         const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
@@ -134,6 +138,7 @@ const addAdjunto = async (req, res) => {
 
         // 2. Guardar metadatos en la base de datos
         const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
         await pool.request()
             .input('solicitudId', sql.UniqueIdentifier, id)
             .input('nombreArchivo', sql.NVarChar, file.originalname)
