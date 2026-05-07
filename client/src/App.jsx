@@ -4,6 +4,7 @@ import { Layout, PlusCircle, List, Activity, Settings, User } from 'lucide-react
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
+import logoEmpresa from './assets/logo.png'; // Asegúrate de guardarlo aquí
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
@@ -33,8 +34,8 @@ function App() {
       {/* Sidebar */}
       <aside className="w-64 glass-card m-4 mr-0 p-6 flex flex-col gap-8 hidden md:flex">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary rounded-lg">
-            <Layout className="text-white" size={24} />
+          <div className="p-1 bg-white rounded-lg overflow-hidden flex items-center justify-center w-12 h-12">
+            <img src={logoEmpresa} alt="Logo Empresa" className="w-full h-full object-contain" />
           </div>
           <h1 className="font-bold text-xl tracking-tight">REG-SIS-007</h1>
         </div>
