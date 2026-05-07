@@ -4,7 +4,8 @@ import { Layout, PlusCircle, List, Activity, Settings, User } from 'lucide-react
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
-import logoEmpresa from './assets/logo.png'; // Asegúrate de guardarlo aquí
+// Quitamos el import estático para que el build no falle
+const logoEmpresa = "/logo.png"; 
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
@@ -12,6 +13,8 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const [logoError, setLogoError] = useState(false);
 
   const fetchSolicitudes = async () => {
     setLoading(true);
@@ -35,7 +38,18 @@ function App() {
       <aside className="w-64 glass-card m-4 mr-0 p-6 flex flex-col gap-8 hidden md:flex">
         <div className="flex items-center gap-3">
           <div className="p-1 bg-white rounded-lg overflow-hidden flex items-center justify-center w-12 h-12">
-            <img src={logoEmpresa} alt="Logo Empresa" className="w-full h-full object-contain" />
+            {!logoError ? (
+              <img 
+                src={logoEmpresa} 
+                alt="Logo" 
+                className="w-full h-full object-contain" 
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="p-2 bg-primary w-full h-full flex items-center justify-center">
+                <Layout className="text-white" size={24} />
+              </div>
+            )}
           </div>
           <h1 className="font-bold text-xl tracking-tight">REG-SIS-007</h1>
         </div>
