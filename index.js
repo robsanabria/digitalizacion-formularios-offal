@@ -38,8 +38,13 @@ app.get('/api/test-db', async (req, res) => {
 
 // Servir el frontend en producción (React)
 app.get('*', (req, res) => {
-    // Si el archivo no existe (porque no hemos construido el frontend aún), enviamos el index.html base
-    res.sendFile(path.join(__dirname, 'index.html'));
+    const indexPath = path.join(__dirname, 'client/dist/index.html');
+    if (require('fs').existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        // Fallback si no hay build (útil para el primer despliegue o debug)
+        res.sendFile(path.join(__dirname, 'index.html'));
+    }
 });
 
 app.listen(PORT, () => {
