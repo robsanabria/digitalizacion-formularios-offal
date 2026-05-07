@@ -2,22 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Layout, PlusCircle, List, Activity, Settings, User } from 'lucide-react';
 import axios from 'axios';
+import NuevaSolicitud from './components/NuevaSolicitud';
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchSolicitudes = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get('/api/solicitudes');
+      setSolicitudes(res.data);
+    } catch (err) {
+      console.error("Error al cargar solicitudes", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSolicitudes = async () => {
-      try {
-        const res = await axios.get('/api/solicitudes');
-        setSolicitudes(res.data);
-      } catch (err) {
-        console.error("Error al cargar solicitudes", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSolicitudes();
   }, []);
 
@@ -35,7 +39,7 @@ function App() {
         <nav className="flex flex-col gap-2">
           <NavItem icon={<Activity size={20} />} label="Dashboard" active />
           <NavItem icon={<List size={20} />} label="Solicitudes" />
-          <NavItem icon={<PlusCircle size={20} />} label="Nueva Solicitud" />
+          <NavItem icon={<PlusCircle size={20} />} label="Nueva Solicitud" onClick={() => setIsModalOpen(true)} />
         </nav>
 
         <div className="mt-auto flex flex-col gap-2">
@@ -55,11 +59,21 @@ function App() {
             <p className="text-text-muted">Gestiona tus solicitudes de cambio de etiquetas</p>
           </motion.div>
           
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <PlusCircle size={20} />
             Nueva Solicitud
           </button>
         </header>
+
+        {/* Modal de Nueva Solicitud */}
+        <NuevaSolicitud 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onCreated={fetchSolicitudes}
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
@@ -130,9 +144,11 @@ function App() {
   );
 }
 
-function NavItem({ icon, label, active = false }) {
+function NavItem({ icon, label, active = false, onClick }) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+    <div 
+      onClick={onClick}
+      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
       active ? 'bg-primary/20 text-primary border border-primary/20' : 'text-text-muted hover:bg-white/5 hover:text-white'
     }`}>
       {icon}
