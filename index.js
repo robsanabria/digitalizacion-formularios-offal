@@ -21,17 +21,27 @@ app.use('/api/solicitudes', solicitudesRoutes);
 
 // Endpoint de prueba de conexión y tablas
 app.get('/api/test-db', async (req, res) => {
+    const sql = require('mssql');
+    // Leemos la config directamente para el reintento
+    const { poolPromise } = require('./config/db');
+    
     try {
         const pool = await poolPromise;
+        if (!pool) {
+            // Si el pool inicial falló, intentamos uno nuevo para ver el error real
+            // Nota: El config/db.js ya exporta 'sql', pero necesitamos ver por qué falla
+            return res.status(500).json({ 
+                error: 'La conexión inicial falló', 
+                ayuda: 'Revisa el Log Stream de Azure para ver el error de mssql.connect' 
+            });
+        }
         const result = await pool.request().query("SELECT TOP 5 * FROM Usuarios");
-        res.json({ 
-            mensaje: 'Conexión exitosa', 
-            usuarios: result.recordset 
-        });
+        res.json({ mensaje: 'Conexión exitosa', usuarios: result.recordset });
     } catch (err) {
         res.status(500).json({ 
-            error: 'Error al consultar la base de datos', 
-            detalle: err.message 
+            error: 'Fallo técnico en la consulta', 
+            detalle: err.message,
+            stack: err.stack 
         });
     }
 });
