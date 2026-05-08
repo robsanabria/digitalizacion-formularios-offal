@@ -13,9 +13,19 @@ const containerClient = blobServiceClient.getContainerClient(containerName);
 
 const uploadFile = async (requestId, file) => {
     try {
-        // Asegurar que el contenedor existe (acceso privado por defecto para evitar 403)
-        console.log(`[Storage] Verificando contenedor: ${containerName}`);
-        await containerClient.createIfNotExists();
+        // Intentar asegurar que el contenedor existe
+        // Si falla con 403, es probable que el contenedor ya exista pero no tengamos permisos de gestión
+        // (común con SAS tokens limitados a blobs). En ese caso, procedemos con la subida.
+        try {
+            console.log(`[Storage] Verificando contenedor: ${containerName}`);
+            await containerClient.createIfNotExists();
+        } catch (err) {
+            if (err.statusCode === 403) {
+                console.warn(`[Storage] Advertencia: No se pudo verificar/crear el contenedor (403). Es posible que ya exista. Continuando...`);
+            } else {
+                throw err;
+            }
+        }
 
         const blobName = `requests/${requestId}/${Date.now()}-${file.originalname}`;
         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
