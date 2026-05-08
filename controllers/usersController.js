@@ -2,8 +2,8 @@ const { poolPromise, sql } = require('../config/db');
 
 const getUsers = async (req, res) => {
     try {
-        // Solo SISTEMAS puede ver la lista de usuarios
-        if (req.user.Rol !== 'SISTEMAS') {
+        // Solo ADMIN puede ver la lista de usuarios
+        if (req.user.Rol !== 'ADMIN') {
             return res.status(403).json({ error: 'No tienes permisos para ver usuarios' });
         }
 
@@ -20,7 +20,7 @@ const updateUserRole = async (req, res) => {
     const { rol } = req.body;
 
     try {
-        if (req.user.Rol !== 'SISTEMAS') {
+        if (req.user.Rol !== 'ADMIN') {
             return res.status(403).json({ error: 'No tienes permisos para cambiar roles' });
         }
 
