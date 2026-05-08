@@ -13,24 +13,14 @@ const containerClient = blobServiceClient.getContainerClient(containerName);
 
 const uploadFile = async (requestId, file) => {
     try {
-        // Intentar asegurar que el contenedor existe
-        // Si falla con 403, es probable que el contenedor ya exista pero no tengamos permisos de gestión
-        // (común con SAS tokens limitados a blobs). En ese caso, procedemos con la subida.
-        try {
-            console.log(`[Storage] Verificando contenedor: ${containerName}`);
-            await containerClient.createIfNotExists();
-        } catch (err) {
-            if (err.statusCode === 403) {
-                console.warn(`[Storage] Advertencia: No se pudo verificar/crear el contenedor (403). Es posible que ya exista. Continuando...`);
-            } else {
-                throw err;
-            }
-        }
-
+        // Omitimos la verificación del contenedor para evitar errores 403 a nivel de recurso
+        // El contenedor debe existir previamente en Azure.
         const blobName = `requests/${requestId}/${Date.now()}-${file.originalname}`;
         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-        console.log(`[Storage] Subiendo archivo: ${blobName} (${file.size} bytes)`);
+        console.log(`[Storage] Intentando subida directa: ${blobName}`);
+        console.log(`[Storage] Tipo de conexión: ${connectionString.includes('SharedAccessSignature') ? 'SAS Token' : 'Account Key'}`);
+        
         await blockBlobClient.uploadData(file.buffer, {
             blobHTTPHeaders: { blobContentType: file.mimetype }
         });
