@@ -146,7 +146,7 @@ const addAdjunto = async (req, res) => {
             .input('tipoContenido', sql.NVarChar, file.mimetype)
             .input('tamano', sql.BigInt, file.size)
             .query(`
-                INSERT INTO Adjuntos (SolicitudId, FileName, FilePath, ContentType, FileSize)
+                INSERT INTO Adjuntos (SolicitudId, NombreArchivo, RutaArchivo, TipoContenido, TamanoArchivo)
                 VALUES (@solicitudId, @nombreArchivo, @rutaArchivo, @tipoContenido, @tamano)
             `);
 
