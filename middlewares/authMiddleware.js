@@ -35,10 +35,16 @@ const authMiddleware = async (req, res, next) => {
             console.log(`[Auth] Creando nuevo usuario: ${userEmail}`);
             const nombreSugerido = userEmail.split('@')[0];
             
+            // Si eres tú (Roberto), te damos el rol de SISTEMAS para que puedas administrar
+            let rolInicial = 'SOLICITANTE';
+            if (userEmail.toLowerCase().includes('roberto.sanabria')) {
+                rolInicial = 'SISTEMAS';
+            }
+
             const insertResult = await pool.request()
                 .input('nombre', sql.NVarChar, nombreSugerido)
                 .input('email', sql.NVarChar, userEmail)
-                .input('rol', sql.NVarChar, 'SOLICITANTE') // Rol por defecto
+                .input('rol', sql.NVarChar, rolInicial)
                 .query(`
                     INSERT INTO Usuarios (NombreUsuario, Email, Rol)
                     OUTPUT INSERTED.*

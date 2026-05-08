@@ -4,6 +4,7 @@ import { Layout, PlusCircle, List, Activity, Settings, User } from 'lucide-react
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
+import GestionUsuarios from './components/GestionUsuarios';
 // Quitamos el import estático para que el build no falle
 const logoEmpresa = "/logo.png"; 
 
@@ -12,6 +13,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUserMgmtOpen, setIsUserMgmtOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -93,13 +95,24 @@ function App() {
             </p>
           </motion.div>
           
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <PlusCircle size={20} />
-            Nueva Solicitud
-          </button>
+          <div className="flex gap-3">
+            {user && user.Rol === 'SISTEMAS' && (
+              <button 
+                onClick={() => setIsUserMgmtOpen(true)}
+                className="px-6 py-2 bg-white/5 border border-border rounded-xl hover:bg-white/10 transition-all flex items-center gap-2"
+              >
+                <Users size={20} />
+                Gestionar Usuarios
+              </button>
+            )}
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Nueva Solicitud
+            </button>
+          </div>
         </header>
 
         {/* Modal de Nueva Solicitud */}
@@ -189,6 +202,12 @@ function App() {
           )}
         </section>
       </main>
+      </div>
+
+      <GestionUsuarios 
+        isOpen={isUserMgmtOpen}
+        onClose={() => setIsUserMgmtOpen(false)}
+      />
     </div>
   );
 }

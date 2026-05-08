@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3001;
 
 // Rutas
 const solicitudesRoutes = require('./routes/solicitudesRoutes');
+const usersController = require('./controllers/usersController');
 
 // Middlewares
 const authMiddleware = require('./middlewares/authMiddleware');
@@ -26,6 +27,8 @@ app.use('/api', authMiddleware);
 
 // Registro de rutas API
 app.use('/api/solicitudes', solicitudesRoutes);
+app.get('/api/users', usersController.getUsers);
+app.put('/api/users/:id/role', usersController.updateUserRole);
 
 
 // Endpoint de prueba de conexión y tablas
