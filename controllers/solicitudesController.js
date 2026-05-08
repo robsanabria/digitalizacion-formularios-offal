@@ -78,16 +78,27 @@ const createSolicitud = async (req, res) => {
 
 const updateSolicitud = async (req, res) => {
     const { id } = req.params;
-    const { 
-        solicitadoPor, rolSolicitante, fechaPresentacion, motivo, 
-        tipoSenasa, nombreProducto, destino, codigo, codigoSenasa, 
-        impresoras, descripcionCorta, estado 
-    } = req.body;
+    
+    // Extraemos los campos intentando ambos casings (Mayúsculas y minúsculas)
+    const b = req.body;
+    const solicitadoPor = b.SolicitadoPor || b.solicitadoPor;
+    const rolSolicitante = b.RolSolicitante || b.rolSolicitante;
+    const fechaPresentacion = b.FechaPresentacion || b.fechaPresentacion;
+    const motivo = b.Motivo || b.motivo;
+    const tipoSenasa = b.TipoSenasa || b.tipoSenasa;
+    const nombreProducto = b.NombreProducto || b.nombreProducto;
+    const destino = b.Destino || b.destino;
+    const codigo = b.Codigo || b.codigo;
+    const codigoSenasa = b.CodigoSenasa || b.codigoSenasa;
+    const impresoras = b.Impresoras || b.impresoras;
+    const descripcionCorta = b.DescripcionCorta || b.descripcionCorta;
+    const estado = b.Estado || b.estado;
 
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
-        const result = await pool.request()
+        
+        await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
             .input('rolSolicitante', sql.NVarChar, rolSolicitante)
@@ -98,31 +109,29 @@ const updateSolicitud = async (req, res) => {
             .input('destino', sql.NVarChar, destino)
             .input('codigo', sql.NVarChar, codigo)
             .input('codigoSenasa', sql.NVarChar, codigoSenasa)
-            .input('impresoras', sql.NVarChar, JSON.stringify(impresoras))
+            .input('impresoras', sql.NVarChar, typeof impresoras === 'string' ? impresoras : JSON.stringify(impresoras))
             .input('descripcionCorta', sql.NVarChar, descripcionCorta)
             .input('estado', sql.NVarChar, estado)
             .query(`
                 UPDATE Solicitudes 
-                SET SolicitadoPor = @solicitadoPor,
-                    RolSolicitante = @rolSolicitante,
-                    FechaPresentacion = @fechaPresentacion,
-                    Motivo = @motivo,
-                    TipoSenasa = @tipoSenasa,
-                    NombreProducto = @nombreProducto,
-                    Destino = @destino,
-                    Codigo = @codigo,
-                    CodigoSenasa = @codigoSenasa,
-                    Impresoras = @impresoras,
-                    DescripcionCorta = @descripcionCorta,
-                    Estado = @estado
+                SET SolicitadoPor = ISNULL(@solicitadoPor, SolicitadoPor),
+                    RolSolicitante = ISNULL(@rolSolicitante, RolSolicitante),
+                    FechaPresentacion = ISNULL(@fechaPresentacion, FechaPresentacion),
+                    Motivo = ISNULL(@motivo, Motivo),
+                    TipoSenasa = ISNULL(@tipoSenasa, TipoSenasa),
+                    NombreProducto = ISNULL(@nombreProducto, NombreProducto),
+                    Destino = ISNULL(@destino, Destino),
+                    Codigo = ISNULL(@codigo, Codigo),
+                    CodigoSenasa = ISNULL(@codigoSenasa, CodigoSenasa),
+                    Impresoras = ISNULL(@impresoras, Impresoras),
+                    DescripcionCorta = ISNULL(@descripcionCorta, DescripcionCorta),
+                    Estado = ISNULL(@estado, Estado)
                 WHERE SolicitudId = @id
             `);
         
-        if (result.rowsAffected[0] === 0) {
-            return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
-        }
         res.json({ mensaje: 'Solicitud actualizada con éxito' });
     } catch (err) {
+        console.error('[Controller] Error en updateSolicitud:', err);
         res.status(500).json({ error: 'Error al actualizar la solicitud', detalle: err.message });
     }
 };
