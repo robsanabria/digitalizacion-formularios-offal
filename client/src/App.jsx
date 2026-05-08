@@ -160,8 +160,8 @@ function App() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               <StatCard label="Total Solicitudes" value={solicitudes.length} color="var(--primary)" />
-              <StatCard label="Pendientes" value={solicitudes.filter(s => s.Estado === 'pendiente').length} color="#fbbf24" />
-              <StatCard label="Aprobadas" value={solicitudes.filter(s => s.Estado === 'aprobado').length} color="#10b981" />
+              <StatCard label="Pendientes" value={solicitudes.filter(s => s.Estado !== 'Aprobado por Sistemas y Calidad' && s.Estado !== 'aprobado' && s.Estado !== 'rechazado').length} color="#fbbf24" />
+              <StatCard label="Aprobadas Finales" value={solicitudes.filter(s => s.Estado === 'Aprobado por Sistemas y Calidad' || s.Estado === 'aprobado').length} color="#10b981" />
             </div>
 
             {/* Recent Solicitudes */}
@@ -197,9 +197,9 @@ function App() {
                           <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
                           <td className="py-4">
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              (s.Estado === 'Aprobado Final' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
-                              s.Estado === 'Aprobado por Calidad' ? 'bg-blue-500/20 text-blue-400' : 
-                              s.Estado === 'borrador' ? 'bg-slate-500/20 text-slate-400' : 
+                              (s.Estado === 'Aprobado por Sistemas y Calidad' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
+                              (s.Estado === 'Aprobado por calidad' || s.Estado === 'Aprobado por sistemas') ? 'bg-blue-500/20 text-blue-400' : 
+                              s.Estado === 'rechazado' ? 'bg-red-500/20 text-red-400' : 
                               'bg-yellow-500/20 text-yellow-400'
                             }`}>
                               {s.Estado}
@@ -253,9 +253,9 @@ function App() {
                       <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
                       <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          (s.Estado === 'Aprobado Final' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
-                          s.Estado === 'Aprobado por Calidad' ? 'bg-blue-500/20 text-blue-400' : 
-                          s.Estado === 'borrador' ? 'bg-slate-500/20 text-slate-400' : 
+                          (s.Estado === 'Aprobado por Sistemas y Calidad' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
+                          (s.Estado === 'Aprobado por calidad' || s.Estado === 'Aprobado por sistemas') ? 'bg-blue-500/20 text-blue-400' : 
+                          s.Estado === 'rechazado' ? 'bg-red-500/20 text-red-400' : 
                           'bg-yellow-500/20 text-yellow-400'
                         }`}>
                           {s.Estado}

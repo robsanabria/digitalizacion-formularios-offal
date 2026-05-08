@@ -36,11 +36,18 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
 
     setStatusLoading(true);
     try {
-      // Definimos el estado exacto según el rol
       let estadoFinal = nuevoEstado;
+      
       if (nuevoEstado === 'aprobado') {
-        if (user.Rol === 'CALIDAD') estadoFinal = 'Aprobado por Calidad';
-        if (user.Rol === 'SISTEMAS') estadoFinal = 'Aprobado Final';
+        if (user?.Rol === 'CALIDAD' || user?.Rol === 'ADMIN') {
+          estadoFinal = solicitud.Estado === 'Aprobado por sistemas' ? 'Aprobado por Sistemas y Calidad' : 'Aprobado por calidad';
+        }
+        if (user?.Rol === 'SISTEMAS' || user?.Rol === 'ADMIN') {
+          // Si es ADMIN y ya estaba aprobado por calidad, lo pasa a final. Si es Sistemas, hace su parte.
+          estadoFinal = (solicitud.Estado === 'Aprobado por calidad' || estadoFinal === 'Aprobado por calidad' && user.Rol === 'ADMIN') 
+            ? 'Aprobado por Sistemas y Calidad' 
+            : 'Aprobado por sistemas';
+        }
       }
 
       await axios.put(`/api/solicitudes/${solicitudId}`, { 
@@ -92,16 +99,16 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
               <InfoItem icon={<Tag size={18} />} label="Código" value={solicitud.Codigo || '-'} />
             </div>
 
-            {/* Acciones de Aprobación para Calidad/Sistemas */}
-            {(user?.Rol === 'CALIDAD' || user?.Rol === 'SISTEMAS') && (
+            {/* Acciones de Aprobación para Calidad/Sistemas/Admin */}
+            {(user?.Rol === 'CALIDAD' || user?.Rol === 'SISTEMAS' || user?.Rol === 'ADMIN') && (
               <section className="bg-primary/5 p-6 rounded-xl border border-primary/20">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-4">Validación de Solicitud</h3>
                 <div className="flex gap-4">
                   <button 
-                    disabled={statusLoading || solicitud.Estado === 'aprobado'}
+                    disabled={statusLoading || solicitud.Estado === 'Aprobado por Sistemas y Calidad' || (solicitud.Estado === 'Aprobado por calidad' && user?.Rol === 'CALIDAD') || (solicitud.Estado === 'Aprobado por sistemas' && user?.Rol === 'SISTEMAS')}
                     onClick={() => handleEstadoChange('aprobado')}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold transition-all ${
-                      solicitud.Estado === 'aprobado' 
+                      solicitud.Estado === 'Aprobado por Sistemas y Calidad' || (solicitud.Estado === 'Aprobado por calidad' && user?.Rol === 'CALIDAD') || (solicitud.Estado === 'Aprobado por sistemas' && user?.Rol === 'SISTEMAS')
                       ? 'bg-green-500 text-white opacity-50' 
                       : 'bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white shadow-lg shadow-green-500/10'
                     }`}

@@ -65,7 +65,7 @@ const createSolicitud = async (req, res) => {
                 VALUES (
                     @solicitadoPor, @rolSolicitante, @fechaPresentacion, @motivo, 
                     @tipoSenasa, @nombreProducto, @destino, @codigo, @codigoSenasa, 
-                    @impresoras, @descripcionCorta, 'borrador'
+                    @impresoras, @descripcionCorta, 'Pendiente'
                 )
             `);
         
