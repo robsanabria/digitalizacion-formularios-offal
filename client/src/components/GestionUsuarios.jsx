@@ -83,9 +83,9 @@ const GestionUsuarios = ({ isOpen, onClose }) => {
                         value={u.Rol}
                         onChange={(e) => handleRoleChange(u.UsuarioId, e.target.value)}
                       >
-                        <option value="SOLICITANTE">Solicitante</option>
                         <option value="CALIDAD">Calidad</option>
-                        <option value="SISTEMAS">Sistemas (Admin)</option>
+                        <option value="SISTEMAS">Sistemas</option>
+                        <option value="ADMIN">Admin (Gestión)</option>
                       </select>
                     )}
                   </div>

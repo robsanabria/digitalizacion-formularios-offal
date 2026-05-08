@@ -32,13 +32,13 @@ const authMiddleware = async (req, res, next) => {
 
         let user = result.recordset[0];
 
-        // REGLA DE EMERGENCIA: Si ya existes pero no eres SISTEMAS, te ascendemos automáticamente
-        if (user && user.Email.toLowerCase().includes('roberto.sanabria') && user.Rol !== 'SISTEMAS') {
-            console.log(`[Auth] Ascendiendo a Roberto a SISTEMAS...`);
+        // REGLA DE EMERGENCIA: Si ya existes pero no eres ADMIN, te ascendemos automáticamente
+        if (user && user.Email.toLowerCase().includes('roberto.sanabria') && user.Rol !== 'ADMIN') {
+            console.log(`[Auth] Ascendiendo a Roberto a ADMIN...`);
             await pool.request()
                 .input('id', sql.UniqueIdentifier, user.UsuarioId)
-                .query("UPDATE Usuarios SET Rol = 'SISTEMAS' WHERE UsuarioId = @id");
-            user.Rol = 'SISTEMAS';
+                .query("UPDATE Usuarios SET Rol = 'ADMIN' WHERE UsuarioId = @id");
+            user.Rol = 'ADMIN';
         }
 
         // 2. Si no existe, lo creamos automáticamente (JIT Provisioning)
@@ -46,10 +46,10 @@ const authMiddleware = async (req, res, next) => {
             console.log(`[Auth] Creando nuevo usuario: ${userEmail}`);
             const nombreSugerido = userEmail.split('@')[0];
             
-            // Si eres tú (Roberto), te damos el rol de SISTEMAS para que puedas administrar
-            let rolInicial = 'SOLICITANTE';
+            // Roberto es ADMIN, los demás entran como CALIDAD por defecto (o lo que prefieras)
+            let rolInicial = 'CALIDAD';
             if (userEmail.toLowerCase().includes('roberto.sanabria')) {
-                rolInicial = 'SISTEMAS';
+                rolInicial = 'ADMIN';
             }
 
             const insertResult = await pool.request()

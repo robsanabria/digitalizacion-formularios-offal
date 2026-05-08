@@ -119,12 +119,12 @@ function App() {
           </motion.div>
           
           <div className="flex gap-3">
-            {user && user.Rol === 'SISTEMAS' && (
+            {user && user.Rol === 'ADMIN' && (
               <button 
                 onClick={() => setIsUserMgmtOpen(true)}
-                className="px-6 py-2 bg-white/5 border border-border rounded-xl hover:bg-white/10 transition-all flex items-center gap-2"
+                className="px-6 py-2 bg-white/5 border border-border rounded-xl hover:bg-white/10 transition-all flex items-center gap-2 group"
               >
-                <Users size={20} />
+                <Users size={20} className="group-hover:text-primary transition-colors" />
                 Gestionar Usuarios
               </button>
             )}
