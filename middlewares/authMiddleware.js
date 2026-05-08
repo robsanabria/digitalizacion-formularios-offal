@@ -20,6 +20,8 @@ const authMiddleware = async (req, res, next) => {
         return res.status(401).json({ error: 'No autenticado por Azure EasyAuth' });
     }
 
+    console.log(`[Auth] Usuario detectado: ${userEmail}`);
+
     try {
         const pool = await poolPromise;
         
@@ -29,6 +31,15 @@ const authMiddleware = async (req, res, next) => {
             .query('SELECT * FROM Usuarios WHERE Email = @email');
 
         let user = result.recordset[0];
+
+        // REGLA DE EMERGENCIA: Si ya existes pero no eres SISTEMAS, te ascendemos automáticamente
+        if (user && user.Email.toLowerCase().includes('roberto.sanabria') && user.Rol !== 'SISTEMAS') {
+            console.log(`[Auth] Ascendiendo a Roberto a SISTEMAS...`);
+            await pool.request()
+                .input('id', sql.UniqueIdentifier, user.UsuarioId)
+                .query("UPDATE Usuarios SET Rol = 'SISTEMAS' WHERE UsuarioId = @id");
+            user.Rol = 'SISTEMAS';
+        }
 
         // 2. Si no existe, lo creamos automáticamente (JIT Provisioning)
         if (!user) {
