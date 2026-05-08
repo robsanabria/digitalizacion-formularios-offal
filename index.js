@@ -11,9 +11,18 @@ const PORT = process.env.PORT || 3001;
 const solicitudesRoutes = require('./routes/solicitudesRoutes');
 
 // Middlewares
+const authMiddleware = require('./middlewares/authMiddleware');
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/dist')));
+
+// Endpoint de identidad (debe ir antes del middleware global si quieres que sea público, pero aquí lo protegemos)
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+    res.json(req.user);
+});
+
+// Proteger todas las rutas de la API con el middleware
+app.use('/api', authMiddleware);
 
 // Registro de rutas API
 app.use('/api/solicitudes', solicitudesRoutes);

@@ -9,12 +9,22 @@ const logoEmpresa = "/logo.png";
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const [logoError, setLogoError] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get('/api/auth/me');
+      setUser(res.data);
+    } catch (err) {
+      console.error("Error al cargar usuario", err);
+    }
+  };
 
   const fetchSolicitudes = async () => {
     setLoading(true);
@@ -29,7 +39,11 @@ function App() {
   };
 
   useEffect(() => {
-    fetchSolicitudes();
+    const init = async () => {
+      await fetchUser();
+      await fetchSolicitudes();
+    };
+    init();
   }, []);
 
   return (
@@ -73,8 +87,10 @@ function App() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <h2 className="text-3xl font-bold">Bienvenido de nuevo</h2>
-            <p className="text-text-muted">Gestiona tus solicitudes de cambio de etiquetas</p>
+            <h2 className="text-3xl font-bold">Hola, {user ? user.NombreUsuario : '...'}</h2>
+            <p className="text-text-muted">
+              Rol: <span className="text-primary font-bold">{user ? user.Rol : 'Cargando...'}</span>
+            </p>
           </motion.div>
           
           <button 

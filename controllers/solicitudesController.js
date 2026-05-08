@@ -32,10 +32,13 @@ const getSolicitudById = async (req, res) => {
 
 const createSolicitud = async (req, res) => {
     const { 
-        solicitadoPor, rolSolicitante, fechaPresentacion, motivo, 
+        fechaPresentacion, motivo, 
         tipoSenasa, nombreProducto, destino, codigo, codigoSenasa, 
         impresoras, descripcionCorta 
     } = req.body;
+
+    const solicitadoPor = req.user.UsuarioId;
+    const rolSolicitante = req.user.Rol;
 
     try {
         const pool = await poolPromise;
