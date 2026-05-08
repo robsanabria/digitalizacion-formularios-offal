@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { X, FileText, Calendar, User, Tag, Download, ExternalLink, Loader2 } from 'lucide-react';
+import { X, FileText, Calendar, User, Tag, Download, ExternalLink, Loader2, Check, X as XIcon } from 'lucide-react';
 import axios from 'axios';
 
-const DetalleSolicitud = ({ solicitudId, isOpen, onClose }) => {
+const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => {
   const [solicitud, setSolicitud] = useState(null);
   const [adjuntos, setAdjuntos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && solicitudId) {
@@ -28,12 +28,28 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose }) => {
     }
   }, [isOpen, solicitudId]);
 
+  const handleEstadoChange = async (nuevoEstado) => {
+    setStatusLoading(true);
+    try {
+      await axios.put(`/api/solicitudes/${solicitudId}`, { 
+        ...solicitud,
+        estado: nuevoEstado 
+      });
+      setSolicitud({ ...solicitud, Estado: nuevoEstado });
+      if (onUpdated) onUpdated();
+    } catch (err) {
+      alert("Error al actualizar el estado");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm">
       <div className="glass-card w-full max-w-2xl h-full m-0 rounded-none md:m-4 md:rounded-xl p-8 relative overflow-y-auto">
-        <button onClick={onClose} className="absolute top-6 right-6 text-text-muted hover:text-white">
+        <button onClick={onClose} className="absolute top-6 right-6 text-text-muted hover:text-white transition-colors">
           <X size={24} />
         </button>
 
@@ -59,6 +75,39 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose }) => {
               <InfoItem icon={<FileText size={18} />} label="Tipo SENASA" value={solicitud.TipoSenasa} />
               <InfoItem icon={<Tag size={18} />} label="Código" value={solicitud.Codigo || '-'} />
             </div>
+
+            {/* Acciones de Aprobación para Calidad/Sistemas */}
+            {(user?.Rol === 'CALIDAD' || user?.Rol === 'SISTEMAS') && (
+              <section className="bg-primary/5 p-6 rounded-xl border border-primary/20">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-primary mb-4">Validación de Solicitud</h3>
+                <div className="flex gap-4">
+                  <button 
+                    disabled={statusLoading || solicitud.Estado === 'aprobado'}
+                    onClick={() => handleEstadoChange('aprobado')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold transition-all ${
+                      solicitud.Estado === 'aprobado' 
+                      ? 'bg-green-500 text-white opacity-50' 
+                      : 'bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white shadow-lg shadow-green-500/10'
+                    }`}
+                  >
+                    {statusLoading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                    Aprobar
+                  </button>
+                  <button 
+                    disabled={statusLoading || solicitud.Estado === 'rechazado'}
+                    onClick={() => handleEstadoChange('rechazado')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold transition-all ${
+                      solicitud.Estado === 'rechazado' 
+                      ? 'bg-red-500 text-white opacity-50' 
+                      : 'bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white shadow-lg shadow-red-500/10'
+                    }`}
+                  >
+                    {statusLoading ? <Loader2 className="animate-spin" size={20} /> : <XIcon size={20} />}
+                    Rechazar
+                  </button>
+                </div>
+              </section>
+            )}
 
             <section>
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
