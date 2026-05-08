@@ -81,6 +81,27 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             </div>
           </div>
 
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-text-muted">Fecha de Presentación</label>
+              <input 
+                type="date"
+                required
+                className="input-field"
+                value={formData.fechaPresentacion || ''}
+                onChange={(e) => setFormData({...formData, fechaPresentacion: e.target.value})}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-text-muted">Código Senasa (Opcional)</label>
+              <input 
+                className="input-field"
+                value={formData.codigoSenasa}
+                onChange={(e) => setFormData({...formData, codigoSenasa: e.target.value})}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-text-muted">Motivo del Cambio</label>
             <textarea 

@@ -77,18 +77,18 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose }) => {
               </h3>
               <div className="flex flex-col gap-3">
                 {adjuntos.length > 0 ? adjuntos.map((file) => (
-                  <div key={file.AttachmentId} className="flex items-center justify-between p-4 bg-white/5 border border-border rounded-lg hover:bg-white/10 transition-all">
+                  <div key={file.AdjuntoId} className="flex items-center justify-between p-4 bg-white/5 border border-border rounded-lg hover:bg-white/10 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-primary/10 rounded">
                         <FileText size={18} className="text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium truncate max-w-[200px]">{file.FileName}</p>
-                        <p className="text-[10px] text-text-muted uppercase">{file.ContentType}</p>
+                        <p className="text-sm font-medium truncate max-w-[200px]">{file.NombreArchivo}</p>
+                        <p className="text-[10px] text-text-muted uppercase">{file.TipoContenido}</p>
                       </div>
                     </div>
                     <a 
-                      href={file.FilePath} 
+                      href={file.RutaArchivo} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="p-2 hover:bg-primary/20 rounded-full text-primary transition-colors"
