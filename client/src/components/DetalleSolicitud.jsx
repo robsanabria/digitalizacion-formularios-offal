@@ -88,7 +88,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose }) => {
                       </div>
                     </div>
                     <a 
-                      href={file.RutaArchivo} 
+                      href={`/api/solicitudes/${solicitudId}/adjuntos/${file.AdjuntoId}/descargar`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="p-2 hover:bg-primary/20 rounded-full text-primary transition-colors"

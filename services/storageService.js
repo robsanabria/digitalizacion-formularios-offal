@@ -41,6 +41,22 @@ const uploadFile = async (requestId, file) => {
     }
 };
 
+const downloadFile = async (blobName) => {
+    try {
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        const downloadResponse = await blockBlobClient.download();
+        return {
+            readableStream: downloadResponse.readableStreamBody,
+            contentType: downloadResponse.contentType,
+            contentLength: downloadResponse.contentLength
+        };
+    } catch (err) {
+        console.error('❌ Error al descargar de Blob Storage:', err);
+        throw err;
+    }
+};
+
 module.exports = {
-    uploadFile
+    uploadFile,
+    downloadFile
 };
