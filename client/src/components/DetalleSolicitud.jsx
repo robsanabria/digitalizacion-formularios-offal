@@ -30,15 +30,30 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   }, [isOpen, solicitudId]);
 
   const handleEstadoChange = async (nuevoEstado) => {
+    // 1. Preguntar confirmación
+    const confirmacion = window.confirm(`¿Está seguro que desea ${nuevoEstado === 'rechazado' ? 'rechazar' : 'aprobar'} esta solicitud?`);
+    if (!confirmacion) return;
+
     setStatusLoading(true);
     try {
+      // Definimos el estado exacto según el rol
+      let estadoFinal = nuevoEstado;
+      if (nuevoEstado === 'aprobado') {
+        if (user.Rol === 'CALIDAD') estadoFinal = 'Aprobado por Calidad';
+        if (user.Rol === 'SISTEMAS') estadoFinal = 'Aprobado Final';
+      }
+
       await axios.put(`/api/solicitudes/${solicitudId}`, { 
         ...solicitud,
-        estado: nuevoEstado 
+        Estado: estadoFinal 
       });
-      setSolicitud({ ...solicitud, Estado: nuevoEstado });
+      
+      setSolicitud({ ...solicitud, Estado: estadoFinal });
       if (onUpdated) onUpdated();
+      
+      alert(`Solicitud actualizada a: ${estadoFinal}`);
     } catch (err) {
+      console.error("Error en handleEstadoChange:", err);
       alert("Error al actualizar el estado");
     } finally {
       setStatusLoading(false);

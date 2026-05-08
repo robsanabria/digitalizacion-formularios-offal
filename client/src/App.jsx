@@ -197,7 +197,8 @@ function App() {
                           <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
                           <td className="py-4">
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              s.Estado === 'aprobado' ? 'bg-green-500/20 text-green-400' : 
+                              (s.Estado === 'Aprobado Final' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
+                              s.Estado === 'Aprobado por Calidad' ? 'bg-blue-500/20 text-blue-400' : 
                               s.Estado === 'borrador' ? 'bg-slate-500/20 text-slate-400' : 
                               'bg-yellow-500/20 text-yellow-400'
                             }`}>
@@ -252,7 +253,8 @@ function App() {
                       <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
                       <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          s.Estado === 'aprobado' ? 'bg-green-500/20 text-green-400' : 
+                          (s.Estado === 'Aprobado Final' || s.Estado === 'aprobado') ? 'bg-green-500/20 text-green-400' : 
+                          s.Estado === 'Aprobado por Calidad' ? 'bg-blue-500/20 text-blue-400' : 
                           s.Estado === 'borrador' ? 'bg-slate-500/20 text-slate-400' : 
                           'bg-yellow-500/20 text-yellow-400'
                         }`}>
