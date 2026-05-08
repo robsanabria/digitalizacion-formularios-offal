@@ -176,6 +176,7 @@ const getAdjuntosBySolicitud = async (req, res) => {
 
 const downloadAdjunto = async (req, res) => {
     const { id, adjuntoId } = req.params;
+    console.log(`[Controller] Petición de descarga para AdjuntoId: ${adjuntoId}`);
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
@@ -185,19 +186,24 @@ const downloadAdjunto = async (req, res) => {
             .query('SELECT RutaArchivo, NombreArchivo, TipoContenido FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
         
         if (result.recordset.length === 0) {
+            console.warn(`[Controller] Adjunto no encontrado en DB: ${adjuntoId}`);
             return res.status(404).json({ mensaje: 'Archivo no encontrado' });
         }
 
         const { RutaArchivo, NombreArchivo, TipoContenido } = result.recordset[0];
+        console.log(`[Controller] URL recuperada de DB: ${RutaArchivo}`);
         
-        // Extraer el blobName de la URL (lo que sigue después del nombre del contenedor)
-        // Ejemplo: https://.../regsis-attachments/requests/ID/file.pdf -> requests/ID/file.pdf
+        // Extraer el blobName de la URL
         const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'regsis-attachments';
         const urlParts = RutaArchivo.split(`/${containerName}/`);
+        
         if (urlParts.length < 2) {
-            throw new Error('URL de archivo malformada o no contiene el contenedor esperado');
+            console.error(`[Controller] Error al parsear URL. No se encontró /${containerName}/ en ${RutaArchivo}`);
+            return res.status(500).json({ error: 'Error interno al procesar la ruta del archivo' });
         }
+        
         const blobName = urlParts[1];
+        console.log(`[Controller] Nombre de blob identificado: ${blobName}`);
 
         const { readableStream, contentType, contentLength } = await storageService.downloadFile(blobName);
 
@@ -207,8 +213,16 @@ const downloadAdjunto = async (req, res) => {
             'Content-Disposition': `attachment; filename="${NombreArchivo}"`
         });
 
+        readableStream.on('error', (streamErr) => {
+            console.error('[Controller] Error en el stream de descarga:', streamErr);
+            if (!res.headersSent) {
+                res.status(500).send('Error durante la transmisión del archivo');
+            }
+        });
+
         readableStream.pipe(res);
     } catch (err) {
+        console.error('[Controller] Error general en downloadAdjunto:', err);
         res.status(500).json({ error: 'Error al descargar el archivo', detalle: err.message });
     }
 };

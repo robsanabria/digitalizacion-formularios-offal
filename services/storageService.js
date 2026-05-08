@@ -43,8 +43,10 @@ const uploadFile = async (requestId, file) => {
 
 const downloadFile = async (blobName) => {
     try {
+        console.log(`[Storage] Iniciando descarga de blob: ${blobName}`);
         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
         const downloadResponse = await blockBlobClient.download();
+        console.log(`[Storage] Azure respondió: Status ${downloadResponse._response.status}, ContentType ${downloadResponse.contentType}`);
         return {
             readableStream: downloadResponse.readableStreamBody,
             contentType: downloadResponse.contentType,
