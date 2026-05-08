@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { X, FileText, Calendar, User, Tag, Download, ExternalLink, Loader2, Check, X as XIcon } from 'lucide-react';
 import axios from 'axios';
 
