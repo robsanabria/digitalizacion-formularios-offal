@@ -80,13 +80,13 @@ function App() {
             icon={<Activity size={20} />} 
             label="Dashboard" 
             active={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }}
           />
           <NavItem 
             icon={<List size={20} />} 
             label="Solicitudes" 
             active={activeTab === 'solicitudes'} 
-            onClick={() => setActiveTab('solicitudes')}
+            onClick={() => { setActiveTab('solicitudes'); setIsModalOpen(false); setIsDetailOpen(false); }}
           />
           <NavItem 
             icon={<PlusCircle size={20} />} 
@@ -122,9 +122,9 @@ function App() {
             {user && user.Rol === 'ADMIN' && (
               <button 
                 onClick={() => setIsUserMgmtOpen(true)}
-                className="px-6 py-2 bg-white/5 border border-border rounded-xl hover:bg-white/10 transition-all flex items-center gap-2 group"
+                className="btn btn-outline btn-info gap-2"
               >
-                <Users size={20} className="group-hover:text-primary transition-colors" />
+                <Users size={20} />
                 Gestionar Usuarios
               </button>
             )}
@@ -298,7 +298,7 @@ function NavItem({ icon, label, active = false, onClick, className = "" }) {
       whileHover={{ scale: 1.02, x: 5 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer select-none transition-all duration-200 ${
       active 
         ? 'bg-primary/20 text-primary border border-primary/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
         : 'text-text-muted hover:bg-white/5 hover:text-white'
