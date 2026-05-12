@@ -20,7 +20,7 @@ const getSolicitudById = async (req, res) => {
         const result = await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .query('SELECT * FROM Solicitudes WHERE SolicitudId = @id');
-        
+
         if (result.recordset.length === 0) {
             return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
         }
@@ -31,10 +31,10 @@ const getSolicitudById = async (req, res) => {
 };
 
 const createSolicitud = async (req, res) => {
-    const { 
-        fechaPresentacion, motivo, 
-        tipoSenasa, nombreProducto, destino, codigo, codigoSenasa, 
-        impresoras, descripcionCorta 
+    const {
+        fechaPresentacion, motivo,
+        tipoSenasa, nombreProducto, destino, codigo, codigoSenasa,
+        impresoras, descripcionCorta
     } = req.body;
 
     const solicitadoPor = req.user.UsuarioId;
@@ -68,7 +68,7 @@ const createSolicitud = async (req, res) => {
                     @impresoras, @descripcionCorta, 'Pendiente'
                 )
             `);
-        
+
         const solicitudId = result.recordset[0].SolicitudId;
         res.status(201).json({ mensaje: 'Solicitud creada con éxito', solicitudId });
     } catch (err) {
@@ -78,7 +78,7 @@ const createSolicitud = async (req, res) => {
 
 const updateSolicitud = async (req, res) => {
     const { id } = req.params;
-    
+
     // Extraemos los campos intentando ambos casings (Mayúsculas y minúsculas)
     const b = req.body;
     const solicitadoPor = b.SolicitadoPor || b.solicitadoPor;
@@ -97,7 +97,7 @@ const updateSolicitud = async (req, res) => {
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
-        
+
         await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
@@ -128,7 +128,7 @@ const updateSolicitud = async (req, res) => {
                     Estado = ISNULL(@estado, Estado)
                 WHERE SolicitudId = @id
             `);
-        
+
         res.json({ mensaje: 'Solicitud actualizada con éxito' });
     } catch (err) {
         console.error('[Controller] Error en updateSolicitud:', err);
@@ -162,9 +162,9 @@ const addAdjunto = async (req, res) => {
                 VALUES (@solicitudId, @nombreArchivo, @rutaArchivo, @tipoContenido, @tamano)
             `);
 
-        res.status(201).json({ 
-            mensaje: 'Archivo subido con éxito', 
-            url: url 
+        res.status(201).json({
+            mensaje: 'Archivo subido con éxito',
+            url: url
         });
     } catch (err) {
         res.status(500).json({ error: 'Error al procesar el adjunto', detalle: err.message });
@@ -179,7 +179,7 @@ const getAdjuntosBySolicitud = async (req, res) => {
         const result = await pool.request()
             .input('solicitudId', sql.UniqueIdentifier, id)
             .query('SELECT * FROM Adjuntos WHERE SolicitudId = @solicitudId');
-        
+
         res.json(result.recordset);
     } catch (err) {
         res.status(500).json({ error: 'Error al obtener adjuntos', detalle: err.message });
@@ -192,11 +192,11 @@ const downloadAdjunto = async (req, res) => {
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
-        
+
         const result = await pool.request()
             .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
             .query('SELECT RutaArchivo, NombreArchivo, TipoContenido FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
-        
+
         if (result.recordset.length === 0) {
             console.warn(`[Controller] Adjunto no encontrado en DB: ${adjuntoId}`);
             return res.status(404).json({ mensaje: 'Archivo no encontrado' });
@@ -204,16 +204,16 @@ const downloadAdjunto = async (req, res) => {
 
         const { RutaArchivo, NombreArchivo, TipoContenido } = result.recordset[0];
         console.log(`[Controller] URL recuperada de DB: ${RutaArchivo}`);
-        
+
         // Extraer el blobName de la URL
         const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'regsis-attachments';
         const urlParts = RutaArchivo.split(`/${containerName}/`);
-        
+
         if (urlParts.length < 2) {
             console.error(`[Controller] Error al parsear URL. No se encontró /${containerName}/ en ${RutaArchivo}`);
             return res.status(500).json({ error: 'Error interno al procesar la ruta del archivo' });
         }
-        
+
         const blobName = urlParts[1];
         console.log(`[Controller] Nombre de blob identificado: ${blobName}`);
 
@@ -239,6 +239,140 @@ const downloadAdjunto = async (req, res) => {
     }
 };
 
+// ─── Máquina de estados ────────────────────────────────────────────────────────
+/**
+ * POST /api/solicitudes/:id/transition
+ * Body: { action: 'approve' | 'reject', comentario?: string }
+ *
+ * Lógica de transición de estados con validación de rol:
+ *   approve (CALIDAD/ADMIN) + Pendiente/En revisión → 'Aprobado por calidad'
+ *   approve (SISTEMAS/ADMIN) + Pendiente/En revisión → 'Aprobado por sistemas'
+ *   approve (CALIDAD/ADMIN)  + 'Aprobado por sistemas' → 'Aprobado por Sistemas y Calidad'
+ *   approve (SISTEMAS/ADMIN) + 'Aprobado por calidad'  → 'Aprobado por Sistemas y Calidad'
+ *   reject  (cualquier rol)                            → 'rechazado'
+ */
+const transitionSolicitud = async (req, res) => {
+    const { id } = req.params;
+    const { action, comentario } = req.body;
+    const { UsuarioId, Rol } = req.user;
+
+    if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ error: "La acción debe ser 'approve' o 'reject'" });
+    }
+
+    try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+
+        // 1. Obtener estado actual
+        const solRes = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query('SELECT Estado FROM Solicitudes WHERE SolicitudId = @id');
+
+        if (solRes.recordset.length === 0) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+
+        const estadoActual = solRes.recordset[0].Estado;
+
+        // 2. Calcular nuevo estado
+        let nuevoEstado;
+        let accionDescripcion;
+
+        if (action === 'reject') {
+            nuevoEstado = 'rechazado';
+            accionDescripcion = `Rechazado por ${Rol}`;
+        } else {
+            // approve — validar que no haya aprobado ya
+            const yaAprobadoCalidad   = estadoActual === 'Aprobado por calidad';
+            const yaAprobadoSistemas  = estadoActual === 'Aprobado por sistemas';
+            const aprobacionFinal     = estadoActual === 'Aprobado por Sistemas y Calidad';
+
+            if (aprobacionFinal) {
+                return res.status(400).json({ error: 'La solicitud ya tiene aprobación final' });
+            }
+
+            if ((Rol === 'CALIDAD' || Rol === 'ADMIN') && yaAprobadoCalidad && Rol !== 'ADMIN') {
+                return res.status(400).json({ error: 'Calidad ya aprobó esta solicitud' });
+            }
+            if (Rol === 'SISTEMAS' && yaAprobadoSistemas) {
+                return res.status(400).json({ error: 'Sistemas ya aprobó esta solicitud' });
+            }
+
+            if (Rol === 'CALIDAD') {
+                nuevoEstado = yaAprobadoSistemas
+                    ? 'Aprobado por Sistemas y Calidad'
+                    : 'Aprobado por calidad';
+                accionDescripcion = `Aprobado por Calidad → ${nuevoEstado}`;
+            } else if (Rol === 'SISTEMAS') {
+                nuevoEstado = yaAprobadoCalidad
+                    ? 'Aprobado por Sistemas y Calidad'
+                    : 'Aprobado por sistemas';
+                accionDescripcion = `Aprobado por Sistemas → ${nuevoEstado}`;
+            } else if (Rol === 'ADMIN') {
+                // ADMIN puede aprobar en nombre de cualquiera
+                if (yaAprobadoCalidad) {
+                    nuevoEstado = 'Aprobado por Sistemas y Calidad';
+                } else if (yaAprobadoSistemas) {
+                    nuevoEstado = 'Aprobado por Sistemas y Calidad';
+                } else {
+                    nuevoEstado = 'Aprobado por calidad'; // Admin aprueba como Calidad primero
+                }
+                accionDescripcion = `Aprobado por Admin → ${nuevoEstado}`;
+            } else {
+                return res.status(403).json({ error: 'Tu rol no tiene permisos para aprobar solicitudes' });
+            }
+        }
+
+        // 3. Actualizar estado en Solicitudes
+        await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .input('estado', sql.NVarChar, nuevoEstado)
+            .query('UPDATE Solicitudes SET Estado = @estado WHERE SolicitudId = @id');
+
+        // 4. Registrar en Historial
+        await pool.request()
+            .input('solicitudId', sql.UniqueIdentifier, id)
+            .input('usuarioId', sql.UniqueIdentifier, UsuarioId)
+            .input('estadoAnterior', sql.NVarChar, estadoActual)
+            .input('estadoNuevo', sql.NVarChar, nuevoEstado)
+            .input('accion', sql.NVarChar, accionDescripcion)
+            .input('comentario', sql.NVarChar, comentario || null)
+            .query(`
+                INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion, Comentario)
+                VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion, @comentario)
+            `);
+
+        res.json({ mensaje: 'Transición registrada', nuevoEstado });
+    } catch (err) {
+        console.error('[Controller] Error en transitionSolicitud:', err);
+        res.status(500).json({ error: 'Error al procesar la transición', detalle: err.message });
+    }
+};
+
+// ─── Historial ────────────────────────────────────────────────────────────────
+const getHistorial = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+
+        const result = await pool.request()
+            .input('solicitudId', sql.UniqueIdentifier, id)
+            .query(`
+                SELECT h.*, u.NombreUsuario
+                FROM Historial h
+                LEFT JOIN Usuarios u ON h.UsuarioId = u.UsuarioId
+                WHERE h.SolicitudId = @solicitudId
+                ORDER BY h.FechaEvento ASC
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: 'Error al obtener historial', detalle: err.message });
+    }
+};
+
 module.exports = {
     getSolicitudes,
     getSolicitudById,
@@ -246,5 +380,7 @@ module.exports = {
     updateSolicitud,
     addAdjunto,
     getAdjuntosBySolicitud,
-    downloadAdjunto
+    downloadAdjunto,
+    transitionSolicitud,
+    getHistorial,
 };

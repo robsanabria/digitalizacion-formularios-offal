@@ -23,11 +23,8 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     setLoading(true);
     try {
       // 1. Crear la solicitud base
-      const res = await axios.post('/api/solicitudes', {
-        ...formData,
-        solicitadoPor: '00000000-0000-0000-0000-000000000000', // GUID temporal hasta tener Auth
-        rolSolicitante: 'CALIDAD'
-      });
+      // solicitadoPor y rolSolicitante los toma el backend de req.user (authMiddleware)
+      const res = await axios.post('/api/solicitudes', { ...formData });
 
       const solicitudId = res.data.id || res.data.solicitudId;
 
@@ -60,19 +57,19 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Nombre del Producto</label>
-              <input 
+              <input
                 required
                 className="input-field"
                 value={formData.nombreProducto}
-                onChange={(e) => setFormData({...formData, nombreProducto: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, nombreProducto: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Tipo SENASA</label>
-              <select 
+              <select
                 className="input-field"
                 value={formData.tipoSenasa}
-                onChange={(e) => setFormData({...formData, tipoSenasa: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, tipoSenasa: e.target.value })}
               >
                 <option value="SENASA">SENASA</option>
                 <option value="Nuevo producto">Nuevo producto</option>
@@ -84,50 +81,50 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Fecha de Presentación</label>
-              <input 
+              <input
                 type="date"
                 required
                 className="input-field"
                 value={formData.fechaPresentacion || ''}
-                onChange={(e) => setFormData({...formData, fechaPresentacion: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, fechaPresentacion: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Código Senasa (Opcional)</label>
-              <input 
+              <input
                 className="input-field"
                 value={formData.codigoSenasa}
-                onChange={(e) => setFormData({...formData, codigoSenasa: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, codigoSenasa: e.target.value })}
               />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-text-muted">Motivo del Cambio</label>
-            <textarea 
+            <textarea
               required
               rows={3}
               className="input-field"
               value={formData.motivo}
-              onChange={(e) => setFormData({...formData, motivo: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
             />
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Destino</label>
-              <input 
+              <input
                 className="input-field"
                 value={formData.destino}
-                onChange={(e) => setFormData({...formData, destino: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, destino: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-text-muted">Código Interno</label>
-              <input 
+              <input
                 className="input-field"
                 value={formData.codigo}
-                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
               />
             </div>
           </div>
@@ -135,13 +132,13 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-text-muted">Adjuntar Evidencia (PDF/Imagen)</label>
             <div className="relative group">
-              <input 
-                type="file" 
-                className="hidden" 
+              <input
+                type="file"
+                className="hidden"
                 id="file-upload"
                 onChange={(e) => setFile(e.target.files[0])}
               />
-              <label 
+              <label
                 htmlFor="file-upload"
                 className="flex items-center justify-center gap-3 p-8 border-2 border-dashed border-border rounded-xl cursor-pointer group-hover:border-primary group-hover:bg-primary/5 transition-all"
               >
