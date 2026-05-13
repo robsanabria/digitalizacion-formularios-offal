@@ -50,6 +50,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [evidenciaFile, setEvidenciaFile] = useState(null);
   const [comentario, setComentario] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // 'approve' | 'reject'
+  const [confirmReason, setConfirmReason] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -74,20 +77,26 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   }, [isOpen, solicitudId]);
 
   // ── Acción de transición (approve / reject) ──────────────────────────────
-  const handleTransition = async (action) => {
-    const confirmMsg = action === 'reject'
-      ? '¿Está seguro que desea rechazar esta solicitud?'
-      : '¿Está seguro que desea aprobar esta solicitud?';
-    if (!window.confirm(confirmMsg)) return;
+  const handleTransition = (action) => {
+    // Abrir modal de confirmación DaisyUI en lugar de window.confirm
+    setConfirmAction(action);
+    setConfirmReason(comentario || '');
+    setConfirmOpen(true);
+  };
 
+  const handleConfirmTransition = async () => {
+    if (!confirmAction) return;
     setStatusLoading(true);
     try {
       const res = await axios.post(`/api/solicitudes/${solicitudId}/transition`, {
-        action,
-        comentario: comentario.trim() || undefined,
+        action: confirmAction === 'approve' ? 'approve' : 'reject',
+        comentario: confirmReason.trim() || undefined,
       });
       setSolicitud(prev => ({ ...prev, Estado: res.data.nuevoEstado }));
       setComentario('');
+      setConfirmOpen(false);
+      setConfirmAction(null);
+      setConfirmReason('');
       if (onUpdated) onUpdated();
       await fetchData(); // refresca historial y adjuntos
     } catch (err) {
@@ -122,6 +131,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   const esSistemas = user?.Rol === 'SISTEMAS' || user?.Rol === 'ADMIN';
   const estadoPermiteEvidencias = solicitud && ['Pendiente', 'En revisión', 'Aprobado por calidad'].includes(solicitud.Estado);
 
+  const getDecisionMotivo = () => {
+    // Preferir campos explícitos en la solicitud
+    if (solicitud?.MotivoDecision) return solicitud.MotivoDecision;
+    if (solicitud?.MotivoRechazo) return solicitud.MotivoRechazo;
+    // Buscar última entrada relevante en historial
+    const relevant = (historial || []).slice().reverse().find(h => /aprobar|rechaz/i.test(h.Accion || ''));
+    return relevant?.Comentario || null;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm">
       <div className="glass-card w-full max-w-2xl h-full m-0 rounded-none md:m-4 md:rounded-xl p-8 relative overflow-y-auto">
@@ -153,7 +171,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
 
             {/* ── Info grid ── */}
             <div className="grid grid-cols-2 gap-6">
-              <InfoItem icon={<Calendar size={18} />} label="Fecha Presentación" value={solicitud.FechaPresentacion ? new Date(solicitud.FechaPresentacion).toLocaleDateString() : '-'} />
+              <InfoItem
+                icon={<Calendar size={18} />}
+                label="Fecha Presentación"
+                value={(solicitud.FechaPresentacion || solicitud.PresentationDate || solicitud.FechaCreacion) ? new Date(solicitud.FechaPresentacion || solicitud.PresentationDate || solicitud.FechaCreacion).toLocaleDateString() : '-'}
+              />
               <InfoItem icon={<User size={18} />} label="Solicitado por" value={solicitud.RolSolicitante} />
               <InfoItem icon={<FileText size={18} />} label="Tipo SENASA" value={solicitud.TipoSenasa} />
               <InfoItem icon={<Tag size={18} />} label="Código" value={solicitud.Codigo || '-'} />
@@ -207,12 +229,16 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                 />
 
                 {yaAprobo(solicitud.Estado, user?.Rol) ? (
-                  <div className="flex items-center gap-2 text-green-400 text-sm font-semibold p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                    <Check size={16} /> Tu aprobación ya fue registrada
+                  <div className="flex flex-col gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
+                      <Check size={16} /> Tu aprobación ya fue registrada
+                    </div>
+                    {getDecisionMotivo() && <div className="text-text-muted text-sm">Motivo: {getDecisionMotivo()}</div>}
                   </div>
                 ) : solicitud.Estado === 'rechazado' ? (
-                  <div className="text-red-400 text-sm font-semibold p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                    Esta solicitud fue rechazada.
+                  <div className="flex flex-col gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <div className="text-red-400 text-sm font-semibold">Esta solicitud fue rechazada.</div>
+                    {getDecisionMotivo() && <div className="text-text-muted text-sm">Motivo: {getDecisionMotivo()}</div>}
                   </div>
                 ) : (
                   <div className="flex gap-4">
@@ -283,27 +309,52 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
             </section>
 
             {/* ── Historial ── */}
-            {historial.length > 0 && (
-              <section>
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <History size={20} className="text-primary" /> Historial de Cambios
-                </h3>
-                <div className="flex flex-col gap-2">
-                  {historial.map((evt, i) => (
-                    <div key={i} className="flex gap-3 p-3 bg-white/5 border border-border rounded-lg text-sm">
-                      <div className="mt-0.5 text-primary"><Clock size={14} /></div>
-                      <div className="flex-1">
-                        <p className="font-medium">{evt.Accion}</p>
-                        {evt.Comentario && <p className="text-text-muted text-xs mt-1">"{evt.Comentario}"</p>}
-                        <p className="text-text-muted text-xs mt-1">
-                          {evt.NombreUsuario || evt.UsuarioId} · {new Date(evt.FechaEvento).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+            <section>
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <History size={20} className="text-primary" /> Historial de Cambios
+              </h3>
+              {historial.length === 0 ? (
+                <p className="text-text-muted text-sm italic p-4 border border-dashed border-border rounded-lg text-center">No hay historial de cambios</p>
+              ) : (
+                <div className="flow-root">
+                  <div className="-mb-8">
+                    <ol className="relative border-l border-border">
+                      {historial.map((evt, i) => (
+                        <li key={i} className="mb-8 ml-6">
+                          <span className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white ring-8 ring-background">
+                            <Clock size={12} />
+                          </span>
+                          <div className="pl-2">
+                            <p className="font-medium">{evt.Accion}</p>
+                            {evt.Comentario && <p className="text-text-muted text-xs mt-1">"{evt.Comentario}"</p>}
+                            <p className="text-text-muted text-xs mt-1">{evt.NombreUsuario || evt.UsuarioId} · {new Date(evt.FechaEvento).toLocaleString()}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 </div>
-              </section>
-            )}
+              )}
+            </section>
+
+            {/* Modal de confirmación DaisyUI */}
+            <div className={`modal ${confirmOpen ? 'modal-open' : ''}`}>
+              <div className="modal-box">
+                <h3 className="font-bold text-lg">{confirmAction === 'reject' ? 'Confirmar rechazo' : 'Confirmar aprobación'}</h3>
+                <p className="py-2 text-text-muted">Por favor confirma la acción e ingresa un motivo (opcional).</p>
+                <textarea
+                  rows={3}
+                  className="input-field w-full mb-4 text-sm resize-none"
+                  placeholder="Motivo (opcional)"
+                  value={confirmReason}
+                  onChange={(e) => setConfirmReason(e.target.value)}
+                />
+                <div className="modal-action">
+                  <button className="btn" onClick={() => { setConfirmOpen(false); setConfirmAction(null); setConfirmReason(''); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleConfirmTransition} disabled={statusLoading}>{statusLoading ? 'Procesando...' : 'Confirmar'}</button>
+                </div>
+              </div>
+            </div>
 
             <div className="mt-auto pt-8 flex gap-3">
               <button onClick={onClose} className="px-6 py-2 border border-border rounded-lg hover:bg-white/5 transition-all flex-1">

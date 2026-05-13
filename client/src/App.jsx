@@ -206,7 +206,9 @@ function App() {
                             </span>
                           </td>
                           <td className="py-4 text-text-muted">
-                            {s.FechaCreacion ? new Date(s.FechaCreacion).toLocaleDateString() : '-'}
+                              {(
+                                s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime
+                              ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
                           </td>
                           <td className="py-4">
                             <button 
@@ -262,7 +264,9 @@ function App() {
                         </span>
                       </td>
                       <td className="py-4 text-text-muted">
-                        {s.FechaCreacion ? new Date(s.FechaCreacion).toLocaleDateString() : '-'}
+                        {(
+                          s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime
+                        ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
                       </td>
                       <td className="py-4">
                         <button 
