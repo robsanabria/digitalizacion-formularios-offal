@@ -16,7 +16,6 @@ const ESTADOS_APROBACION = {
 /** Dado el estado actual y el rol del usuario, devuelve si YA aprobó */
 const yaAprobo = (estado, rol) => {
   if (estado === 'Aprobado por Sistemas y Calidad') return true;
-  if (estado === 'rechazado') return true;
   if (rol === 'CALIDAD' && (estado === 'Aprobado por calidad')) return true;
   if (rol === 'SISTEMAS' && (estado === 'Aprobado por sistemas')) return true;
   return false;
@@ -228,16 +227,16 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                   onChange={(e) => setComentario(e.target.value)}
                 />
 
-                {yaAprobo(solicitud.Estado, user?.Rol) ? (
+                {solicitud.Estado === 'rechazado' ? (
+                  <div className="flex flex-col gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <div className="text-red-400 text-sm font-semibold">Esta solicitud fue rechazada.</div>
+                    {getDecisionMotivo() && <div className="text-text-muted text-sm">Motivo: {getDecisionMotivo()}</div>}
+                  </div>
+                ) : yaAprobo(solicitud.Estado, user?.Rol) ? (
                   <div className="flex flex-col gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                     <div className="flex items-center gap-2 text-green-400 text-sm font-semibold">
                       <Check size={16} /> Tu aprobación ya fue registrada
                     </div>
-                    {getDecisionMotivo() && <div className="text-text-muted text-sm">Motivo: {getDecisionMotivo()}</div>}
-                  </div>
-                ) : solicitud.Estado === 'rechazado' ? (
-                  <div className="flex flex-col gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                    <div className="text-red-400 text-sm font-semibold">Esta solicitud fue rechazada.</div>
                     {getDecisionMotivo() && <div className="text-text-muted text-sm">Motivo: {getDecisionMotivo()}</div>}
                   </div>
                 ) : (
