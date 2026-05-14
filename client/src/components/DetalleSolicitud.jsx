@@ -213,59 +213,66 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
         </div>
 
         {/* Contenido Principal (Documentos) */}
-        <div className="flex-1 p-8" id="paper-form-container">
-
+        <div className="flex-1 p-4 md:p-8 overflow-x-hidden" id="paper-form-container">
            {loading ? (
              <div className="flex flex-col items-center justify-center h-64 gap-4">
                 <Loader2 className="animate-spin text-blue-600" size={48} />
                 <p className="text-gray-500 font-medium">Cargando registros...</p>
              </div>
            ) : (
-             <div className="flex flex-col gap-12">
+             <div className="flex flex-col gap-12 max-w-full">
                 
-                {/* Visualizador de Documentos */}
-                <div className="relative">
-                   {/* Si el estado es 011 o estamos respondiendo, mostramos el 011 arriba como referencia */}
-                   {(solicitud.estado === 'REG-011-PENDIENTE' || isResponding) && (
-                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-8">
-                         <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span></div>
-                         <REG011PaperForm data={solicitud} readOnly={true} />
-                      </div>
-                   )}
+                {/* Visualizador de Documentos con Scroll Horizontal en móvil */}
+                <div className="relative overflow-x-auto pb-4 custom-scrollbar">
+                   <div className="min-w-[800px] md:min-w-0">
+                      {/* Si el estado es 011 o estamos respondiendo, mostramos el 011 arriba como referencia */}
+                      {(solicitud.estado === 'REG-011-PENDIENTE' || isResponding) && (
+                         <div className="animate-in fade-in slide-in-from-bottom-4 mb-12">
+                            <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span></div>
+                            <REG011PaperForm data={solicitud} readOnly={true} />
+                         </div>
+                      )}
 
-                   {/* Modo Respuesta Sistemas o Vista 007 */}
-                   {(isResponding || solicitud.estado === 'REG-007-PENDIENTE-APROBACION' || solicitud.estado === 'APROBADO') && (
-                      <div className="animate-in fade-in zoom-in-95 duration-300">
-                         <div className="text-center mb-4"><span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span></div>
-                         <REG007PaperForm 
-                            data={isResponding ? { ...solicitud, ...responseData } : solicitud} 
-                            readOnly={!isResponding}
-                            onChange={(field, val) => setResponseData(prev => ({ ...prev, [field]: val }))}
-                         >
-                            {/* Renderizar etiquetas adjuntas en el espacio de 007 */}
-                            <div className="grid grid-cols-1 gap-8 w-full p-4">
-                               {adjuntos.filter(f => f.TipoContenido?.startsWith('image/')).map(img => (
-                                  <div key={img.AdjuntoId} className="flex flex-col items-center">
-                                     <img 
-                                        src={`/api/solicitudes/${solicitudId}/adjuntos/${img.AdjuntoId}/descargar`}
-                                        className="max-w-full h-auto border border-gray-300 shadow-lg"
-                                        alt="Etiqueta"
-                                     />
-                                     <span className="text-[10px] mt-2 text-gray-400 italic">{img.NombreArchivo}</span>
-                                  </div>
-                               ))}
-                               
-                               {/* Dropzone solo para Sistemas cuando responde */}
-                               {isResponding && (
-                                  <label className="border-2 border-dashed border-blue-300 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-all bg-white/50">
-                                     <input type="file" className="hidden" onChange={handleUploadEvidencia} />
-                                     <Upload className="text-blue-500 mb-2" size={32} />
-                                     <span className="text-xs font-bold text-blue-600 uppercase">Subir Foto de Etiqueta Modificada</span>
-                                     {uploadLoading && <Loader2 className="animate-spin mt-2" />}
-                                  </label>
-                               )}
-                            </div>
-                         </REG007PaperForm>
+                      {/* Modo Respuesta Sistemas o Vista 007 */}
+                      {(isResponding || solicitud.estado === 'REG-007-PENDIENTE-APROBACION' || solicitud.estado === 'APROBADO') && (
+                         <div className="animate-in fade-in zoom-in-95 duration-300">
+                            <div className="text-center mb-4"><span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span></div>
+                            <REG007PaperForm 
+                               data={isResponding ? { ...solicitud, ...responseData } : solicitud} 
+                               readOnly={!isResponding}
+                               onChange={(field, val) => setResponseData(prev => ({ ...prev, [field]: val }))}
+                            >
+                               {/* Renderizar etiquetas adjuntas */}
+                               <div className="grid grid-cols-1 gap-8 w-full p-4">
+                                  {adjuntos.filter(f => f.TipoContenido?.startsWith('image/')).map(img => (
+                                     <div key={img.AdjuntoId} className="flex flex-col items-center">
+                                        <img 
+                                           src={`/api/solicitudes/${solicitudId}/adjuntos/${img.AdjuntoId}/descargar`}
+                                           className="max-w-full h-auto border border-gray-300 shadow-lg"
+                                           alt="Etiqueta"
+                                        />
+                                        <span className="text-[10px] mt-2 text-gray-400 italic">{img.NombreArchivo}</span>
+                                     </div>
+                                  ))}
+                                  
+                                  {/* Dropzone optimizado para móviles */}
+                                  {isResponding && (
+                                     <label className="border-4 border-dashed border-blue-400 rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-all bg-white shadow-inner group active:scale-95">
+                                        <input type="file" className="hidden" onChange={handleUploadEvidencia} />
+                                        <div className="bg-blue-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform">
+                                           <Upload className="text-blue-600" size={48} />
+                                        </div>
+                                        <span className="text-lg font-black text-blue-700 uppercase tracking-tight text-center">Toca aquí para subir foto de la etiqueta</span>
+                                        <span className="text-xs text-blue-400 mt-2 font-medium uppercase tracking-widest">Cámara o Galería</span>
+                                        {uploadLoading && <Loader2 className="animate-spin mt-4 text-blue-600" size={32} />}
+                                     </label>
+                                  )}
+                               </div>
+                            </REG007PaperForm>
+                         </div>
+                      )}
+                   </div>
+                </div>
 
                          {/* Mostrar el 011 original abajo colapsado como referencia */}
                          <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity">
