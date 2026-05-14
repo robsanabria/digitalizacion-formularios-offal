@@ -25,10 +25,11 @@ Propósito: definir de forma completa los requisitos técnicos, modelos de datos
 - Login: la aplicación debe exigir autenticación antes de acceder al índice o al formulario. Preferible: inicio de sesión único mediante Microsoft 365 / Microsoft Identity Platform (OAuth2 / OpenID Connect). Alternativa: formulario de login que emite JWT tras validar contra el servicio de identidades corporativo.
  - Roles y comportamientos (simplificado):
   - `Solicitante/Calidad`: crea y sube solicitudes (tanto de creación como de modificación). Registra aprobaciones o transiciones de estado (`aprobar`/`parcial`/`rechazar`), exporta e imprime en PDF, y revisa historiales. En el MVP la aprobación puede representarse con un tilde (`aprobado`/`no aprobado`) en lugar de una firma digital.
-  - `Sistemas`: recibe las solicitudes (p.ej. PDF escaneado), ejecuta el circuito técnico en planta subiendo fotos de etiquetas y evidencia, y registra su decisión técnica. La aprobación final requiere la conformidad tanto de `Sistemas` como de `Calidad`.
-- Autorización: middleware en backend que verifica rol y permisos por endpoint y por acción (ej. `POST /api/requests/:id/transition` valida que el usuario tiene rol `Calidad` para `approve`).
+  - `Sistemas`: Inicia el circuito completando el formulario digital (que refleja el REG-SIS-007), adjunta las fotos técnicas de las etiquetas. Al guardarlo, se aprueba automáticamente por Sistemas.
+  - `Solicitante/Calidad`: Recibe el formulario completado por Sistemas. Revisa la carga, las imágenes adjuntas, y registra su aprobación. La aprobación final requiere que Calidad confirme la solicitud (ya que Sistemas la auto-aprueba al crearla).
+- Autorización: middleware en backend que verifica rol y permisos por endpoint y por acción.
 - Session management: si se usa JWT, tokens con expiración corta (p.ej. 1h) y refresh tokens almacenados con revocación posible; si se usa AD/Kerberos, delegar sesión al proxy/IIS.
-Mapping Microsoft 365 → Roles: sincronizar usuarios de Microsoft 365 (grupos/claims) con la tabla `Users` al primer login, almacenando `UserId`, `UserName`, `Email` y `Role` (mapeo por grupo de Microsoft 365 o claim de usuario). Si la organización usa sólo dos grupos (`GRP_CALIDAD`, `GRP_SISTEMAS`), mapear directamente a los roles `Calidad` y `Sistemas`.
+Mapping Microsoft 365 → Roles: sincronizar usuarios de Microsoft 365 (grupos/claims) con la tabla `Users` al primer login, almacenando `UserId`, `UserName`, `Email` y `Role`.
 
 ## 2.2 Índice de solicitudes (UI + API)
 - UI: página `Index` con tabla de todas las solicitudes visible por permisos. Columnas mínimas: `RequestId`, `PresentationDate`, `RequestedBy`, `ProductName`, `Status`, `Última acción` (timestamp), `Acciones` (ver, editar, transicionar).
@@ -63,6 +64,7 @@ CREATE TABLE Requests (
   Destination NVARCHAR(200),
   Code NVARCHAR(100),
   SenasaCode NVARCHAR(100),
+  CorrespondeSolicitud NVARCHAR(100),
   Printers NVARCHAR(200), -- csv o JSON
   ShortDescription NVARCHAR(MAX),
   CheckFormat BIT DEFAULT 0,

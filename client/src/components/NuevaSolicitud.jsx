@@ -1,34 +1,48 @@
 import React, { useState } from 'react';
 import { X, Upload, Save, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import REG011PaperForm from './REG011PaperForm';
 
 const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    fechaSolicitud: new Date().toISOString().split('T')[0],
+    sectorSolicitante: 'Calidad',
+    motivo: [],
     nombreProducto: '',
-    motivo: '',
-    tipoSenasa: 'SENASA',
+    codigoProducto: '',
     destino: '',
-    codigo: '',
+    vidaUtil: '',
     codigoSenasa: '',
-    descripcionCorta: '',
-    impresoras: []
+    impresoras: [],
+    tara: '',
+    pesoMinimo: '',
+    pesoMaximo: '',
+    pesoEstandar: '',
+    numCaja: '',
+    faja: '',
+    codigoExterno: '',
+    comentariosSolicitante: '',
+    cambioSolicitado: ''
   });
+
   const [file, setFile] = useState(null);
 
   if (!isOpen) return null;
+
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // 1. Crear la solicitud base
-      // solicitadoPor y rolSolicitante los toma el backend de req.user (authMiddleware)
+      // 1. Crear la solicitud base (REG-011)
       const res = await axios.post('/api/solicitudes', { ...formData });
+      const solicitudId = res.data.solicitudId;
 
-      const solicitudId = res.data.id || res.data.solicitudId;
-
-      // 2. Si hay archivo, subirlo
+      // 2. Si hay archivo inicial (opcional), subirlo
       if (file && solicitudId) {
         const formDataFile = new FormData();
         formDataFile.append('archivo', file);
@@ -38,128 +52,59 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
       onCreated();
       onClose();
     } catch (err) {
-      alert("Error al crear la solicitud: " + (err.response?.data?.detalle || err.message));
+      alert("Error al crear el registro REG-011: " + (err.response?.data?.detalle || err.message));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-text-muted hover:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="w-full max-w-5xl my-8 relative">
+        <button 
+          onClick={onClose} 
+          className="absolute -top-4 -right-4 bg-red-600 text-white rounded-full p-2 shadow-xl hover:bg-red-700 transition-all z-10"
+        >
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold mb-6">Nueva Solicitud</h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Nombre del Producto</label>
-              <input
-                required
-                className="input-field"
-                value={formData.nombreProducto}
-                onChange={(e) => setFormData({ ...formData, nombreProducto: e.target.value })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Tipo SENASA</label>
-              <select
-                className="input-field"
-                value={formData.tipoSenasa}
-                onChange={(e) => setFormData({ ...formData, tipoSenasa: e.target.value })}
+        <div className="bg-white rounded-xl shadow-2xl p-2 md:p-8">
+          <div className="flex justify-between items-center mb-6 px-4">
+            <h2 className="text-2xl font-bold text-gray-800 uppercase tracking-tighter">Nueva Solicitud de Etiquetas (REG-SIS-011)</h2>
+            <div className="flex gap-3">
+               <button 
+                type="button" 
+                onClick={onClose} 
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 font-bold uppercase text-xs"
               >
-                <option value="SENASA">SENASA</option>
-                <option value="Nuevo producto">Nuevo producto</option>
-                <option value="Modificación">Modificación</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Fecha de Presentación</label>
-              <input
-                type="date"
-                required
-                className="input-field"
-                value={formData.fechaPresentacion || ''}
-                onChange={(e) => setFormData({ ...formData, fechaPresentacion: e.target.value })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Código Senasa (Opcional)</label>
-              <input
-                className="input-field"
-                value={formData.codigoSenasa}
-                onChange={(e) => setFormData({ ...formData, codigoSenasa: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-text-muted">Motivo del Cambio</label>
-            <textarea
-              required
-              rows={3}
-              className="input-field"
-              value={formData.motivo}
-              onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Destino</label>
-              <input
-                className="input-field"
-                value={formData.destino}
-                onChange={(e) => setFormData({ ...formData, destino: e.target.value })}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-text-muted">Código Interno</label>
-              <input
-                className="input-field"
-                value={formData.codigo}
-                onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-text-muted">Adjuntar Evidencia (PDF/Imagen)</label>
-            <div className="relative group">
-              <input
-                type="file"
-                className="hidden"
-                id="file-upload"
-                onChange={(e) => setFile(e.target.files[0])}
-              />
-              <label
-                htmlFor="file-upload"
-                className="flex items-center justify-center gap-3 p-8 border-2 border-dashed border-border rounded-xl cursor-pointer group-hover:border-primary group-hover:bg-primary/5 transition-all"
+                Cancelar
+              </button>
+              <button 
+                disabled={loading} 
+                onClick={handleSubmit}
+                className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
               >
-                <Upload size={24} className="text-text-muted group-hover:text-primary" />
-                <span className="text-text-muted group-hover:text-primary font-medium">
-                  {file ? file.name : "Selecciona o arrastra un archivo"}
-                </span>
-              </label>
+                {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                Guardar y Enviar a Sistemas
+              </button>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-4">
-            <button type="button" onClick={onClose} className="px-6 py-2 text-text-muted hover:text-white font-medium">
-              Cancelar
-            </button>
-            <button disabled={loading} type="submit" className="btn-primary flex items-center gap-2">
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-              Crear Solicitud
-            </button>
+          <div className="max-h-[70vh] overflow-y-auto px-2">
+            <REG011PaperForm data={formData} onChange={handleFieldChange} />
+            
+            {/* Upload adicional */}
+            <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl">
+               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Adjuntar Referencia Visual (Opcional):</label>
+               <input 
+                  type="file" 
+                  onChange={e => setFile(e.target.files[0])}
+                  className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+               />
+               {file && <p className="mt-2 text-xs text-green-600 font-bold italic">Archivo seleccionado: {file.name}</p>}
+            </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
