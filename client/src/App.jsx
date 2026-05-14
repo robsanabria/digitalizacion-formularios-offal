@@ -54,7 +54,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pb-20 md:pb-0">
       {/* Sidebar */}
       <aside className="w-64 glass-card m-4 mr-0 p-6 flex flex-col gap-8 hidden md:flex">
         <div className="flex items-center gap-3">
@@ -106,8 +106,8 @@ function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-12">
+      <main className="flex-1 p-4 md:p-8 w-full overflow-x-hidden">
+        <header className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-8 md:mb-12">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -118,7 +118,7 @@ function App() {
             </p>
           </motion.div>
           
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap mt-2 md:mt-0">
             {user && user.Rol === 'ADMIN' && (
               <button 
                 onClick={() => setIsUserMgmtOpen(true)}
@@ -287,6 +287,32 @@ function App() {
           </section>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-card m-0 rounded-t-2xl rounded-b-none border-t border-border flex justify-around items-center p-2 z-40 pb-4">
+        <button onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-primary' : 'text-text-muted'}`}>
+          <Activity size={20} />
+          <span className="text-[10px] mt-1 font-medium">Dashboard</span>
+        </button>
+        <button onClick={() => { setActiveTab('solicitudes'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'solicitudes' ? 'text-primary' : 'text-text-muted'}`}>
+          <List size={20} />
+          <span className="text-[10px] mt-1 font-medium">Solicitudes</span>
+        </button>
+        <button onClick={() => setIsModalOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
+          <PlusCircle size={20} />
+          <span className="text-[10px] mt-1 font-medium">Nueva</span>
+        </button>
+        {user && user.Rol === 'ADMIN' && (
+          <button onClick={() => setIsUserMgmtOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
+            <Users size={20} />
+            <span className="text-[10px] mt-1 font-medium">Usuarios</span>
+          </button>
+        )}
+        <button onClick={handleLogout} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
+          <LogOut size={20} />
+          <span className="text-[10px] mt-1 font-medium">Salir</span>
+        </button>
+      </nav>
 
       <GestionUsuarios 
         isOpen={isUserMgmtOpen}

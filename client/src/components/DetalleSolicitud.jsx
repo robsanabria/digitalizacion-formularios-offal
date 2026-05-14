@@ -141,8 +141,8 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-2xl h-full m-0 rounded-none md:m-4 md:rounded-xl p-8 relative overflow-y-auto">
-        <button onClick={onClose} className="absolute top-6 right-6 text-text-muted hover:text-white transition-colors">
+      <div className="glass-card w-full max-w-2xl h-full m-0 rounded-none md:m-4 md:rounded-xl p-4 md:p-8 relative overflow-y-auto pb-24 md:pb-8">
+        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 text-text-muted hover:text-white transition-colors bg-black/20 md:bg-transparent rounded-full p-2 md:p-0 z-10">
           <X size={24} />
         </button>
 
@@ -169,7 +169,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
             </header>
 
             {/* ── Info grid ── */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InfoItem
                 icon={<Calendar size={18} />}
                 label="Fecha Presentación"
