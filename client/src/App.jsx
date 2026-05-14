@@ -88,11 +88,13 @@ function App() {
             active={activeTab === 'solicitudes'} 
             onClick={() => { setActiveTab('solicitudes'); setIsModalOpen(false); setIsDetailOpen(false); }}
           />
-          <NavItem 
-            icon={<PlusCircle size={20} />} 
-            label="Nueva Solicitud" 
-            onClick={() => setIsModalOpen(true)} 
-          />
+          {user?.Rol === 'CALIDAD' && (
+            <NavItem 
+              icon={<PlusCircle size={20} />} 
+              label="Nueva Solicitud" 
+              onClick={() => setIsModalOpen(true)} 
+            />
+          )}
         </nav>
 
         <div className="mt-auto flex flex-col gap-2">
@@ -128,13 +130,15 @@ function App() {
                 Gestionar Usuarios
               </button>
             )}
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Nueva Solicitud
-            </button>
+            {user?.Rol === 'CALIDAD' && (
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Nueva Solicitud
+              </button>
+            )}
           </div>
         </header>
 

@@ -105,7 +105,7 @@ const REG007PaperForm = ({ data, onChange, readOnly = false, children }) => {
       {/* Large Area for Label Previews */}
       <div className="relative min-h-[500px] border-b-[2px] border-black">
         <div className="absolute top-0 left-0 h-full w-8 border-r border-black flex items-center justify-center">
-          <span className="rotate-[-90deg] text-[10px] font-bold whitespace-nowrap">Formato original</span>
+          <span className="rotate-[-90deg] text-[10px] font-bold whitespace-nowrap">Formato propuesto</span>
         </div>
         <div className="ml-8 p-4 flex flex-col items-center justify-center gap-6">
           {children ? children : (

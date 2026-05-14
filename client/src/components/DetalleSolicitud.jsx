@@ -35,15 +35,41 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
         axios.get(`/api/solicitudes/${solicitudId}/adjuntos`),
         axios.get(`/api/solicitudes/${solicitudId}/historial`).catch(() => ({ data: [] })),
       ]);
-      setSolicitud(solRes.data);
+      // Normalizar datos (PascalCase de SQL a camelCase de React)
+      const rawData = solRes.data;
+      const normalized = {
+        solicitudId: rawData.SolicitudId,
+        fechaSolicitud: rawData.FechaSolicitud || rawData.FechaCreacion,
+        sectorSolicitante: rawData.SectorSolicitante,
+        motivo: rawData.Motivo,
+        nombreProducto: rawData.NombreProducto,
+        codigoProducto: rawData.CodigoProducto,
+        destino: rawData.Destino,
+        vidaUtil: rawData.VidaUtil,
+        codigoSenasa: rawData.CodigoSenasa,
+        impresoras: rawData.Impresoras,
+        tara: rawData.Tara,
+        pesoMinimo: rawData.PesoMinimo,
+        pesoMaximo: rawData.PesoMaximo,
+        pesoEstandar: rawData.PesoEstandar,
+        numCaja: rawData.NumCaja,
+        faja: rawData.Faja,
+        codigoExterno: rawData.CodigoExterno,
+        comentariosSolicitante: rawData.ComentariosSolicitante,
+        cambioSolicitado: rawData.CambioSolicitado,
+        estado: rawData.Estado,
+        codigoTwins: rawData.CodigoTwins,
+        correspondeSolicitud: rawData.CorrespondeSolicitud
+      };
+
+      setSolicitud(normalized);
       setAdjuntos(adjRes.data);
       setHistorial(histRes.data);
       
-      // Pre-cargar datos si ya existen
       setResponseData({
-        fechaPresentacion: solRes.data.FechaPresentacion ? new Date(solRes.data.FechaPresentacion).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        codigoTwins: solRes.data.CodigoTwins || '',
-        correspondeSolicitud: solRes.data.CorrespondeSolicitud || ''
+        fechaPresentacion: normalized.fechaPresentacion ? new Date(normalized.fechaPresentacion).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        codigoTwins: normalized.codigoTwins || normalized.codigoProducto || '',
+        correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0,8) || ''
       });
     } catch (err) {
       console.error('Error al cargar datos', err);
@@ -105,7 +131,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
 
   if (!isOpen) return null;
 
-  const estadoInfo = ESTADOS_APROBACION[solicitud?.Estado] || { label: solicitud?.Estado, color: 'text-text-muted', bg: 'bg-white/5 border-border' };
+  const estadoInfo = ESTADOS_APROBACION[solicitud?.estado] || { label: solicitud?.estado, color: 'text-text-muted', bg: 'bg-white/5 border-border' };
   const esSistemas = user?.Rol === 'SISTEMAS' || user?.Rol === 'ADMIN';
   const esCalidad = user?.Rol === 'CALIDAD' || user?.Rol === 'ADMIN';
 
@@ -119,11 +145,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
              <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest ${estadoInfo.bg} ${estadoInfo.color}`}>
                 {estadoInfo.label}
              </div>
-             <h2 className="text-xl font-bold text-gray-800">{solicitud?.NombreProducto}</h2>
+             <h2 className="text-xl font-bold text-gray-800">{solicitud?.nombreProducto}</h2>
           </div>
           <div className="flex gap-3">
              {/* Acciones para Sistemas */}
-             {esSistemas && solicitud?.Estado === 'REG-011-PENDIENTE' && !isResponding && (
+             {esSistemas && solicitud?.estado === 'REG-011-PENDIENTE' && !isResponding && (
                 <button 
                    onClick={() => setIsResponding(true)}
                    className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-blue-700 transition-all flex items-center gap-2"
@@ -152,7 +178,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
              )}
 
              {/* Acciones para Calidad */}
-             {esCalidad && solicitud?.Estado === 'REG-007-PENDIENTE-APROBACION' && (
+             {esCalidad && solicitud?.estado === 'REG-007-PENDIENTE-APROBACION' && (
                 <>
                    <button 
                       disabled={statusLoading}
@@ -200,15 +226,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                 {/* Visualizador de Documentos */}
                 <div className="relative">
                    {/* Si el estado es 011 o estamos respondiendo, mostramos el 011 arriba como referencia */}
-                   {solicitud.Estado === 'REG-011-PENDIENTE' && !isResponding && (
-                      <div className="animate-in fade-in slide-in-from-bottom-4">
-                         <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento Activo: REG-SIS-011</span></div>
+                   {(solicitud.estado === 'REG-011-PENDIENTE' || isResponding) && (
+                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-8">
+                         <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span></div>
                          <REG011PaperForm data={solicitud} readOnly={true} />
                       </div>
                    )}
 
                    {/* Modo Respuesta Sistemas o Vista 007 */}
-                   {(isResponding || solicitud.Estado === 'REG-007-PENDIENTE-APROBACION' || solicitud.Estado === 'APROBADO') && (
+                   {(isResponding || solicitud.estado === 'REG-007-PENDIENTE-APROBACION' || solicitud.estado === 'APROBADO') && (
                       <div className="animate-in fade-in zoom-in-95 duration-300">
                          <div className="text-center mb-4"><span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span></div>
                          <REG007PaperForm 
