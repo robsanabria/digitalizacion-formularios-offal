@@ -274,14 +274,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                    </div>
                 </div>
 
-                         {/* Mostrar el 011 original abajo colapsado como referencia */}
-                         <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity">
-                            <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">Ver Solicitud Original (REG-SIS-011)</summary>
-                            <REG011PaperForm data={solicitud} readOnly={true} />
-                         </details>
-                      </div>
-                   )}
-                </div>
+                {/* Mostrar el 011 original abajo colapsado como referencia */}
+                <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity">
+                   <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">Ver Solicitud Original (REG-SIS-011)</summary>
+                   <REG011PaperForm data={solicitud} readOnly={true} />
+                </details>
 
                 {/* Historial (lateral o inferior) */}
                 <section className="max-w-4xl mx-auto w-full border-t border-gray-300 pt-8 mt-8">
