@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -212,15 +212,30 @@ function App() {
                               ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
                           </td>
                           <td className="py-4">
-                            <button 
-                              onClick={() => {
-                                setSelectedSolicitudId(s.SolicitudId);
-                                setIsDetailOpen(true);
-                              }}
-                              className="text-primary hover:text-white hover:underline font-medium transition-all"
-                            >
-                              Ver detalles
-                            </button>
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={() => {
+                                  setSelectedSolicitudId(s.SolicitudId);
+                                  setIsDetailOpen(true);
+                                }}
+                                className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
+                                title="Previsualizar Registro"
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setSelectedSolicitudId(s.SolicitudId);
+                                  setIsDetailOpen(true);
+                                  // Un pequeño delay para que abra y podamos disparar la impresión
+                                  setTimeout(() => window.print(), 500);
+                                }}
+                                className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
+                                title="Descargar PDF"
+                              >
+                                <Download size={18} />
+                              </button>
+                            </div>
                           </td>
                         </motion.tr>
                       ))}
@@ -271,15 +286,29 @@ function App() {
                         ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
                       </td>
                       <td className="py-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedSolicitudId(s.SolicitudId);
-                            setIsDetailOpen(true);
-                          }}
-                          className="text-primary hover:text-white font-medium transition-all"
-                        >
-                          Ver detalles
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button 
+                            onClick={() => {
+                              setSelectedSolicitudId(s.SolicitudId);
+                              setIsDetailOpen(true);
+                            }}
+                            className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
+                            title="Previsualizar"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedSolicitudId(s.SolicitudId);
+                              setIsDetailOpen(true);
+                              setTimeout(() => window.print(), 500);
+                            }}
+                            className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
+                            title="Descargar PDF"
+                          >
+                            <Download size={18} />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}

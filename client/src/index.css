@@ -86,3 +86,43 @@ table { border-collapse: collapse; }
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ── Estilos de Impresión (Generación de PDF) ── */
+@media print {
+  /* Ocultar todo lo que no sea el formulario */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Mostrar solo el contenedor del formulario y su contenido */
+  #paper-form-container, #paper-form-container * {
+    visibility: visible;
+  }
+
+  /* Posicionar el formulario al inicio de la página */
+  #paper-form-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    visibility: visible;
+  }
+
+  /* Forzar colores de fondo para que salgan los bordes y grises del papel */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar scrollbars y fondos oscuros */
+  body {
+    background: white !important;
+  }
+
+  /* Ocultar botones dentro del modal durante la impresión */
+  button, .no-print {
+    display: none !important;
+  }
+}

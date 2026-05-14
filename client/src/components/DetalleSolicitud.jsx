@@ -172,6 +172,14 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                 </>
              )}
 
+             <button 
+               onClick={() => window.print()}
+               className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
+               title="Descargar PDF"
+             >
+               <Download size={24} />
+             </button>
+
              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
                <X size={24} />
              </button>
@@ -179,7 +187,8 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
         </div>
 
         {/* Contenido Principal (Documentos) */}
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-8" id="paper-form-container">
+
            {loading ? (
              <div className="flex flex-col items-center justify-center h-64 gap-4">
                 <Loader2 className="animate-spin text-blue-600" size={48} />
