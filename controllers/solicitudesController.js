@@ -293,13 +293,13 @@ const transitionSolicitud = async (req, res) => {
         let accionDescripcion;
 
         if (action === 'reject') {
-            nuevoEstado = 'rechazado';
+            nuevoEstado = 'RECHAZADO';
             accionDescripcion = `Rechazado por ${Rol}`;
         } else {
             // approve — validar que no haya aprobado ya
-            const yaAprobadoCalidad   = estadoActual === 'Aprobado por calidad';
-            const yaAprobadoSistemas  = estadoActual === 'Aprobado por sistemas';
-            const aprobacionFinal     = estadoActual === 'Aprobado por Sistemas y Calidad';
+            const yaAprobadoCalidad   = estadoActual === 'Aprobado por calidad' || estadoActual === 'APROBADO';
+            const yaAprobadoSistemas  = estadoActual === 'Aprobado por sistemas' || estadoActual === 'REG-007-PENDIENTE-APROBACION';
+            const aprobacionFinal     = estadoActual === 'APROBADO';
 
             if (aprobacionFinal) {
                 return res.status(400).json({ error: 'La solicitud ya tiene aprobación final' });
@@ -314,24 +314,28 @@ const transitionSolicitud = async (req, res) => {
 
             if (Rol === 'CALIDAD') {
                 nuevoEstado = yaAprobadoSistemas
-                    ? 'Aprobado por Sistemas y Calidad'
+                    ? 'APROBADO'
                     : 'Aprobado por calidad';
-                accionDescripcion = `Aprobado por Calidad → ${nuevoEstado}`;
+                accionDescripcion = nuevoEstado === 'APROBADO'
+                    ? 'Aprobado por Calidad → Finalizado'
+                    : `Aprobado por Calidad → ${nuevoEstado}`;
             } else if (Rol === 'SISTEMAS') {
                 nuevoEstado = yaAprobadoCalidad
-                    ? 'Aprobado por Sistemas y Calidad'
+                    ? 'APROBADO'
                     : 'Aprobado por sistemas';
-                accionDescripcion = `Aprobado por Sistemas → ${nuevoEstado}`;
+                accionDescripcion = nuevoEstado === 'APROBADO'
+                    ? 'Aprobado por Sistemas → Finalizado'
+                    : `Aprobado por Sistemas → ${nuevoEstado}`;
             } else if (Rol === 'ADMIN') {
                 // ADMIN puede aprobar en nombre de cualquiera
-                if (yaAprobadoCalidad) {
-                    nuevoEstado = 'Aprobado por Sistemas y Calidad';
-                } else if (yaAprobadoSistemas) {
-                    nuevoEstado = 'Aprobado por Sistemas y Calidad';
+                if (yaAprobadoCalidad || yaAprobadoSistemas) {
+                    nuevoEstado = 'APROBADO';
                 } else {
                     nuevoEstado = 'Aprobado por calidad'; // Admin aprueba como Calidad primero
                 }
-                accionDescripcion = `Aprobado por Admin → ${nuevoEstado}`;
+                accionDescripcion = nuevoEstado === 'APROBADO'
+                    ? 'Aprobado por Admin → Finalizado'
+                    : `Aprobado por Admin → ${nuevoEstado}`;
             } else {
                 return res.status(403).json({ error: 'Tu rol no tiene permisos para aprobar solicitudes' });
             }

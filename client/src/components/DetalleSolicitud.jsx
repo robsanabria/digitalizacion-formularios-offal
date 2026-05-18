@@ -18,6 +18,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState(null);
   
   // Estado para la respuesta de Sistemas (REG-007)
   const [isResponding, setIsResponding] = useState(false);
@@ -168,7 +169,14 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                   </button>
                   <button 
                     disabled={statusLoading}
-                    onClick={handleSystemsResponse}
+                    onClick={() => {
+                      setConfirmConfig({
+                        title: "Enviar REG-SIS-007",
+                        message: "¿Confirma el envío de este formulario REG-SIS-007 completo a Calidad para su aprobación final?",
+                        btnClass: "btn-success",
+                        onConfirm: handleSystemsResponse
+                      });
+                    }}
                     className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2"
                   >
                     {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
@@ -182,14 +190,28 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                 <>
                    <button 
                       disabled={statusLoading}
-                      onClick={() => handleStatusUpdate('reject')}
+                      onClick={() => {
+                        setConfirmConfig({
+                          title: "Rechazar Solicitud",
+                          message: "¿Está seguro de que desea rechazar esta solicitud de etiqueta? Se registrará la acción y se cancelará el circuito actual.",
+                          btnClass: "btn-error text-white",
+                          onConfirm: () => handleStatusUpdate('reject')
+                        });
+                      }}
                       className="bg-red-100 text-red-600 px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-red-200 transition-all flex items-center gap-2 border border-red-200"
                    >
                       Rechazar
                    </button>
                    <button 
                       disabled={statusLoading}
-                      onClick={() => handleStatusUpdate('approve')}
+                      onClick={() => {
+                        setConfirmConfig({
+                          title: "Aprobar Solicitud Final",
+                          message: "¿Confirma la aprobación final de esta solicitud de etiquetas? Esto dará por concluido el circuito técnico de Calidad y Sistemas.",
+                          btnClass: "btn-success",
+                          onConfirm: () => handleStatusUpdate('approve')
+                        });
+                      }}
                       className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
                    >
                       {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
@@ -297,10 +319,43 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                       ))}
                    </div>
                 </section>
-             </div>
+              </div>
            )}
         </div>
       </div>
+
+      {/* Modal de Confirmación DaisyUI */}
+      {confirmConfig && (
+        <div className="modal modal-open z-[100] backdrop-blur-sm">
+          <div className="modal-box bg-[#1e293b] text-white border border-slate-700 max-w-md">
+            <h3 className="font-bold text-lg text-primary uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-info animate-ping"></span>
+              {confirmConfig.title}
+            </h3>
+            <p className="py-4 text-sm text-slate-300 font-medium">
+              {confirmConfig.message}
+            </p>
+            <div className="modal-action">
+              <button 
+                type="button"
+                onClick={() => setConfirmConfig(null)} 
+                className="btn btn-sm btn-outline border-slate-600 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-[10px]"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  confirmConfig.onConfirm();
+                  setConfirmConfig(null);
+                }} 
+                className={`btn btn-sm text-white font-bold uppercase tracking-wider text-[10px] ${confirmConfig.btnClass}`}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

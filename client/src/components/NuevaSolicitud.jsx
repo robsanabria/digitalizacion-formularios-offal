@@ -5,6 +5,7 @@ import REG011PaperForm from './REG011PaperForm';
 
 const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
     fechaSolicitud: new Date().toISOString().split('T')[0],
     sectorSolicitante: 'Calidad',
@@ -35,7 +36,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setLoading(true);
     try {
       // 1. Crear la solicitud base (REG-011)
@@ -81,7 +82,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
               </button>
               <button 
                 disabled={loading} 
-                onClick={handleSubmit}
+                onClick={(e) => { e.preventDefault(); setShowConfirm(true); }}
                 className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
               >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
@@ -106,6 +107,39 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmación DaisyUI */}
+      {showConfirm && (
+        <div className="modal modal-open z-[100] backdrop-blur-sm">
+          <div className="modal-box bg-[#1e293b] text-white border border-slate-700 max-w-md">
+            <h3 className="font-bold text-lg text-primary uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-success animate-ping"></span>
+              Confirmar Registro
+            </h3>
+            <p className="py-4 text-sm text-slate-300 font-medium">
+              ¿Confirma la creación de este nuevo registro de etiquetas (REG-SIS-011) y su envío a Sistemas?
+            </p>
+            <div className="modal-action">
+              <button 
+                type="button"
+                onClick={() => setShowConfirm(false)} 
+                className="btn btn-sm btn-outline border-slate-600 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-[10px]"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  setShowConfirm(false);
+                  handleSubmit();
+                }} 
+                className="btn btn-sm btn-success text-white font-bold uppercase tracking-wider text-[10px]"
+              >
+                Sí, Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
