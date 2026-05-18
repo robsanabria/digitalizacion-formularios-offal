@@ -227,7 +227,7 @@ const downloadAdjunto = async (req, res) => {
             return res.status(500).json({ error: 'Error interno al procesar la ruta del archivo' });
         }
 
-        const blobName = urlParts[1];
+        const blobName = decodeURIComponent(urlParts[1]);
         console.log(`[Controller] Nombre de blob identificado: ${blobName}`);
 
         const { readableStream, contentType, contentLength } = await storageService.downloadFile(blobName);
