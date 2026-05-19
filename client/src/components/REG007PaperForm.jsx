@@ -136,16 +136,7 @@ const REG007PaperForm = ({
           </div>
           <div className="w-1/3 p-2 border-r-[2px] border-black flex gap-2 items-center">
             <span>Código TWINS:</span>
-            {!canEditProposed ? (
-              <span>{data.codigoTwins || '21.8'}</span>
-            ) : (
-              <input 
-                className="bg-blue-50/50 outline-none px-1 border-b border-black/20 text-[9px] font-black max-w-[60px]"
-                value={data.codigoTwins || ''}
-                onChange={e => onChange('codigoTwins', e.target.value)}
-                placeholder="21.8"
-              />
-            )}
+            <span>{data.codigoTwins || data.codigoProducto || '21.8'}</span>
           </div>
           <div className="w-1/3 p-2 flex gap-2 items-center">
             <span>Código SENASA:</span>
@@ -284,19 +275,9 @@ const REG007PaperForm = ({
         {/* Cambio Solicitado Box */}
         <div className="border-b-[2px] border-black p-3 flex flex-col bg-white">
           <span className="text-[8.5px] font-black uppercase tracking-wider text-gray-700">Cambio Solicitado (Breve Descripción):</span>
-          {!canEditProposed ? (
-            <div className="text-[10px] p-2 font-bold italic text-gray-700 bg-gray-50 border border-gray-200 min-h-[50px] mt-1 select-all">
-              {data.cambioSolicitado || 'No se detallaron observaciones descriptivas adicionales en el circuito.'}
-            </div>
-          ) : (
-            <textarea 
-              className="w-full text-[10px] font-bold p-2 bg-blue-50/30 outline-none border border-blue-200 mt-1.5 resize-none shadow-inner"
-              rows={2}
-              placeholder="Describa de forma técnica y concisa la modificación o cambio aplicado en las etiquetas..."
-              value={data.cambioSolicitado || ''}
-              onChange={e => onChange('cambioSolicitado', e.target.value)}
-            />
-          )}
+          <div className="text-[10px] p-2 font-bold italic text-gray-700 bg-gray-50 border border-gray-200 min-h-[50px] mt-1 select-all">
+            {data.cambioSolicitado || 'No se detallaron observaciones descriptivas adicionales en el circuito.'}
+          </div>
         </div>
 
         {/* Panel de Firmas y Trazabilidad */}
@@ -376,16 +357,7 @@ const REG007PaperForm = ({
         <div className="border-t border-black bg-gray-50 p-2.5 flex justify-between items-center text-[7.5px] font-bold">
           <div className="flex gap-2 items-center">
             <span>Corresponde a Solicitud:</span>
-            {!canEditProposed ? (
-              <span className="uppercase font-black text-gray-800">{data.correspondeSolicitud || `REG-SIS-011 (#${solicitudId ? solicitudId.substring(0, 8) : 'S/D'})`}</span>
-            ) : (
-              <input 
-                className="bg-blue-50/50 outline-none px-1 border-b border-black/20 text-[7.5px] uppercase font-black max-w-[120px]" 
-                value={data.correspondeSolicitud || ''} 
-                onChange={e => onChange('correspondeSolicitud', e.target.value)} 
-                placeholder="REG-SIS-011-XXXX"
-              />
-            )}
+            <span className="uppercase font-black text-gray-800">{data.correspondeSolicitud || `REG-SIS-011 (#${solicitudId ? solicitudId.substring(0, 8) : 'S/D'})`}</span>
           </div>
           <div className="text-gray-400 uppercase italic">Formulario digital controlado por el área de Calidad e Inocuidad</div>
         </div>
