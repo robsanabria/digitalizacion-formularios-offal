@@ -130,6 +130,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
     }
   };
 
+  const handleDeleteAdjunto = async (adjuntoId) => {
+    if (!window.confirm('¿Está seguro de que desea eliminar este archivo adjunto?')) return;
+    try {
+      await axios.delete(`/api/solicitudes/${solicitudId}/adjuntos/${adjuntoId}`);
+      await fetchData();
+    } catch (err) {
+      alert('Error al eliminar archivo: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
+
   if (!isOpen) return null;
 
   const estadoInfo = ESTADOS_APROBACION[solicitud?.estado] || { label: solicitud?.estado, color: 'text-text-muted', bg: 'bg-white/5 border-border' };
@@ -244,6 +255,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
            ) : (
              <div className="flex flex-col gap-12 max-w-full">
                 
+                {/* Hint de scroll horizontal para móviles */}
+                <div className="md:hidden flex items-center justify-center gap-2 mb-3 text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-200 p-2.5 rounded-lg animate-pulse uppercase tracking-wider no-print select-none">
+                  <span>↔️ Desliza horizontalmente para ver el documento completo</span>
+                </div>
+
                 {/* Visualizador de Documentos con Scroll Horizontal en móvil */}
                 <div className="relative overflow-x-auto pb-4 custom-scrollbar">
                    <div className="min-w-[800px] md:min-w-0">
@@ -260,37 +276,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                          <div className="animate-in fade-in zoom-in-95 duration-300">
                             <div className="text-center mb-4"><span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span></div>
                             <REG007PaperForm 
+                               solicitudId={solicitudId}
                                data={isResponding ? { ...solicitud, ...responseData } : solicitud} 
                                readOnly={!isResponding}
+                               userRole={user?.Rol}
+                               adjuntos={adjuntos}
+                               historial={historial}
+                               onUploadAdjunto={handleUploadEvidencia}
+                               onDeleteAdjunto={handleDeleteAdjunto}
+                               uploadLoading={uploadLoading}
                                onChange={(field, val) => setResponseData(prev => ({ ...prev, [field]: val }))}
-                            >
-                               {/* Renderizar etiquetas adjuntas */}
-                               <div className="grid grid-cols-1 gap-8 w-full p-4">
-                                  {adjuntos.filter(f => f.TipoContenido?.startsWith('image/')).map(img => (
-                                     <div key={img.AdjuntoId} className="flex flex-col items-center">
-                                        <img 
-                                           src={`/api/solicitudes/${solicitudId}/adjuntos/${img.AdjuntoId}/descargar`}
-                                           className="max-w-full h-auto border border-gray-300 shadow-lg"
-                                           alt="Etiqueta"
-                                        />
-                                        <span className="text-[10px] mt-2 text-gray-400 italic">{img.NombreArchivo}</span>
-                                     </div>
-                                  ))}
-                                  
-                                  {/* Dropzone optimizado para móviles */}
-                                  {isResponding && (
-                                     <label className="border-4 border-dashed border-blue-400 rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition-all bg-white shadow-inner group active:scale-95">
-                                        <input type="file" className="hidden" onChange={handleUploadEvidencia} />
-                                        <div className="bg-blue-100 p-6 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                                           <Upload className="text-blue-600" size={48} />
-                                        </div>
-                                        <span className="text-lg font-black text-blue-700 uppercase tracking-tight text-center">Toca aquí para subir foto de la etiqueta</span>
-                                        <span className="text-xs text-blue-400 mt-2 font-medium uppercase tracking-widest">Cámara o Galería</span>
-                                        {uploadLoading && <Loader2 className="animate-spin mt-4 text-blue-600" size={32} />}
-                                     </label>
-                                  )}
-                               </div>
-                            </REG007PaperForm>
+                            />
                          </div>
                       )}
                    </div>

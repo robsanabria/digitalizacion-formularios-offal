@@ -21,6 +21,7 @@ router.get('/:id/historial', solicitudesController.getHistorial);
 router.get('/:id/adjuntos', solicitudesController.getAdjuntosBySolicitud);
 router.post('/:id/adjuntos', upload.single('archivo'), solicitudesController.addAdjunto);
 router.get('/:id/adjuntos/:adjuntoId/descargar', solicitudesController.downloadAdjunto);
+router.delete('/:id/adjuntos/:adjuntoId', solicitudesController.deleteAdjunto);
 
 module.exports = router;
 

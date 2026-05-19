@@ -71,7 +71,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Sector Solicitante:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 bg-transparent border-none outline-none" 
+            className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.sectorSolicitante || ''}
             onChange={e => onChange('sectorSolicitante', e.target.value)}
           />
@@ -92,7 +92,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Nombre Producto:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 uppercase font-black bg-transparent outline-none" 
+            className={`flex-1 uppercase font-black bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.nombreProducto || ''}
             onChange={e => onChange('nombreProducto', e.target.value)}
           />
@@ -101,7 +101,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Código Producto:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 bg-transparent outline-none" 
+            className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.codigoProducto || ''}
             onChange={e => onChange('codigoProducto', e.target.value)}
           />
@@ -114,7 +114,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Destino:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 bg-transparent outline-none" 
+            className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.destino || ''}
             onChange={e => onChange('destino', e.target.value)}
           />
@@ -123,7 +123,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Vida Útil:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 bg-transparent outline-none" 
+            className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.vidaUtil || ''}
             onChange={e => onChange('vidaUtil', e.target.value)}
           />
@@ -132,7 +132,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           <span>Código SENASA:</span>
           <input 
             readOnly={readOnly}
-            className="flex-1 bg-transparent outline-none" 
+            className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
             value={data.codigoSenasa || ''}
             onChange={e => onChange('codigoSenasa', e.target.value)}
           />
@@ -151,19 +151,19 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
       <div className="flex border-b-[2px] border-black text-[10px] font-bold">
         <div className="w-1/4 p-2 border-r-[2px] border-black flex flex-col">
           <span>Tara:</span>
-          <input readOnly={readOnly} className="bg-transparent outline-none" value={data.tara || ''} onChange={e => onChange('tara', e.target.value)} />
+          <input readOnly={readOnly} className={`w-full bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.tara || ''} onChange={e => onChange('tara', e.target.value)} />
         </div>
         <div className="w-1/4 p-2 border-r-[2px] border-black flex flex-col">
           <span>Peso Mínimo:</span>
-          <input readOnly={readOnly} className="bg-transparent outline-none" value={data.pesoMinimo || ''} onChange={e => onChange('pesoMinimo', e.target.value)} />
+          <input readOnly={readOnly} className={`w-full bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.pesoMinimo || ''} onChange={e => onChange('pesoMinimo', e.target.value)} />
         </div>
         <div className="w-1/4 p-2 border-r-[2px] border-black flex flex-col">
           <span>Peso Máximo:</span>
-          <input readOnly={readOnly} className="bg-transparent outline-none" value={data.pesoMaximo || ''} onChange={e => onChange('pesoMaximo', e.target.value)} />
+          <input readOnly={readOnly} className={`w-full bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.pesoMaximo || ''} onChange={e => onChange('pesoMaximo', e.target.value)} />
         </div>
         <div className="w-1/4 p-2 flex flex-col">
           <span>Peso Estándar:</span>
-          <input readOnly={readOnly} className="bg-transparent outline-none" value={data.pesoEstandar || ''} onChange={e => onChange('pesoEstandar', e.target.value)} />
+          <input readOnly={readOnly} className={`w-full bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.pesoEstandar || ''} onChange={e => onChange('pesoEstandar', e.target.value)} />
         </div>
       </div>
 
@@ -171,15 +171,15 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
       <div className="flex border-b-[2px] border-black text-[10px] font-bold">
         <div className="w-1/3 p-2 border-r-[2px] border-black flex gap-2 items-center">
           <span>N° de Caja:</span>
-          <input readOnly={readOnly} className="flex-1 bg-transparent outline-none" value={data.numCaja || ''} onChange={e => onChange('numCaja', e.target.value)} />
+          <input readOnly={readOnly} className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.numCaja || ''} onChange={e => onChange('numCaja', e.target.value)} />
         </div>
         <div className="w-1/3 p-2 border-r-[2px] border-black flex gap-2 items-center">
           <span>Faja:</span>
-          <input readOnly={readOnly} className="flex-1 bg-transparent outline-none" value={data.faja || ''} onChange={e => onChange('faja', e.target.value)} />
+          <input readOnly={readOnly} className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.faja || ''} onChange={e => onChange('faja', e.target.value)} />
         </div>
         <div className="w-1/3 p-2 flex gap-2 items-center">
           <span>Código Externo:</span>
-          <input readOnly={readOnly} className="flex-1 bg-transparent outline-none" value={data.codigoExterno || ''} onChange={e => onChange('codigoExterno', e.target.value)} />
+          <input readOnly={readOnly} className={`flex-1 bg-transparent outline-none px-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} value={data.codigoExterno || ''} onChange={e => onChange('codigoExterno', e.target.value)} />
         </div>
       </div>
 
@@ -189,7 +189,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
         <textarea 
           readOnly={readOnly}
           rows={2} 
-          className="w-full bg-transparent outline-none text-xs resize-none" 
+          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
           value={data.comentariosSolicitante || ''}
           onChange={e => onChange('comentariosSolicitante', e.target.value)}
         />
@@ -201,7 +201,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
         <textarea 
           readOnly={readOnly}
           rows={4} 
-          className="w-full bg-transparent outline-none text-xs resize-none" 
+          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
           value={data.cambioSolicitado || ''}
           placeholder="Describa aquí el cambio..."
           onChange={e => onChange('cambioSolicitado', e.target.value)}

@@ -89,6 +89,10 @@ table { border-collapse: collapse; }
 
 /* ── Estilos de Impresión (Generación de PDF) ── */
 @media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
   /* Ocultar todo lo que no sea el formulario */
   body * {
     visibility: hidden;

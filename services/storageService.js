@@ -58,7 +58,21 @@ const downloadFile = async (blobName) => {
     }
 };
 
+const deleteFile = async (blobName) => {
+    try {
+        console.log(`[Storage] Iniciando eliminación de blob: ${blobName}`);
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        await blockBlobClient.delete();
+        console.log(`[Storage] Eliminación exitosa de blob: ${blobName}`);
+    } catch (err) {
+        console.error('❌ Error al eliminar de Blob Storage:', err);
+        throw err;
+    }
+};
+
 module.exports = {
     uploadFile,
-    downloadFile
+    downloadFile,
+    deleteFile
 };
+

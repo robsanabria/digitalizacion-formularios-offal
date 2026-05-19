@@ -390,6 +390,51 @@ const getHistorial = async (req, res) => {
     }
 };
 
+const deleteAdjunto = async (req, res) => {
+    const { id, adjuntoId } = req.params;
+    console.log(`[Controller] Petición de eliminación para AdjuntoId: ${adjuntoId}`);
+    try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+
+        // 1. Buscar el adjunto en la base de datos
+        const result = await pool.request()
+            .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
+            .query('SELECT RutaArchivo FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
+
+        if (result.recordset.length === 0) {
+            console.warn(`[Controller] Adjunto no encontrado en DB: ${adjuntoId}`);
+            return res.status(404).json({ mensaje: 'Archivo no encontrado' });
+        }
+
+        const { RutaArchivo } = result.recordset[0];
+
+        // 2. Intentar eliminar de Azure Blob Storage (si tiene ruta)
+        if (RutaArchivo) {
+            const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'regsis-attachments';
+            const urlParts = RutaArchivo.split(`/${containerName}/`);
+            if (urlParts.length >= 2) {
+                const blobName = decodeURIComponent(urlParts[1]);
+                try {
+                    await storageService.deleteFile(blobName);
+                } catch (storageErr) {
+                    console.error('[Controller] Error al borrar de storage, procediendo con borrado DB igualmente:', storageErr);
+                }
+            }
+        }
+
+        // 3. Eliminar de la base de datos
+        await pool.request()
+            .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
+            .query('DELETE FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
+
+        res.json({ mensaje: 'Archivo eliminado con éxito' });
+    } catch (err) {
+        console.error('[Controller] Error general en deleteAdjunto:', err);
+        res.status(500).json({ error: 'Error al eliminar el archivo', detalle: err.message });
+    }
+};
+
 module.exports = {
     getSolicitudes,
     getSolicitudById,
@@ -398,6 +443,8 @@ module.exports = {
     addAdjunto,
     getAdjuntosBySolicitud,
     downloadAdjunto,
+    deleteAdjunto,
     transitionSolicitud,
     getHistorial,
 };
+
