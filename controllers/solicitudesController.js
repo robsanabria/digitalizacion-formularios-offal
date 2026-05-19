@@ -152,6 +152,7 @@ const updateSolicitud = async (req, res) => {
 const addAdjunto = async (req, res) => {
     const { id } = req.params;
     const file = req.file;
+    const { tipo } = req.query; // 'ORIGINAL' o 'PROPUESTO'
 
     if (!file) {
         return res.status(400).json({ error: 'No se ha subido ningún archivo' });
@@ -170,9 +171,10 @@ const addAdjunto = async (req, res) => {
             .input('rutaArchivo', sql.NVarChar, url)
             .input('tipoContenido', sql.NVarChar, file.mimetype)
             .input('tamano', sql.BigInt, file.size)
+            .input('tipoAdjunto', sql.NVarChar, tipo || 'PROPUESTO')
             .query(`
-                INSERT INTO Adjuntos (SolicitudId, NombreArchivo, RutaArchivo, TipoContenido, TamanoArchivo)
-                VALUES (@solicitudId, @nombreArchivo, @rutaArchivo, @tipoContenido, @tamano)
+                INSERT INTO Adjuntos (SolicitudId, NombreArchivo, RutaArchivo, TipoContenido, TamanoArchivo, TipoAdjunto)
+                VALUES (@solicitudId, @nombreArchivo, @rutaArchivo, @tipoContenido, @tamano, @tipoAdjunto)
             `);
 
         res.status(201).json({

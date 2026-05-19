@@ -1,7 +1,18 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Trash2, Plus, Loader2 } from 'lucide-react';
 
-const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
+const REG011PaperForm = ({ 
+  solicitudId,
+  data, 
+  onChange, 
+  readOnly = false, 
+  userRole = '',
+  solicitudEstado = '',
+  adjuntos = [], 
+  onUploadAdjunto, 
+  onDeleteAdjunto,
+  uploadLoading = false 
+}) => {
   const parseArray = (val) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -31,6 +42,14 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
       <span className="text-xs font-bold uppercase">{label}</span>
     </div>
   );
+  // Calidad's uploaded reference
+  let calidadAdjunto = adjuntos && adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL');
+  if (!calidadAdjunto && adjuntos && adjuntos.length > 0) {
+    calidadAdjunto = adjuntos[0];
+  }
+
+  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') && 
+                          (solicitudEstado === 'REG-011-PENDIENTE' || solicitudEstado === 'REG-007-PENDIENTE-APROBACION');
 
   return (
     <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl mx-auto font-serif shadow-2xl overflow-hidden mb-10">
@@ -196,7 +215,7 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
       </div>
 
       {/* Cambio Solicitado */}
-      <div className="p-2 min-h-[100px]">
+      <div className="p-2 min-h-[100px] border-b-[2px] border-black">
         <div className="text-[10px] font-bold mb-1 uppercase">Cambio Solicitado (Breve Descripción):</div>
         <textarea 
           readOnly={readOnly}
@@ -206,6 +225,55 @@ const REG011PaperForm = ({ data, onChange, readOnly = false }) => {
           placeholder="Describa aquí el cambio..."
           onChange={e => onChange('cambioSolicitado', e.target.value)}
         />
+      </div>
+
+      {/* Formato Original Area */}
+      <div className="relative min-h-[350px] flex">
+        <div className="w-8 border-r-[2px] border-black flex items-center justify-center bg-gray-50/50 select-none">
+          <span className="rotate-[-90deg] text-[9px] font-black uppercase tracking-widest whitespace-nowrap text-gray-500">Formato original</span>
+        </div>
+        <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
+          {calidadAdjunto ? (
+            <div className="flex flex-col items-center max-w-full relative group">
+              {canEditOriginal && onDeleteAdjunto && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteAdjunto(calidadAdjunto.AdjuntoId)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
+                  title="Eliminar adjunto original"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+              {calidadAdjunto.TipoContenido?.startsWith('image/') ? (
+                <img 
+                  src={`/api/solicitudes/${solicitudId}/adjuntos/${calidadAdjunto.AdjuntoId}/descargar`}
+                  className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
+                  alt="Referencia Original"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex flex-col items-center p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
+                  <span className="font-bold text-xs uppercase truncate max-w-full">{calidadAdjunto.NombreArchivo}</span>
+                  <span className="text-[9px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">Archivo de Referencia Calidad</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            canEditOriginal && onUploadAdjunto ? (
+              <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+                <input type="file" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
+                <div className="bg-blue-100 p-3 rounded-full mb-2">
+                  <Plus className="text-blue-600 animate-pulse" size={24} />
+                </div>
+                <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+                {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
+              </label>
+            ) : (
+              <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
+            )
+          )}
+        </div>
       </div>
 
       {/* Footer / Signatures Area */}

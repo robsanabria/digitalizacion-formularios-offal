@@ -7,6 +7,7 @@ const REG007PaperForm = ({
   onChange, 
   readOnly = false, 
   userRole = '',
+  solicitudEstado = '',
   adjuntos = [], 
   historial = [], 
   onUploadAdjunto, 
@@ -14,7 +15,8 @@ const REG007PaperForm = ({
   uploadLoading = false 
 }) => {
   
-  const canEditOriginal = !readOnly && (userRole === 'CALIDAD' || userRole === 'ADMIN');
+  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') && 
+                          (solicitudEstado === 'REG-011-PENDIENTE' || solicitudEstado === 'REG-007-PENDIENTE-APROBACION');
   const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
 
   const parseArray = (val) => {
@@ -26,11 +28,17 @@ const REG007PaperForm = ({
   const selectedMotivos = parseArray(data.motivo);
   const selectedImpresoras = parseArray(data.impresoras);
 
-  // Calidad's uploaded reference is usually the first attachment (index 0)
-  const calidadAdjunto = adjuntos && adjuntos.length > 0 ? adjuntos[0] : null;
+  // Calidad's uploaded reference
+  let calidadAdjunto = adjuntos && adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL');
+  if (!calidadAdjunto && adjuntos && adjuntos.length > 0) {
+    calidadAdjunto = adjuntos[0];
+  }
   
-  // Sistemas' modified label samples are any subsequent attachments (index 1+)
-  const sistemasAdjuntos = adjuntos && adjuntos.length > 1 ? adjuntos.slice(1) : [];
+  // Sistemas' modified label samples
+  let sistemasAdjuntos = adjuntos ? adjuntos.filter(a => a.TipoAdjunto === 'PROPUESTO') : [];
+  if (sistemasAdjuntos.length === 0 && adjuntos && adjuntos.length > 1) {
+    sistemasAdjuntos = adjuntos.slice(1);
+  }
 
   // Buscar firmas en el historial de trazabilidad de la base de datos
   const parseHistorialFirmas = () => {
@@ -182,7 +190,18 @@ const REG007PaperForm = ({
                 )}
               </div>
             ) : (
-              <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
+              canEditOriginal && onUploadAdjunto ? (
+                <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner animate-in fade-in duration-300">
+                  <input type="file" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
+                  <div className="bg-blue-100 p-3 rounded-full mb-2">
+                    <Plus className="text-blue-600 animate-pulse" size={24} />
+                  </div>
+                  <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+                  {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
+                </label>
+              ) : (
+                <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
+              )
             )}
           </div>
         </div>
@@ -227,7 +246,7 @@ const REG007PaperForm = ({
             {/* Botón de carga integrado como placeholder en papel */}
             {canEditProposed && sistemasAdjuntos.length < 9 && (
               <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
-                <input type="file" className="hidden" onChange={onUploadAdjunto} />
+                <input type="file" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
                 <div className="bg-blue-100 p-3 rounded-full mb-2">
                   <Plus className="text-blue-600 animate-pulse" size={24} />
                 </div>

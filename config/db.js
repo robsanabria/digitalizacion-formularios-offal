@@ -14,14 +14,28 @@ const dbConfig = {
 };
 
 const poolPromise = sql.connect(dbConfig)
-    .then(pool => {
+    .then(async pool => {
         console.log('✅ Conectado a SQL Server');
+        try {
+            // Verificar y crear la columna TipoAdjunto si no existe
+            await pool.request().query(`
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns 
+                    WHERE object_id = OBJECT_ID(N'[dbo].[Adjuntos]') 
+                    AND name = 'TipoAdjunto'
+                )
+                BEGIN
+                    ALTER TABLE Adjuntos ADD TipoAdjunto NVARCHAR(50) DEFAULT 'PROPUESTO';
+                END
+            `);
+            console.log('✅ Columna TipoAdjunto verificada/creada en la tabla Adjuntos');
+        } catch (err) {
+            console.error('⚠️ Error al verificar columna TipoAdjunto:', err.message);
+        }
         return pool;
     })
     .catch(err => {
         console.error('❌ Error de conexión a SQL Server:', err.message);
-        // No lanzamos el error para evitar que la app crashee, 
-        // pero devolvemos null para que el controlador pueda manejarlo.
         return null; 
     });
 

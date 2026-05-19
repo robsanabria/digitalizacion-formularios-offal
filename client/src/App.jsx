@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, Search, Calendar, Filter, XCircle } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -17,6 +17,12 @@ function App() {
   const [isUserMgmtOpen, setIsUserMgmtOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const [filterProducto, setFilterProducto] = useState('');
+  const [filterCodigoTwins, setFilterCodigoTwins] = useState('');
+  const [filterFechaDesde, setFilterFechaDesde] = useState('');
+  const [filterFechaHasta, setFilterFechaHasta] = useState('');
+  const [filterEstado, setFilterEstado] = useState('TODOS');
 
   const [logoError, setLogoError] = useState(false);
 
@@ -52,6 +58,54 @@ function App() {
     };
     init();
   }, []);
+
+  const filteredSolicitudes = solicitudes.filter(s => {
+    // 1. Filtro Producto
+    if (filterProducto && !s.NombreProducto?.toLowerCase().includes(filterProducto.toLowerCase())) {
+      return false;
+    }
+
+    // 2. Filtro Código Twins o Producto
+    if (filterCodigoTwins) {
+      const query = filterCodigoTwins.toLowerCase();
+      const codeTwins = (s.CodigoTwins || '').toLowerCase();
+      const codeProd = (s.CodigoProducto || '').toLowerCase();
+      if (!codeTwins.includes(query) && !codeProd.includes(query)) {
+        return false;
+      }
+    }
+
+    // 3. Filtro Fechas
+    const itemDateStr = s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime;
+    if (itemDateStr) {
+      const itemDate = new Date(itemDateStr);
+      itemDate.setHours(0,0,0,0);
+
+      if (filterFechaDesde) {
+        const desde = new Date(filterFechaDesde);
+        desde.setHours(0,0,0,0);
+        if (itemDate < desde) return false;
+      }
+
+      if (filterFechaHasta) {
+        const hasta = new Date(filterFechaHasta);
+        hasta.setHours(0,0,0,0);
+        if (itemDate > hasta) return false;
+      }
+    } else if (filterFechaDesde || filterFechaHasta) {
+      return false;
+    }
+
+    // 4. Filtro Estado
+    if (filterEstado !== 'TODOS') {
+      if (filterEstado === 'PENDIENTE_SISTEMAS' && s.Estado !== 'REG-011-PENDIENTE') return false;
+      if (filterEstado === 'PENDIENTE_CALIDAD' && s.Estado !== 'REG-007-PENDIENTE-APROBACION') return false;
+      if (filterEstado === 'APROBADO' && s.Estado !== 'APROBADO') return false;
+      if (filterEstado === 'RECHAZADO' && s.Estado !== 'RECHAZADO') return false;
+    }
+
+    return true;
+  });
 
   return (
     <div className="flex min-h-screen pb-20 md:pb-0">
@@ -252,6 +306,107 @@ function App() {
         ) : (
           <section className="glass-card p-8 min-h-[500px]">
             <h3 className="text-2xl font-bold mb-8">Listado Completo de Solicitudes</h3>
+
+            {/* Panel de Filtros */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-8 flex flex-col gap-4 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                <Filter size={14} /> Filtros de Búsqueda
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                {/* Filtro Producto */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Producto</label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder="Buscar producto..."
+                      value={filterProducto}
+                      onChange={e => setFilterProducto(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <Search className="absolute left-2.5 top-2.5 text-white/30" size={14} />
+                  </div>
+                </div>
+
+                {/* Filtro Código Twins */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Código Twins / Prod</label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder="Ej: Twins..."
+                      value={filterCodigoTwins}
+                      onChange={e => setFilterCodigoTwins(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <Search className="absolute left-2.5 top-2.5 text-white/30" size={14} />
+                  </div>
+                </div>
+
+                {/* Filtro Fecha Desde */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Fecha Desde</label>
+                  <div className="relative">
+                    <input 
+                      type="date"
+                      value={filterFechaDesde}
+                      onChange={e => setFilterFechaDesde(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-primary transition-colors scheme-dark"
+                    />
+                    <Calendar className="absolute left-2.5 top-2.5 text-white/30" size={14} />
+                  </div>
+                </div>
+
+                {/* Filtro Fecha Hasta */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Fecha Hasta</label>
+                  <div className="relative">
+                    <input 
+                      type="date"
+                      value={filterFechaHasta}
+                      onChange={e => setFilterFechaHasta(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-primary transition-colors scheme-dark"
+                    />
+                    <Calendar className="absolute left-2.5 top-2.5 text-white/30" size={14} />
+                  </div>
+                </div>
+
+                {/* Filtro Estado */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Estado</label>
+                  <select
+                    value={filterEstado}
+                    onChange={e => setFilterEstado(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                  >
+                    <option value="TODOS" className="bg-slate-900 text-white">Todos</option>
+                    <option value="PENDIENTE_SISTEMAS" className="bg-slate-900 text-white">Pendiente Sistemas</option>
+                    <option value="PENDIENTE_CALIDAD" className="bg-slate-900 text-white">Pendiente Calidad</option>
+                    <option value="APROBADO" className="bg-slate-900 text-white">Aprobadas</option>
+                    <option value="RECHAZADO" className="bg-slate-900 text-white">Rechazadas</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Botón de limpiar si hay filtros activos */}
+              {(filterProducto || filterCodigoTwins || filterFechaDesde || filterFechaHasta || filterEstado !== 'TODOS') && (
+                <div className="flex justify-end mt-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                  <button 
+                    onClick={() => {
+                      setFilterProducto('');
+                      setFilterCodigoTwins('');
+                      setFilterFechaDesde('');
+                      setFilterFechaHasta('');
+                      setFilterEstado('TODOS');
+                    }}
+                    className="flex items-center gap-1.5 text-red-400 hover:text-red-300 text-xs font-bold transition-colors uppercase tracking-wider"
+                  >
+                    <XCircle size={14} /> Limpiar Filtros
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
@@ -264,58 +419,66 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {solicitudes.map((s, i) => (
-                    <motion.tr 
-                      key={s.SolicitudId}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="border-b border-border hover:bg-white/5 transition-colors group"
-                    >
-                      <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
-                      <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
-                      <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          s.Estado === 'APROBADO' ? 'bg-green-500/20 text-green-400' : 
-                          s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'bg-blue-500/20 text-blue-400' : 
-                          s.Estado === 'RECHAZADO' ? 'bg-red-500/20 text-red-400' : 
-                          'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {s.Estado === 'REG-011-PENDIENTE' ? 'Pendiente Sistemas' : 
-                           s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'Pendiente Calidad' : s.Estado}
-                        </span>
+                  {filteredSolicitudes.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-text-muted font-medium uppercase tracking-wider text-xs">
+                        No se encontraron solicitudes que coincidan con los filtros de búsqueda.
                       </td>
-                      <td className="py-4 text-text-muted">
-                        {(
-                          s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime
-                        ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
-                      </td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <button 
-                            onClick={() => {
-                              setSelectedSolicitudId(s.SolicitudId);
-                              setIsDetailOpen(true);
-                            }}
-                            className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
-                            title="Previsualizar"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setSelectedSolicitudId(s.SolicitudId);
-                              setIsDetailOpen(true);
-                              setTimeout(() => window.print(), 500);
-                            }}
-                            className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
-                            title="Descargar PDF"
-                          >
-                            <Download size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
+                    </tr>
+                  ) : (
+                    filteredSolicitudes.map((s, i) => (
+                      <motion.tr 
+                        key={s.SolicitudId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="border-b border-border hover:bg-white/5 transition-colors group"
+                      >
+                        <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
+                        <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
+                        <td className="py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            s.Estado === 'APROBADO' ? 'bg-green-500/20 text-green-400' : 
+                            s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'bg-blue-500/20 text-blue-400' : 
+                            s.Estado === 'RECHAZADO' ? 'bg-red-500/20 text-red-400' : 
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {s.Estado === 'REG-011-PENDIENTE' ? 'Pendiente Sistemas' : 
+                             s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'Pendiente Calidad' : s.Estado}
+                          </span>
+                        </td>
+                        <td className="py-4 text-text-muted">
+                          {(
+                            s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime
+                          ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <button 
+                              onClick={() => {
+                                setSelectedSolicitudId(s.SolicitudId);
+                                setIsDetailOpen(true);
+                              }}
+                              className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
+                              title="Previsualizar"
+                            >
+                              <Eye size={18} />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setSelectedSolicitudId(s.SolicitudId);
+                                setIsDetailOpen(true);
+                                setTimeout(() => window.print(), 500);
+                              }}
+                              className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
+                              title="Descargar PDF"
+                            >
+                              <Download size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

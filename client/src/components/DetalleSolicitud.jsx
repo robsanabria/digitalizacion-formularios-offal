@@ -114,14 +114,14 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
     }
   };
 
-  const handleUploadEvidencia = async (e) => {
+  const handleUploadEvidencia = async (e, tipo = 'PROPUESTO') => {
     const file = e.target.files[0];
     if (!file) return;
     setUploadLoading(true);
     try {
       const fd = new FormData();
       fd.append('archivo', file);
-      await axios.post(`/api/solicitudes/${solicitudId}/adjuntos`, fd);
+      await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=${tipo}`, fd);
       await fetchData();
     } catch (err) {
       alert('Error al subir archivo: ' + err.message);
@@ -267,7 +267,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                       {(solicitud.estado === 'REG-011-PENDIENTE' || isResponding) && (
                          <div className="animate-in fade-in slide-in-from-bottom-4 mb-12">
                             <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span></div>
-                            <REG011PaperForm data={solicitud} readOnly={true} />
+                            <REG011PaperForm 
+                              solicitudId={solicitudId}
+                              data={solicitud} 
+                              readOnly={true} 
+                              userRole={user?.Rol}
+                              solicitudEstado={solicitud?.estado}
+                              adjuntos={adjuntos}
+                              onUploadAdjunto={handleUploadEvidencia}
+                              onDeleteAdjunto={handleDeleteAdjunto}
+                              uploadLoading={uploadLoading}
+                            />
                          </div>
                       )}
 
@@ -280,6 +290,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                                data={isResponding ? { ...solicitud, ...responseData } : solicitud} 
                                readOnly={!isResponding}
                                userRole={user?.Rol}
+                               solicitudEstado={solicitud?.estado}
                                adjuntos={adjuntos}
                                historial={historial}
                                onUploadAdjunto={handleUploadEvidencia}
@@ -295,7 +306,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
                 {/* Mostrar el 011 original abajo colapsado como referencia */}
                 <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity">
                    <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">Ver Solicitud Original (REG-SIS-011)</summary>
-                   <REG011PaperForm data={solicitud} readOnly={true} />
+                   <REG011PaperForm 
+                      solicitudId={solicitudId}
+                      data={solicitud} 
+                      readOnly={true} 
+                      userRole={user?.Rol}
+                      solicitudEstado={solicitud?.estado}
+                      adjuntos={adjuntos}
+                      onUploadAdjunto={handleUploadEvidencia}
+                      onDeleteAdjunto={handleDeleteAdjunto}
+                      uploadLoading={uploadLoading}
+                    />
                 </details>
 
                 {/* Historial (lateral o inferior) */}

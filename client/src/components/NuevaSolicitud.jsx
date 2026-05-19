@@ -47,7 +47,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
       if (file && solicitudId) {
         const formDataFile = new FormData();
         formDataFile.append('archivo', file);
-        await axios.post(`/api/solicitudes/${solicitudId}/adjuntos`, formDataFile);
+        await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=ORIGINAL`, formDataFile);
       }
 
       onCreated();
@@ -95,8 +95,8 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             <REG011PaperForm data={formData} onChange={handleFieldChange} />
             
             {/* Upload adicional */}
-            <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl">
-               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Adjuntar Referencia Visual (Opcional):</label>
+            <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Cargar Formato Original (Etiqueta de Referencia):</label>
                <input 
                   type="file" 
                   onChange={e => setFile(e.target.files[0])}
