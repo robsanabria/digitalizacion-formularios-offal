@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, Download, ExternalLink, Loader2, Check, X as XIcon, Upload, Clock, History, Save, Send } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import REG011PaperForm from './REG011PaperForm';
 import REG007PaperForm from './REG007PaperForm';
 
@@ -353,38 +354,68 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
         </div>
       </div>
 
-      {/* Modal de Confirmación DaisyUI */}
-      {confirmConfig && (
-        <div className="modal modal-open z-[100] backdrop-blur-sm">
-          <div className="modal-box bg-[#1e293b] text-white border border-slate-700 max-w-md">
-            <h3 className="font-bold text-lg text-primary uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-info animate-ping"></span>
-              {confirmConfig.title}
-            </h3>
-            <p className="py-4 text-sm text-slate-300 font-medium">
-              {confirmConfig.message}
-            </p>
-            <div className="modal-action">
-              <button 
-                type="button"
-                onClick={() => setConfirmConfig(null)} 
-                className="btn btn-sm btn-outline border-slate-600 hover:bg-slate-800 text-slate-300 font-bold uppercase tracking-wider text-[10px]"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={() => {
-                  confirmConfig.onConfirm();
-                  setConfirmConfig(null);
-                }} 
-                className={`btn btn-sm text-white font-bold uppercase tracking-wider text-[10px] ${confirmConfig.btnClass}`}
-              >
-                Confirmar
-              </button>
-            </div>
+      {/* Modal de Confirmación Premium */}
+      <AnimatePresence>
+        {confirmConfig && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setConfirmConfig(null)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            {/* Dialog Content */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-md bg-slate-900/95 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-md overflow-hidden"
+            >
+              {/* Top accent glow line */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-indigo-500" />
+              
+              <div className="flex items-center gap-3 mb-4">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                </span>
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-indigo-300">
+                  {confirmConfig.title}
+                </h3>
+              </div>
+
+              <p className="text-sm text-slate-300 font-medium mb-6 leading-relaxed">
+                {confirmConfig.message}
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setConfirmConfig(null)} 
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    confirmConfig.onConfirm();
+                    setConfirmConfig(null);
+                  }} 
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider text-white rounded-xl shadow-lg hover:shadow-xl transition-all ${
+                    confirmConfig.btnClass?.includes('btn-error') 
+                      ? 'bg-rose-600 hover:bg-rose-500 hover:shadow-rose-600/20' 
+                      : 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-600/20'
+                  }`}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

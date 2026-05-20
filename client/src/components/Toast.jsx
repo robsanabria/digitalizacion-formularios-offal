@@ -46,6 +46,13 @@ export const ToastProvider = ({ children }) => {
     info: 'bg-slate-900/95 border-sky-500/30 text-sky-50 shadow-[0_4px_20px_rgba(14,165,233,0.15)]',
   };
 
+  const accentBarMap = {
+    success: 'bg-emerald-500',
+    error: 'bg-rose-500',
+    warning: 'bg-amber-500',
+    info: 'bg-sky-500',
+  };
+
   return (
     <ToastContext.Provider value={toast}>
       {children}
@@ -57,18 +64,23 @@ export const ToastProvider = ({ children }) => {
               initial={{ opacity: 0, y: -20, scale: 0.95, x: 20 }}
               animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 50, transition: { duration: 0.15 } }}
-              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md ${bgMap[t.type]}`}
+              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border backdrop-blur-md relative overflow-hidden ${bgMap[t.type]}`}
             >
-              {iconMap[t.type]}
-              <div className="flex-1 text-xs font-semibold leading-relaxed break-words pr-2">
-                {t.message}
+              {/* Left border accent line */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${accentBarMap[t.type]}`} />
+              
+              <div className="pl-1.5 flex items-start gap-3 w-full">
+                {iconMap[t.type]}
+                <div className="flex-1 text-xs font-semibold leading-relaxed break-words pr-2">
+                  {t.message}
+                </div>
+                <button
+                  onClick={() => removeToast(t.id)}
+                  className="text-slate-400 hover:text-white transition-colors p-0.5 rounded-full hover:bg-white/10 shrink-0"
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <button
-                onClick={() => removeToast(t.id)}
-                className="text-slate-400 hover:text-white transition-colors p-0.5 rounded-full hover:bg-white/10 shrink-0"
-              >
-                <X size={14} />
-              </button>
             </motion.div>
           ))}
         </AnimatePresence>
