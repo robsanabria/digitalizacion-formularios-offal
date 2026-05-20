@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Shield, Users, Save, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import { useToast } from './Toast';
 
 const GestionUsuarios = ({ isOpen, onClose }) => {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
@@ -30,8 +32,9 @@ const GestionUsuarios = ({ isOpen, onClose }) => {
     try {
       await axios.put(`/api/users/${userId}/role`, { rol: newRole });
       setUsers(users.map(u => u.UsuarioId === userId ? { ...u, Rol: newRole } : u));
+      toast.success("Rol de usuario actualizado correctamente");
     } catch (err) {
-      alert("Error al actualizar rol");
+      toast.error("Error al actualizar rol: " + (err.response?.data?.error || err.message));
     } finally {
       setUpdating(null);
     }

@@ -523,19 +523,25 @@ function App() {
 function NavItem({ icon, label, active = false, onClick, className = "" }) {
   return (
     <motion.div 
-      whileHover={{ scale: 1.02, x: 5 }}
+      whileHover={{ scale: 1.03, x: 6 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer select-none transition-all duration-200 ${
-      active 
-        ? 'bg-primary/20 text-primary border border-primary/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
-        : 'text-text-muted hover:bg-white/5 hover:text-white'
-    } ${className}`}
+      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer select-none transition-all duration-300 relative overflow-hidden group ${
+        active 
+          ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary border border-primary/30 shadow-[0_4px_20px_rgba(99,102,241,0.25)]' 
+          : 'text-text-muted hover:bg-white/5 hover:text-white'
+      } ${className}`}
     >
-      <div className={`${active ? 'text-primary' : 'text-text-muted group-hover:text-white'}`}>
+      {active && (
+        <motion.div 
+          layoutId="activeIndicator"
+          className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-indigo-400 rounded-r-md"
+        />
+      )}
+      <div className={`transition-transform duration-300 group-hover:scale-110 ${active ? 'text-primary' : 'text-text-muted group-hover:text-white'}`}>
         {icon}
       </div>
-      <span className="font-medium">{label}</span>
+      <span className="font-semibold text-sm tracking-wide">{label}</span>
     </motion.div>
   );
 }
@@ -543,11 +549,17 @@ function NavItem({ icon, label, active = false, onClick, className = "" }) {
 function StatCard({ label, value, color }) {
   return (
     <motion.div 
-      whileHover={{ y: -5 }}
-      className="glass-card p-6"
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="glass-card p-6 border border-white/5 relative overflow-hidden group shadow-lg hover:shadow-2xl transition-all duration-300"
     >
-      <p className="text-text-muted text-sm font-medium mb-1">{label}</p>
-      <h4 className="text-4xl font-bold" style={{ color }}>{value}</h4>
+      {/* Glow effect matching indicator color */}
+      <div 
+        className="absolute -right-10 -bottom-10 w-28 h-28 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"
+        style={{ backgroundColor: color }}
+      />
+      <p className="text-text-muted text-xs font-bold uppercase tracking-wider mb-2">{label}</p>
+      <h4 className="text-4xl font-black tracking-tight" style={{ color }}>{value}</h4>
     </motion.div>
   );
 }

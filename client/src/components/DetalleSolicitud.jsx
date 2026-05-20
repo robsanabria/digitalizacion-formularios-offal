@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileText, Download, ExternalLink, Loader2, Check, X as XIcon, Upload, Clock, History, Save, Send } from 'lucide-react';
 import axios from 'axios';
+import { useToast } from './Toast';
 import REG011PaperForm from './REG011PaperForm';
 import REG007PaperForm from './REG007PaperForm';
 
@@ -12,6 +13,7 @@ const ESTADOS_APROBACION = {
 };
 
 const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => {
+  const toast = useToast();
   const [solicitud, setSolicitud] = useState(null);
   const [adjuntos, setAdjuntos] = useState([]);
   const [historial, setHistorial] = useState([]);
@@ -88,10 +90,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
     setStatusLoading(true);
     try {
       await axios.post(`/api/solicitudes/${solicitudId}/transition`, { action, comentario });
+      toast.success(action === 'approve' ? "Solicitud aprobada con éxito" : "Solicitud rechazada con éxito");
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
-      alert('Error: ' + (err.response?.data?.error || err.message));
+      toast.error('Error: ' + (err.response?.data?.error || err.message));
     } finally {
       setStatusLoading(false);
     }
@@ -104,11 +107,12 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
         ...responseData,
         estado: 'REG-007-PENDIENTE-APROBACION'
       });
+      toast.success("Respuesta de Sistemas registrada y enviada a Calidad");
       setIsResponding(false);
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
-      alert('Error al enviar respuesta: ' + (err.response?.data?.detalle || err.message));
+      toast.error('Error al enviar respuesta: ' + (err.response?.data?.detalle || err.message));
     } finally {
       setStatusLoading(false);
     }
@@ -122,22 +126,30 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
       const fd = new FormData();
       fd.append('archivo', file);
       await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=${tipo}`, fd);
+      toast.success("Archivo subido correctamente");
       await fetchData();
     } catch (err) {
-      alert('Error al subir archivo: ' + err.message);
+      toast.error('Error al subir archivo: ' + (err.response?.data?.error || err.response?.data?.detalle || err.message));
     } finally {
       setUploadLoading(false);
     }
   };
 
   const handleDeleteAdjunto = async (adjuntoId) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este archivo adjunto?')) return;
-    try {
-      await axios.delete(`/api/solicitudes/${solicitudId}/adjuntos/${adjuntoId}`);
-      await fetchData();
-    } catch (err) {
-      alert('Error al eliminar archivo: ' + (err.response?.data?.error || err.message));
-    }
+    setConfirmConfig({
+      title: "Eliminar archivo",
+      message: "¿Está seguro de que desea eliminar este archivo adjunto? Esta acción no se puede deshacer.",
+      btnClass: "btn-error text-white",
+      onConfirm: async () => {
+        try {
+          await axios.delete(`/api/solicitudes/${solicitudId}/adjuntos/${adjuntoId}`);
+          toast.success("Archivo eliminado correctamente");
+          await fetchData();
+        } catch (err) {
+          toast.error('Error al eliminar archivo: ' + (err.response?.data?.error || err.message));
+        }
+      }
+    });
   };
 
 

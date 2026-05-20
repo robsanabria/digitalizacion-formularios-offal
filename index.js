@@ -13,7 +13,15 @@ const usersController = require('./controllers/usersController');
 
 // Middlewares
 const authMiddleware = require('./middlewares/authMiddleware');
-app.use(cors());
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://etiquetas.offalexpsa.ar'] 
+        : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-ms-client-principal-name', 'x-ms-client-principal-id'],
+    credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/dist')));
 
@@ -23,12 +31,13 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 });
 
 // Proteger todas las rutas de la API con el middleware
+const { checkRole } = require('./middlewares/roleMiddleware');
 app.use('/api', authMiddleware);
 
 // Registro de rutas API
 app.use('/api/solicitudes', solicitudesRoutes);
-app.get('/api/users', usersController.getUsers);
-app.put('/api/users/:id/role', usersController.updateUserRole);
+app.get('/api/users', checkRole(['ADMIN']), usersController.getUsers);
+app.put('/api/users/:id/role', checkRole(['ADMIN']), usersController.updateUserRole);
 
 
 // Endpoint de prueba de conexión y tablas

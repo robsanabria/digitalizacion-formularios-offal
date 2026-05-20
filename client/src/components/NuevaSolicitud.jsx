@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, Upload, Save, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import REG011PaperForm from './REG011PaperForm';
+import { useToast } from './Toast';
 
 const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
@@ -50,10 +52,11 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
         await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=ORIGINAL`, formDataFile);
       }
 
+      toast.success("Registro REG-SIS-011 creado y enviado a Sistemas con éxito");
       onCreated();
       onClose();
     } catch (err) {
-      alert("Error al crear el registro REG-011: " + (err.response?.data?.detalle || err.message));
+      toast.error("Error al crear el registro REG-011: " + (err.response?.data?.detalle || err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }

@@ -153,18 +153,42 @@ const addAdjunto = async (req, res) => {
     const { id } = req.params;
     const file = req.file;
     const { tipo } = req.query; // 'ORIGINAL' o 'PROPUESTO'
+    const { Rol } = req.user;
 
     if (!file) {
         return res.status(400).json({ error: 'No se ha subido ningún archivo' });
     }
 
+    // Validación de roles de acuerdo al tipo de adjunto
+    if (tipo === 'ORIGINAL' && !['CALIDAD', 'ADMIN'].includes(Rol)) {
+        return res.status(403).json({ error: 'No autorizado', detalle: 'Solo personal de Calidad o Administradores pueden subir archivos originales.' });
+    }
+    if (tipo === 'PROPUESTO' && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
+        return res.status(403).json({ error: 'No autorizado', detalle: 'Solo personal de Sistemas o Administradores pueden subir archivos propuestos.' });
+    }
+
     try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+
+        // Verificar el estado de la solicitud
+        const solRes = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query('SELECT Estado FROM Solicitudes WHERE SolicitudId = @id');
+
+        if (solRes.recordset.length === 0) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+
+        const estado = solRes.recordset[0].Estado;
+        if (estado === 'APROBADO' || estado === 'RECHAZADO') {
+            return res.status(400).json({ error: 'Operación no permitida', detalle: 'No se pueden añadir archivos a una solicitud finalizada (Aprobada o Rechazada).' });
+        }
+
         // 1. Subir a Azure Blob Storage
         const { url, blobName } = await storageService.uploadFile(id, file);
 
         // 2. Guardar metadatos en la base de datos
-        const pool = await poolPromise;
-        if (!pool) throw new Error('No hay conexión con la base de datos');
         await pool.request()
             .input('solicitudId', sql.UniqueIdentifier, id)
             .input('nombreArchivo', sql.NVarChar, file.originalname)
@@ -394,22 +418,45 @@ const getHistorial = async (req, res) => {
 
 const deleteAdjunto = async (req, res) => {
     const { id, adjuntoId } = req.params;
+    const { Rol } = req.user;
     console.log(`[Controller] Petición de eliminación para AdjuntoId: ${adjuntoId}`);
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
 
-        // 1. Buscar el adjunto en la base de datos
+        // 1. Buscar el adjunto y verificar tipo
         const result = await pool.request()
             .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
-            .query('SELECT RutaArchivo FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
+            .query('SELECT RutaArchivo, TipoAdjunto FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
 
         if (result.recordset.length === 0) {
             console.warn(`[Controller] Adjunto no encontrado en DB: ${adjuntoId}`);
             return res.status(404).json({ mensaje: 'Archivo no encontrado' });
         }
 
-        const { RutaArchivo } = result.recordset[0];
+        const { RutaArchivo, TipoAdjunto } = result.recordset[0];
+
+        // Validación de roles de acuerdo al tipo de adjunto a eliminar
+        if (TipoAdjunto === 'ORIGINAL' && !['CALIDAD', 'ADMIN'].includes(Rol)) {
+            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Calidad o Administradores pueden eliminar archivos originales.' });
+        }
+        if (TipoAdjunto === 'PROPUESTO' && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
+            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas o Administradores pueden eliminar archivos propuestos.' });
+        }
+
+        // Verificar el estado de la solicitud
+        const solRes = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query('SELECT Estado FROM Solicitudes WHERE SolicitudId = @id');
+
+        if (solRes.recordset.length === 0) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+
+        const estado = solRes.recordset[0].Estado;
+        if (estado === 'APROBADO' || estado === 'RECHAZADO') {
+            return res.status(400).json({ error: 'Operación no permitida', detalle: 'No se pueden eliminar archivos de una solicitud finalizada.' });
+        }
 
         // 2. Intentar eliminar de Azure Blob Storage (si tiene ruta)
         if (RutaArchivo) {
