@@ -90,7 +90,8 @@ table { border-collapse: collapse; }
 /* ── Estilos de Impresión (Generación de PDF) ── */
 @media print {
   @page {
-    size: A4;
+    /* Usar tamaño legal (8.5in x 14in) para emisiones y descargas */
+    size: legal;
     margin: 10mm;
   }
   /* Ocultar todo lo que no sea el formulario */
