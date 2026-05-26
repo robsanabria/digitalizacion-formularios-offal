@@ -148,6 +148,43 @@ table { border-collapse: collapse; }
     background: white !important;
   }
 
+  /* Asegurar dimensiones de página y que el formulario ocupe el ancho imprimible */
+  html, body {
+    width: 8.5in !important;
+    height: 14in !important;
+  }
+
+  #paper-form-container {
+    box-sizing: border-box !important;
+    /* Restar márgenes: 6mm arriba + 6mm abajo => 12mm total horizontal */
+    width: calc(8.5in - 12mm) !important;
+    max-width: calc(8.5in - 12mm) !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* El modal se muestra dentro de un overlay; forzamos que el wrapper sea estático y ocupe todo el ancho para impresión */
+  .fixed.inset-0 > div,
+  .fixed.inset-0 .bg-\[\#f3f4f6\] {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Ocultar backdrop y filtros que interfieren con la impresión */
+  .fixed.inset-0, .fixed.inset-0.z-50 {
+    background: transparent !important;
+  }
+  .backdrop-blur-md {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
   /* Ocultar botones dentro del modal durante la impresión */
   button, .no-print {
     display: none !important;
