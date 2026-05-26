@@ -90,9 +90,11 @@ table { border-collapse: collapse; }
 /* ── Estilos de Impresión (Generación de PDF) ── */
 @media print {
   @page {
-    /* Usar tamaño legal (8.5in x 14in) para emisiones y descargas */
+    /* Usar tamaño legal (8.5in x 14in) para emisiones y descargas. */
+    /* Se incluye la declaración explícita en pulgadas como fallback para algunos navegadores. */
+    size: 8.5in 14in;
     size: legal;
-    margin: 10mm;
+    margin: 6mm;
   }
   /* Ocultar todo lo que no sea el formulario */
   body * {
@@ -104,15 +106,35 @@ table { border-collapse: collapse; }
     visibility: visible;
   }
 
-  /* Posicionar el formulario al inicio de la página */
+  /* Para impresión: permitir que el formulario ocupe todo el ancho utilizable
+     y evitar posicionamiento absoluto que puede provocar recortes entre páginas. */
   #paper-form-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
     visibility: visible;
+  }
+
+  /* Forzar que los wrappers con clases de max-width no limiten el ancho en impresión */
+  #paper-form-container .max-w-4xl,
+  #paper-form-container .max-w-full,
+  #paper-form-container .mx-auto {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Eliminar sombras y radios para evitar problemas visuales en PDF */
+  #paper-form-container * {
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    border-radius: 0 !important;
+    background-clip: border-box !important;
   }
 
   /* Forzar colores de fondo para que salgan los bordes y grises del papel */
