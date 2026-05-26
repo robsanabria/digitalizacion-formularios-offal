@@ -24,5 +24,8 @@ router.post('/:id/adjuntos', upload.single('archivo'), solicitudesController.add
 router.get('/:id/adjuntos/:adjuntoId/descargar', solicitudesController.downloadAdjunto);
 router.delete('/:id/adjuntos/:adjuntoId', solicitudesController.deleteAdjunto);
 
+// Exportar / Generar PDF del formulario (server-side, alta fidelidad)
+router.get('/:id/export', checkRole(['CALIDAD','SISTEMAS','ADMIN']), solicitudesController.exportSolicitud);
+
 module.exports = router;
 
