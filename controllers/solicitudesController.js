@@ -1,6 +1,5 @@
 const { poolPromise, sql } = require('../config/db');
 const storageService = require('../services/storageService');
-const puppeteer = require('puppeteer');
 
 const getSolicitudes = async (req, res) => {
     try {
@@ -417,61 +416,7 @@ const getHistorial = async (req, res) => {
     }
 };
 
-/**
- * Genera y devuelve un PDF del formulario (alta fidelidad) usando Puppeteer.
- * GET /api/solicitudes/:id/export?format=pdf&includeAttachments=true
- */
-const exportSolicitud = async (req, res) => {
-    const { id } = req.params;
-    const { format = 'pdf', includeAttachments = 'true' } = req.query;
-
-    if (format !== 'pdf') {
-        return res.status(400).json({ error: 'Sólo se soporta format=pdf' });
-    }
-
-    try {
-        // Construir la URL pública interna hacia la vista de impresión del cliente
-        // Preferimos usar BASE_URL si está configurada, sino inferir del request
-        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-        const printUrl = `${baseUrl}/requests/${id}/print?includeAttachments=${includeAttachments}`;
-
-        // Lanzar puppeteer
-        const browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-            headless: 'new'
-        });
-        const page = await browser.newPage();
-
-        // Establecer un user-agent para evitar bloqueos
-        await page.setUserAgent('Regsis-PDF-Generator/1.0');
-
-        // Navegar y esperar a que el contenido esté listo. Asumimos que la app emite
-        // una señal (por ejemplo, existencia del contenedor #paper-form-container) cuando esté lista.
-        await page.goto(printUrl, { waitUntil: 'networkidle0', timeout: 60000 });
-
-        // Esperar a que el contenedor específico exista en la página
-        await page.waitForSelector('#paper-form-container', { timeout: 15000 });
-
-        // Generar PDF con formato 'legal'
-        const pdfBuffer = await page.pdf({
-            format: 'legal',
-            printBackground: true,
-            margin: { top: '6mm', right: '6mm', bottom: '6mm', left: '6mm' }
-        });
-
-        await browser.close();
-
-        res.set({
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="REG-SIS-007-${id}.pdf"`,
-            'Content-Length': pdfBuffer.length
-        });
-        return res.send(pdfBuffer);
-    } catch (err) {
-        console.error('[Controller] Error en exportSolicitud:', err);
-        return res.status(500).json({ error: 'Error al generar el PDF', detalle: err.message });
-    }
-};
+/* exportSolicitud removed — keeping backend minimal per user's request */
 
 const deleteAdjunto = async (req, res) => {
     const { id, adjuntoId } = req.params;
@@ -551,7 +496,6 @@ module.exports = {
     downloadAdjunto,
     deleteAdjunto,
     transitionSolicitud,
-    getHistorial,
-    exportSolicitud
+    getHistorial
 };
 

@@ -41,6 +41,8 @@ const uploadFile = async (requestId, file) => {
     }
 };
 
+/* uploadBuffer removed — keeping simple uploadFile API */
+
 const downloadFile = async (blobName) => {
     try {
         console.log(`[Storage] Iniciando descarga de blob: ${blobName}`);
