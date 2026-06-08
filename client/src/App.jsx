@@ -108,7 +108,13 @@ function App() {
     misPendientes.push({ label: 'REG-11 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', 'OBSERVADO') });
   }
 
+  // Un registro "tiene REG-07" cuando Sistemas ya respondió (pendiente, aprobado o rechazado).
+  const tieneReg07 = (estado) => ['REG-007-PENDIENTE-APROBACION', 'APROBADO', 'RECHAZADO'].includes(estado);
+
   const filteredSolicitudes = solicitudes.filter(s => {
+    // 0. La vista REG-07 sólo muestra registros con REG-07 ya generado por Sistemas.
+    if (activeTab === 'reg07' && !tieneReg07(s.Estado)) return false;
+
     // 1. Filtro Producto
     if (filterProducto && !s.NombreProducto?.toLowerCase().includes(filterProducto.toLowerCase())) {
       return false;

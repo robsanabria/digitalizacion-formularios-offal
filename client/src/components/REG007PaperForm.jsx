@@ -46,9 +46,10 @@ const REG007PaperForm = ({
     let calidadFirma = null;
 
     if (historial && Array.isArray(historial)) {
-      // 1. Firma Sistemas: buscar el evento donde completó o envió Sistemas
-      const evSistemas = historial.find(h => 
-        h.Accion?.includes('Respuesta Sistemas') || h.Accion?.includes('Sistemas')
+      // 1. Firma Sistemas: el evento donde Sistemas completó el REG-007
+      // (no confundir con 'REG-11 aprobado por Sistemas', que es la compuerta previa).
+      const evSistemas = historial.find(h =>
+        h.Accion?.includes('Respuesta Sistemas') || h.EstadoNuevo === 'REG-007-PENDIENTE-APROBACION'
       );
       if (evSistemas) {
         sistemasFirma = {

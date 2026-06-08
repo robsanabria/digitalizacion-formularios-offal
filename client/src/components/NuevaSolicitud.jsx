@@ -37,6 +37,47 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Validación: todos los campos del REG-11 son obligatorios.
+  const CAMPOS_REQUERIDOS = [
+    ['fechaSolicitud', 'Fecha de Solicitud'],
+    ['sectorSolicitante', 'Sector Solicitante'],
+    ['nombreProducto', 'Nombre Producto'],
+    ['codigoProducto', 'Código Producto'],
+    ['destino', 'Destino'],
+    ['vidaUtil', 'Vida Útil'],
+    ['codigoSenasa', 'Código SENASA'],
+    ['tara', 'Tara'],
+    ['pesoMinimo', 'Peso Mínimo'],
+    ['pesoMaximo', 'Peso Máximo'],
+    ['pesoEstandar', 'Peso Estándar'],
+    ['numCaja', 'N° de Caja'],
+    ['faja', 'Faja'],
+    ['codigoExterno', 'Código Externo'],
+    ['comentariosSolicitante', 'Comentarios del Solicitante'],
+    ['cambioSolicitado', 'Cambio Solicitado'],
+  ];
+
+  const getFaltantes = () => {
+    const faltan = [];
+    for (const [campo, label] of CAMPOS_REQUERIDOS) {
+      const v = formData[campo];
+      if (!v || String(v).trim() === '') faltan.push(label);
+    }
+    if (!Array.isArray(formData.motivo) || formData.motivo.length === 0) faltan.push('Motivo del cambio (al menos uno)');
+    if (!Array.isArray(formData.impresoras) || formData.impresoras.length === 0) faltan.push('Impresoras afectadas (al menos una)');
+    if (!file) faltan.push('Formato Original (archivo de etiqueta)');
+    return faltan;
+  };
+
+  const handleIntentarGuardar = () => {
+    const faltan = getFaltantes();
+    if (faltan.length > 0) {
+      toast.error('Faltan completar campos obligatorios: ' + faltan.join(', '));
+      return;
+    }
+    setShowConfirm(true);
+  };
+
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setLoading(true);
@@ -83,9 +124,9 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
               >
                 Cancelar
               </button>
-              <button 
-                disabled={loading} 
-                onClick={(e) => { e.preventDefault(); setShowConfirm(true); }}
+              <button
+                disabled={loading}
+                onClick={(e) => { e.preventDefault(); handleIntentarGuardar(); }}
                 className="bg-green-600 text-white px-8 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
               >
                 {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}

@@ -76,7 +76,10 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
         cambioSolicitado: rawData.CambioSolicitado,
         estado: rawData.Estado,
         codigoTwins: rawData.CodigoTwins,
-        correspondeSolicitud: rawData.CorrespondeSolicitud
+        correspondeSolicitud: rawData.CorrespondeSolicitud,
+        solicitanteNombre: rawData.SolicitanteNombre,
+        rolSolicitante: rawData.RolSolicitante,
+        fechaCreacion: rawData.FechaCreacion
       };
 
       setSolicitud(normalized);
@@ -102,7 +105,10 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
         faja: normalized.faja || '',
         codigoExterno: normalized.codigoExterno || '',
         comentariosSolicitante: normalized.comentariosSolicitante || '',
-        cambioSolicitado: normalized.cambioSolicitado || ''
+        cambioSolicitado: normalized.cambioSolicitado || '',
+        solicitanteNombre: normalized.solicitanteNombre || '',
+        rolSolicitante: normalized.rolSolicitante || '',
+        fechaCreacion: normalized.fechaCreacion || ''
       });
 
       setResponseData({
@@ -167,6 +173,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   };
 
   const handleSystemsResponse = async () => {
+    // Validación REG-07: campos obligatorios + al menos una etiqueta propuesta.
+    const faltan = [];
+    if (!responseData.fechaPresentacion?.trim?.()) faltan.push('Fecha de presentación');
+    if (!responseData.codigoTwins?.trim?.()) faltan.push('Código TWINS');
+    if (!responseData.correspondeSolicitud?.trim?.()) faltan.push('Corresponde a Solicitud');
+    const tieneEtiqueta = adjuntos.some(a => a.TipoAdjunto === 'PROPUESTO');
+    if (!tieneEtiqueta) faltan.push('al menos una etiqueta técnica (subir en el REG-07)');
+    if (faltan.length > 0) {
+      toast.error('Faltan completar campos del REG-07: ' + faltan.join(', '));
+      return;
+    }
     setStatusLoading(true);
     try {
       await axios.put(`/api/solicitudes/${solicitudId}`, {
@@ -185,6 +202,25 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   };
 
   const handleResend011 = async () => {
+    // Validación REG-11: todos los campos obligatorios + adjunto original.
+    const req = [
+      ['fechaSolicitud', 'Fecha de Solicitud'], ['sectorSolicitante', 'Sector Solicitante'],
+      ['nombreProducto', 'Nombre Producto'], ['codigoProducto', 'Código Producto'],
+      ['destino', 'Destino'], ['vidaUtil', 'Vida Útil'], ['codigoSenasa', 'Código SENASA'],
+      ['tara', 'Tara'], ['pesoMinimo', 'Peso Mínimo'], ['pesoMaximo', 'Peso Máximo'],
+      ['pesoEstandar', 'Peso Estándar'], ['numCaja', 'N° de Caja'], ['faja', 'Faja'],
+      ['codigoExterno', 'Código Externo'], ['comentariosSolicitante', 'Comentarios del Solicitante'],
+      ['cambioSolicitado', 'Cambio Solicitado'],
+    ];
+    const faltan = req.filter(([k]) => !String(edit011Data[k] ?? '').trim()).map(([, l]) => l);
+    const parseLen = (v) => { try { return (Array.isArray(v) ? v : JSON.parse(v || '[]')).length; } catch { return 0; } };
+    if (parseLen(edit011Data.motivo) === 0) faltan.push('Motivo del cambio (al menos uno)');
+    if (parseLen(edit011Data.impresoras) === 0) faltan.push('Impresoras afectadas (al menos una)');
+    if (!adjuntos.some(a => a.TipoAdjunto === 'ORIGINAL')) faltan.push('Formato Original (archivo de etiqueta)');
+    if (faltan.length > 0) {
+      toast.error('Faltan completar campos obligatorios: ' + faltan.join(', '));
+      return;
+    }
     setStatusLoading(true);
     try {
       await axios.put(`/api/solicitudes/${solicitudId}`, {
@@ -507,6 +543,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                         userRole={user?.Rol}
                         solicitudEstado={estado}
                         adjuntos={adjuntos}
+                        historial={historial}
                         onUploadAdjunto={handleUploadEvidencia}
                         onDeleteAdjunto={handleDeleteAdjunto}
                         uploadLoading={uploadLoading}
@@ -516,7 +553,8 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                   ) : isResponding ? (
                     /* CASO 2: Sistemas responde (011 referencia arriba + 007 editable) */
                     <>
-                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-12">
+                      {/* Referencia REG-11 mientras Sistemas completa: no se imprime (el PDF es sólo el REG-07) */}
+                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-12 no-print">
                         <div className="text-center mb-4">
                           <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span>
                         </div>
@@ -527,6 +565,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                           userRole={user?.Rol}
                           solicitudEstado={estado}
                           adjuntos={adjuntos}
+                          historial={historial}
                           onUploadAdjunto={handleUploadEvidencia}
                           onDeleteAdjunto={handleDeleteAdjunto}
                           uploadLoading={uploadLoading}
@@ -583,6 +622,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                         userRole={user?.Rol}
                         solicitudEstado={estado}
                         adjuntos={adjuntos}
+                        historial={historial}
                         onUploadAdjunto={handleUploadEvidencia}
                         onDeleteAdjunto={handleDeleteAdjunto}
                         uploadLoading={uploadLoading}
@@ -606,6 +646,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                       userRole={user?.Rol}
                       solicitudEstado={estado}
                       adjuntos={adjuntos}
+                      historial={historial}
                       onUploadAdjunto={handleUploadEvidencia}
                       onDeleteAdjunto={handleDeleteAdjunto}
                       uploadLoading={uploadLoading}

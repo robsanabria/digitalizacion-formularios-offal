@@ -19,7 +19,12 @@ const getSolicitudById = async (req, res) => {
         if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request()
             .input('id', sql.UniqueIdentifier, id)
-            .query('SELECT * FROM Solicitudes WHERE SolicitudId = @id');
+            .query(`
+                SELECT s.*, u.NombreUsuario AS SolicitanteNombre
+                FROM Solicitudes s
+                LEFT JOIN Usuarios u ON s.SolicitadoPor = u.UsuarioId
+                WHERE s.SolicitudId = @id
+            `);
 
         if (result.recordset.length === 0) {
             return res.status(404).json({ mensaje: 'Solicitud no encontrada' });
@@ -40,10 +45,31 @@ const createSolicitud = async (req, res) => {
     const solicitadoPor = req.user.UsuarioId;
     const rolSolicitante = req.user.Rol;
 
+    // Validación: todos los campos del REG-11 son obligatorios.
+    const tieneTexto = (v) => v != null && String(v).trim() !== '';
+    const tieneItems = (v) => {
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === 'string') { try { const a = JSON.parse(v); return Array.isArray(a) ? a.length > 0 : v.trim() !== ''; } catch { return v.trim() !== ''; } }
+        return false;
+    };
+    const requeridosTexto = {
+        fechaSolicitud, sectorSolicitante, nombreProducto, codigoProducto, destino,
+        vidaUtil, codigoSenasa, tara, pesoMinimo, pesoMaximo, pesoEstandar,
+        numCaja, faja, codigoExterno, comentariosSolicitante, cambioSolicitado
+    };
+    const faltantes = Object.entries(requeridosTexto)
+        .filter(([, v]) => !tieneTexto(v))
+        .map(([k]) => k);
+    if (!tieneItems(motivo)) faltantes.push('motivo');
+    if (!tieneItems(impresoras)) faltantes.push('impresoras');
+    if (faltantes.length > 0) {
+        return res.status(400).json({ error: 'Campos obligatorios incompletos', detalle: `Faltan: ${faltantes.join(', ')}` });
+    }
+
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
-        
+
         // Estado inicial: el REG-SIS-011 creado por Calidad queda pendiente de
         // aprobación por parte de Sistemas (nueva compuerta previa al REG-007).
         const estadoInicial = 'REG-011-PENDIENTE-APROBACION';
@@ -208,6 +234,23 @@ const updateSolicitud = async (req, res) => {
                 error: 'Operación no permitida',
                 detalle: 'El REG-11 debe estar aprobado por Sistemas antes de completar el REG-007.'
             });
+        }
+
+        // Validación: campos del REG-007 obligatorios + al menos una etiqueta propuesta.
+        const reg07Texto = (v) => v != null && String(v).trim() !== '';
+        const faltan07 = [];
+        if (!reg07Texto(b.fechaPresentacion)) faltan07.push('fechaPresentacion');
+        if (!reg07Texto(b.codigoTwins)) faltan07.push('codigoTwins');
+        if (!reg07Texto(b.correspondeSolicitud)) faltan07.push('correspondeSolicitud');
+
+        const propuestos = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query("SELECT COUNT(*) AS Total FROM Adjuntos WHERE SolicitudId = @id AND TipoAdjunto = 'PROPUESTO'");
+        if ((propuestos.recordset[0]?.Total || 0) === 0) {
+            faltan07.push('al menos una etiqueta técnica (Formato Propuesto)');
+        }
+        if (faltan07.length > 0) {
+            return res.status(400).json({ error: 'REG-007 incompleto', detalle: `Faltan: ${faltan07.join(', ')}` });
         }
 
         const nuevoEstado = b.estado || 'REG-007-PENDIENTE-APROBACION';
