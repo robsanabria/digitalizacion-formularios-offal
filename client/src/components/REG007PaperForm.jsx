@@ -106,7 +106,7 @@ const REG007PaperForm = ({
     <div className="flex flex-col gap-12 max-w-4xl mx-auto">
       
       {/* 📄 PÁGINA 1 de 4: DATOS DEL REGISTRO Y FORMATO ORIGINAL */}
-      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:border-none print:shadow-none print:bg-white print:break-after-page">
+      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white print:break-after-page">
         <PageHeader pageNum={1} />
         
         {/* Row 1: Fecha y Solicitado por */}
@@ -208,7 +208,7 @@ const REG007PaperForm = ({
       </div>
 
       {/* 📄 PÁGINA 2 de 4: ETIQUETAS TÉCNICAS RESULTANTES EN PLANTA */}
-      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:border-none print:shadow-none print:bg-white print:break-after-page">
+      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white print:break-after-page">
         <PageHeader pageNum={2} />
         
         <div className="p-6 min-h-[600px] flex flex-col justify-between">
@@ -266,7 +266,7 @@ const REG007PaperForm = ({
       </div>
 
       {/* 📄 PÁGINA 4 de 4: FORMATO PROPUESTO Y PANEL DE FIRMAS / TRAZABILIDAD */}
-      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:border-none print:shadow-none print:bg-white">
+      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white">
         <PageHeader pageNum={4} />
 
         {/* Espacio Formato Propuesto */}

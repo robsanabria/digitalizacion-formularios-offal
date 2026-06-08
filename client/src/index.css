@@ -147,10 +147,31 @@ table { border-collapse: collapse; }
     height: auto !important;
   }
 
+  /* Colapsar las áreas reservadas para imágenes (Formato original/propuesto,
+     grilla de etiquetas) cuando están vacías, para que el PDF no salga con
+     grandes espacios en blanco. Si hay imagen, el alto se ajusta a ella. */
+  #paper-form-container .min-h-\[460px\],
+  #paper-form-container .min-h-\[600px\],
+  #paper-form-container .min-h-\[380px\],
+  #paper-form-container .min-h-\[350px\] {
+    min-height: 120px !important;
+  }
+
   /* Mantener cada "hoja" del formulario íntegra en una página cuando sea posible */
   #paper-form-container .print\:break-after-page {
     break-after: page;
     page-break-after: always;
+  }
+  /* No partir filas/encabezados entre páginas */
+  #paper-form-container .border-b-\[2px\],
+  #paper-form-container .border-b-\[3px\] {
+    break-inside: avoid;
+  }
+
+  /* La trazabilidad/historial no forma parte del documento oficial: no imprimir */
+  #paper-form-container details,
+  #paper-form-container section {
+    display: none !important;
   }
 
   /* Eliminar sombras y radios para evitar problemas visuales en PDF */

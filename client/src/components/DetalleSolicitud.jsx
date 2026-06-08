@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Loader2, Check, Upload, History, Send, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { X, Download, Loader2, Check, History, Send, RotateCcw, ThumbsUp, ThumbsDown, FileText, FileCheck, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -37,6 +37,10 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   // Estado para que Calidad corrija y reenvíe un REG-11 observado
   const [isEditing011, setIsEditing011] = useState(false);
   const [edit011Data, setEdit011Data] = useState({});
+
+  // Documento mostrado en el panel (REG-11 / REG-07). Se inicializa con el foco
+  // que pide el submenú, pero el usuario puede alternar dentro de la ventana.
+  const [localFocus, setLocalFocus] = useState(focusForm);
 
   const printedSignalRef = useRef(0);
 
@@ -118,6 +122,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     setIsResponding(false);
     setIsEditing011(false);
   }, [isOpen, solicitudId]);
+
+  // Sincronizar el foco local con el que pide el submenú al abrir/cambiar.
+  useEffect(() => {
+    setLocalFocus(focusForm);
+  }, [focusForm, solicitudId, isOpen]);
 
   // ── Impresión robusta: espera a que todas las imágenes del formulario carguen ──
   const waitForImagesAndPrint = async () => {
@@ -413,15 +422,69 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
           ) : (
             <div className="flex flex-col gap-12 max-w-full">
 
+              {/* ── Cabecera de la ventana: documento actual + selector + circuito ── */}
+              {!isResponding && !isEditing011 && (
+                <div className="no-print flex flex-col gap-5">
+                  {/* Cinta identificatoria del documento (color distinto por tipo) */}
+                  <div className={`rounded-xl px-5 py-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    localFocus === 'REG007'
+                      ? 'bg-blue-50 border-blue-200'
+                      : 'bg-amber-50 border-amber-200'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${localFocus === 'REG007' ? 'bg-blue-600' : 'bg-amber-500'} text-white`}>
+                        {localFocus === 'REG007' ? <FileCheck size={20} /> : <FileText size={20} />}
+                      </div>
+                      <div>
+                        <div className={`text-sm font-black uppercase tracking-wider ${localFocus === 'REG007' ? 'text-blue-700' : 'text-amber-700'}`}>
+                          {localFocus === 'REG007' ? 'REG-SIS-007 · Respuesta Técnica' : 'REG-SIS-011 · Solicitud de Etiquetas'}
+                        </div>
+                        <div className="text-[11px] text-gray-500 font-semibold">
+                          {localFocus === 'REG007' ? 'Completado por Sistemas con las etiquetas modificadas en planta.' : 'Documento original creado por Calidad.'}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Selector REG-11 / REG-07 */}
+                    <div className="flex bg-white rounded-lg p-1 border border-gray-200 self-start sm:self-auto">
+                      <button
+                        onClick={() => setLocalFocus('REG011')}
+                        className={`px-4 py-1.5 rounded-md text-xs font-black uppercase tracking-wide transition-all flex items-center gap-1.5 ${
+                          localFocus === 'REG011' ? 'bg-amber-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FileText size={14} /> REG-11
+                      </button>
+                      <button
+                        onClick={() => setLocalFocus('REG007')}
+                        className={`px-4 py-1.5 rounded-md text-xs font-black uppercase tracking-wide transition-all flex items-center gap-1.5 ${
+                          localFocus === 'REG007' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FileCheck size={14} /> REG-07
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stepper del circuito de aprobación */}
+                  <CircuitStepper estado={estado} />
+                </div>
+              )}
+
               {/* Hint de scroll horizontal para móviles */}
               <div className="md:hidden flex items-center justify-center gap-2 mb-3 text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-200 p-2.5 rounded-lg animate-pulse uppercase tracking-wider no-print select-none">
                 <span>↔️ Desliza horizontalmente para ver el documento completo</span>
               </div>
 
               {/* Aviso cuando se pide ver REG-07 pero todavía no fue generado */}
-              {!isResponding && !isEditing011 && focusForm === 'REG007' && !tieneReg07 && (
-                <div className="no-print bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold p-3 rounded-lg text-center uppercase tracking-wide">
-                  El REG-07 aún no fue completado por Sistemas. Se muestra una vista previa con los datos disponibles.
+              {!isResponding && !isEditing011 && localFocus === 'REG007' && !tieneReg07 && (
+                <div className="no-print bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold p-3 rounded-lg flex flex-col sm:flex-row items-center justify-center gap-3 text-center uppercase tracking-wide">
+                  <span>El REG-07 aún no fue completado por Sistemas. Se muestra una vista previa con los datos disponibles.</span>
+                  <button
+                    onClick={() => setLocalFocus('REG011')}
+                    className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-[11px] font-black flex items-center gap-1.5"
+                  >
+                    <FileText size={13} /> Ver REG-11 con datos
+                  </button>
                 </div>
               )}
 
@@ -488,7 +551,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                         />
                       </div>
                     </>
-                  ) : focusForm === 'REG007' ? (
+                  ) : localFocus === 'REG007' ? (
                     /* CASO 3: Submenú REG-07 → mostrar el REG-007 (solo lectura) */
                     <div className="animate-in fade-in zoom-in-95 duration-300">
                       <div className="text-center mb-4">
@@ -533,9 +596,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               {!isEditing011 && !isResponding && (
                 <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity no-print">
                   <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">
-                    {focusForm === 'REG007' ? 'Ver Solicitud Original (REG-SIS-011)' : 'Ver Respuesta Técnica (REG-SIS-007)'}
+                    {localFocus === 'REG007' ? 'Ver Solicitud Original (REG-SIS-011)' : 'Ver Respuesta Técnica (REG-SIS-007)'}
                   </summary>
-                  {focusForm === 'REG007' ? (
+                  {localFocus === 'REG007' ? (
                     <REG011PaperForm
                       solicitudId={solicitudId}
                       data={solicitud}
@@ -645,6 +708,65 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Stepper visual del circuito ────────────────────────────────────────────────
+const stepStatuses = (estado) => {
+  const base = [
+    { label: 'Solicitud REG-11', role: 'Calidad' },
+    { label: 'Aprob. Sistemas', role: 'Sistemas' },
+    { label: 'Respuesta REG-07', role: 'Sistemas' },
+    { label: 'Aprob. Calidad', role: 'Calidad' },
+  ];
+  let st;
+  switch (estado) {
+    case 'REG-011-PENDIENTE-APROBACION': st = ['done', 'active', 'todo', 'todo']; break;
+    case 'REG-011-OBSERVADO':            st = ['done', 'warn', 'todo', 'todo']; break;
+    case 'REG-011-APROBADO':
+    case 'REG-011-PENDIENTE':            st = ['done', 'done', 'active', 'todo']; break;
+    case 'REG-007-PENDIENTE-APROBACION': st = ['done', 'done', 'done', 'active']; break;
+    case 'APROBADO':                     st = ['done', 'done', 'done', 'done']; break;
+    case 'RECHAZADO':                    st = ['done', 'done', 'done', 'error']; break;
+    default:                             st = ['active', 'todo', 'todo', 'todo'];
+  }
+  return base.map((b, i) => ({ ...b, status: st[i] }));
+};
+
+const STEP_STYLES = {
+  done:   { circle: 'bg-emerald-500 text-white border-emerald-500', label: 'text-emerald-700' },
+  active: { circle: 'bg-indigo-600 text-white border-indigo-600 ring-4 ring-indigo-200 animate-pulse', label: 'text-indigo-700' },
+  warn:   { circle: 'bg-orange-500 text-white border-orange-500', label: 'text-orange-700' },
+  error:  { circle: 'bg-rose-600 text-white border-rose-600', label: 'text-rose-700' },
+  todo:   { circle: 'bg-white text-gray-400 border-gray-300', label: 'text-gray-400' },
+};
+
+const CircuitStepper = ({ estado }) => {
+  const steps = stepStatuses(estado);
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm overflow-x-auto">
+      <div className="flex items-start min-w-[480px]">
+        {steps.map((s, i) => {
+          const stl = STEP_STYLES[s.status];
+          const icon = s.status === 'done' ? <Check size={16} />
+            : s.status === 'warn' ? <AlertTriangle size={15} />
+            : s.status === 'error' ? <X size={16} />
+            : <span className="text-xs font-black">{i + 1}</span>;
+          return (
+            <React.Fragment key={i}>
+              <div className="flex flex-col items-center text-center flex-1 min-w-[80px]">
+                <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${stl.circle}`}>{icon}</div>
+                <div className={`mt-2 text-[10px] font-black uppercase tracking-tight leading-tight ${stl.label}`}>{s.label}</div>
+                <div className="text-[9px] text-gray-400 font-semibold uppercase">{s.role}</div>
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`flex-1 h-1 mt-4 mx-1 rounded-full ${s.status === 'done' ? 'bg-emerald-500' : 'bg-gray-200'}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
     </div>
   );
 };
