@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, Search, Calendar, Filter, XCircle } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, Search, Calendar, Filter, XCircle, ChevronDown, FileText, FileCheck } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -13,10 +13,13 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [solicitudesOpen, setSolicitudesOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUserMgmtOpen, setIsUserMgmtOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailFocus, setDetailFocus] = useState('REG011');
+  const [printSignal, setPrintSignal] = useState(0);
 
   const [filterProducto, setFilterProducto] = useState('');
   const [filterCodigoTwins, setFilterCodigoTwins] = useState('');
@@ -59,6 +62,23 @@ function App() {
     init();
   }, []);
 
+  // Abre el panel de detalle enfocando el formulario REG-11 o REG-07.
+  // Si print=true, dispara la impresión robusta dentro de DetalleSolicitud.
+  const openDetail = (id, focus = 'REG011', print = false) => {
+    setSelectedSolicitudId(id);
+    setDetailFocus(focus);
+    setIsDetailOpen(true);
+    setIsModalOpen(false);
+    if (print) setPrintSignal(p => p + 1);
+  };
+
+  // Foco por defecto según un registro: si ya tiene REG-07, mostrarlo; si no, el REG-11.
+  const focusFor = (estado) =>
+    (estado === 'REG-007-PENDIENTE-APROBACION' || estado === 'APROBADO' || estado === 'RECHAZADO')
+      ? 'REG007' : 'REG011';
+
+  const listFocus = activeTab === 'reg07' ? 'REG007' : 'REG011';
+
   const filteredSolicitudes = solicitudes.filter(s => {
     // 1. Filtro Producto
     if (filterProducto && !s.NombreProducto?.toLowerCase().includes(filterProducto.toLowerCase())) {
@@ -98,7 +118,9 @@ function App() {
 
     // 4. Filtro Estado
     if (filterEstado !== 'TODOS') {
-      if (filterEstado === 'PENDIENTE_SISTEMAS' && s.Estado !== 'REG-011-PENDIENTE') return false;
+      if (filterEstado === 'PENDIENTE_APROB_SISTEMAS' && s.Estado !== 'REG-011-PENDIENTE-APROBACION') return false;
+      if (filterEstado === 'OBSERVADO' && s.Estado !== 'REG-011-OBSERVADO') return false;
+      if (filterEstado === 'PENDIENTE_REG07' && !['REG-011-APROBADO', 'REG-011-PENDIENTE'].includes(s.Estado)) return false;
       if (filterEstado === 'PENDIENTE_CALIDAD' && s.Estado !== 'REG-007-PENDIENTE-APROBACION') return false;
       if (filterEstado === 'APROBADO' && s.Estado !== 'APROBADO') return false;
       if (filterEstado === 'RECHAZADO' && s.Estado !== 'RECHAZADO') return false;
@@ -136,12 +158,32 @@ function App() {
             active={activeTab === 'dashboard'} 
             onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }}
           />
-          <NavItem 
-            icon={<List size={20} />} 
-            label="Solicitudes" 
-            active={activeTab === 'solicitudes'} 
-            onClick={() => { setActiveTab('solicitudes'); setIsModalOpen(false); setIsDetailOpen(false); }}
-          />
+          {/* Grupo Solicitudes con submenús REG-11 / REG-07 */}
+          <div>
+            <NavItem
+              icon={<List size={20} />}
+              label="Solicitudes"
+              active={activeTab === 'reg11' || activeTab === 'reg07'}
+              onClick={() => setSolicitudesOpen(o => !o)}
+              trailing={<ChevronDown size={16} className={`transition-transform duration-300 ${solicitudesOpen ? 'rotate-180' : ''}`} />}
+            />
+            {solicitudesOpen && (
+              <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                <NavItem
+                  icon={<FileText size={18} />}
+                  label="REG-11"
+                  active={activeTab === 'reg11'}
+                  onClick={() => { setActiveTab('reg11'); setIsModalOpen(false); setIsDetailOpen(false); }}
+                />
+                <NavItem
+                  icon={<FileCheck size={18} />}
+                  label="REG-07"
+                  active={activeTab === 'reg07'}
+                  onClick={() => { setActiveTab('reg07'); setIsModalOpen(false); setIsDetailOpen(false); }}
+                />
+              </div>
+            )}
+          </div>
           {user?.Rol === 'CALIDAD' && (
             <NavItem 
               icon={<PlusCircle size={20} />} 
@@ -204,12 +246,14 @@ function App() {
         />
 
         {/* Panel de Detalle */}
-        <DetalleSolicitud 
-          solicitudId={selectedSolicitudId} 
-          isOpen={isDetailOpen} 
-          onClose={() => setIsDetailOpen(false)} 
+        <DetalleSolicitud
+          solicitudId={selectedSolicitudId}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
           user={user}
           onUpdated={fetchSolicitudes}
+          focusForm={detailFocus}
+          printSignal={printSignal}
         />
 
         {/* Contenido condicional según la pestaña activa */}
@@ -254,15 +298,7 @@ function App() {
                         >
                           <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
                           <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              s.Estado === 'APROBADO' ? 'bg-green-500/20 text-green-400' : 
-                              s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'bg-blue-500/20 text-blue-400' : 
-                              s.Estado === 'RECHAZADO' ? 'bg-red-500/20 text-red-400' : 
-                              'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              {s.Estado === 'REG-011-PENDIENTE' ? 'Pendiente Sistemas' : 
-                               s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'Pendiente Calidad' : s.Estado}
-                            </span>
+                            <EstadoBadge estado={s.Estado} />
                           </td>
                           <td className="py-4 text-text-muted">
                               {(
@@ -271,23 +307,15 @@ function App() {
                           </td>
                           <td className="py-4">
                             <div className="flex items-center gap-3">
-                              <button 
-                                onClick={() => {
-                                  setSelectedSolicitudId(s.SolicitudId);
-                                  setIsDetailOpen(true);
-                                }}
+                              <button
+                                onClick={() => openDetail(s.SolicitudId, focusFor(s.Estado))}
                                 className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
                                 title="Previsualizar Registro"
                               >
                                 <Eye size={18} />
                               </button>
-                              <button 
-                                onClick={() => {
-                                  setSelectedSolicitudId(s.SolicitudId);
-                                  setIsDetailOpen(true);
-                                  // Un pequeño delay para que abra y podamos disparar la impresión
-                                  setTimeout(() => window.print(), 500);
-                                }}
+                              <button
+                                onClick={() => openDetail(s.SolicitudId, focusFor(s.Estado), true)}
                                 className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
                                 title="Descargar PDF"
                               >
@@ -305,7 +333,14 @@ function App() {
           </>
         ) : (
           <section className="glass-card p-8 min-h-[500px]">
-            <h3 className="text-2xl font-bold mb-8">Listado Completo de Solicitudes</h3>
+            <h3 className="text-2xl font-bold mb-2">
+              {activeTab === 'reg07' ? 'Solicitudes — Vista REG-SIS-007' : 'Solicitudes — Vista REG-SIS-011'}
+            </h3>
+            <p className="text-text-muted text-sm mb-8">
+              {activeTab === 'reg07'
+                ? 'Cada registro abre directamente su formulario REG-07 (respuesta técnica de Sistemas).'
+                : 'Cada registro abre directamente su formulario REG-11 (solicitud original de Calidad).'}
+            </p>
 
             {/* Panel de Filtros */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-8 flex flex-col gap-4 animate-in fade-in duration-300">
@@ -380,7 +415,9 @@ function App() {
                     className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary transition-colors cursor-pointer"
                   >
                     <option value="TODOS" className="bg-slate-900 text-white">Todos</option>
-                    <option value="PENDIENTE_SISTEMAS" className="bg-slate-900 text-white">Pendiente Sistemas</option>
+                    <option value="PENDIENTE_APROB_SISTEMAS" className="bg-slate-900 text-white">Pendiente Aprob. Sistemas</option>
+                    <option value="OBSERVADO" className="bg-slate-900 text-white">Observadas</option>
+                    <option value="PENDIENTE_REG07" className="bg-slate-900 text-white">Pendiente REG-07</option>
                     <option value="PENDIENTE_CALIDAD" className="bg-slate-900 text-white">Pendiente Calidad</option>
                     <option value="APROBADO" className="bg-slate-900 text-white">Aprobadas</option>
                     <option value="RECHAZADO" className="bg-slate-900 text-white">Rechazadas</option>
@@ -436,15 +473,7 @@ function App() {
                         <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
                         <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
                         <td className="py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            s.Estado === 'APROBADO' ? 'bg-green-500/20 text-green-400' : 
-                            s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'bg-blue-500/20 text-blue-400' : 
-                            s.Estado === 'RECHAZADO' ? 'bg-red-500/20 text-red-400' : 
-                            'bg-yellow-500/20 text-yellow-400'
-                          }`}>
-                            {s.Estado === 'REG-011-PENDIENTE' ? 'Pendiente Sistemas' : 
-                             s.Estado === 'REG-007-PENDIENTE-APROBACION' ? 'Pendiente Calidad' : s.Estado}
-                          </span>
+                          <EstadoBadge estado={s.Estado} />
                         </td>
                         <td className="py-4 text-text-muted">
                           {(
@@ -453,22 +482,15 @@ function App() {
                         </td>
                         <td className="py-4">
                           <div className="flex items-center gap-3">
-                            <button 
-                              onClick={() => {
-                                setSelectedSolicitudId(s.SolicitudId);
-                                setIsDetailOpen(true);
-                              }}
+                            <button
+                              onClick={() => openDetail(s.SolicitudId, listFocus)}
                               className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
                               title="Previsualizar"
                             >
                               <Eye size={18} />
                             </button>
-                            <button 
-                              onClick={() => {
-                                setSelectedSolicitudId(s.SolicitudId);
-                                setIsDetailOpen(true);
-                                setTimeout(() => window.print(), 500);
-                              }}
+                            <button
+                              onClick={() => openDetail(s.SolicitudId, listFocus, true)}
                               className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
                               title="Descargar PDF"
                             >
@@ -492,9 +514,13 @@ function App() {
           <Activity size={20} />
           <span className="text-[10px] mt-1 font-medium">Dashboard</span>
         </button>
-        <button onClick={() => { setActiveTab('solicitudes'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'solicitudes' ? 'text-primary' : 'text-text-muted'}`}>
-          <List size={20} />
-          <span className="text-[10px] mt-1 font-medium">Solicitudes</span>
+        <button onClick={() => { setActiveTab('reg11'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg11' ? 'text-primary' : 'text-text-muted'}`}>
+          <FileText size={20} />
+          <span className="text-[10px] mt-1 font-medium">REG-11</span>
+        </button>
+        <button onClick={() => { setActiveTab('reg07'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg07' ? 'text-primary' : 'text-text-muted'}`}>
+          <FileCheck size={20} />
+          <span className="text-[10px] mt-1 font-medium">REG-07</span>
         </button>
         <button onClick={() => setIsModalOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
           <PlusCircle size={20} />
@@ -520,20 +546,20 @@ function App() {
   );
 }
 
-function NavItem({ icon, label, active = false, onClick, className = "" }) {
+function NavItem({ icon, label, active = false, onClick, className = "", trailing = null }) {
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ scale: 1.03, x: 6 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer select-none transition-all duration-300 relative overflow-hidden group ${
-        active 
-          ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary border border-primary/30 shadow-[0_4px_20px_rgba(99,102,241,0.25)]' 
+        active
+          ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary border border-primary/30 shadow-[0_4px_20px_rgba(99,102,241,0.25)]'
           : 'text-text-muted hover:bg-white/5 hover:text-white'
       } ${className}`}
     >
       {active && (
-        <motion.div 
+        <motion.div
           layoutId="activeIndicator"
           className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-indigo-400 rounded-r-md"
         />
@@ -542,7 +568,27 @@ function NavItem({ icon, label, active = false, onClick, className = "" }) {
         {icon}
       </div>
       <span className="font-semibold text-sm tracking-wide">{label}</span>
+      {trailing && <span className="ml-auto">{trailing}</span>}
     </motion.div>
+  );
+}
+
+const ESTADO_META = {
+  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/20 text-amber-400' },
+  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/20 text-orange-400' },
+  'REG-011-APROBADO': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/20 text-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
+  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/20 text-blue-400' },
+  'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/20 text-green-400' },
+  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/20 text-red-400' },
+};
+
+function EstadoBadge({ estado }) {
+  const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-yellow-500/20 text-yellow-400' };
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-bold ${meta.cls}`}>
+      {meta.label}
+    </span>
   );
 }
 

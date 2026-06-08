@@ -52,7 +52,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
         await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=ORIGINAL`, formDataFile);
       }
 
-      toast.success("Registro REG-SIS-011 creado y enviado a Sistemas con éxito");
+      toast.success("Registro REG-SIS-011 creado. Pendiente de aprobación por Sistemas.");
       onCreated();
       onClose();
     } catch (err) {

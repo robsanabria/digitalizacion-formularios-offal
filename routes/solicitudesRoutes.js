@@ -10,7 +10,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/', solicitudesController.getSolicitudes);
 router.get('/:id', solicitudesController.getSolicitudById);
 router.post('/', checkRole(['CALIDAD', 'ADMIN']), solicitudesController.createSolicitud);
-router.put('/:id', checkRole(['SISTEMAS', 'ADMIN']), solicitudesController.updateSolicitud);
+// PUT lo usan: Sistemas (completar REG-007) y Calidad (corregir/reenviar REG-11 observado).
+// La autorización fina por caso se resuelve dentro del controlador.
+router.put('/:id', checkRole(['CALIDAD', 'SISTEMAS', 'ADMIN']), solicitudesController.updateSolicitud);
 
 // Transición de estados (máquina de estados con validación de rol)
 router.post('/:id/transition', checkRole(['CALIDAD', 'SISTEMAS', 'ADMIN']), solicitudesController.transitionSolicitud);

@@ -48,8 +48,9 @@ const REG011PaperForm = ({
     calidadAdjunto = adjuntos[0];
   }
 
-  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') && 
-                          (solicitudEstado === 'REG-011-PENDIENTE' || solicitudEstado === 'REG-007-PENDIENTE-APROBACION');
+  // Calidad puede gestionar el adjunto "Formato Original" mientras el circuito no esté finalizado.
+  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
+                          !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
 
   return (
     <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl mx-auto font-serif shadow-2xl overflow-hidden mb-10">
@@ -250,7 +251,7 @@ const REG011PaperForm = ({
                   src={`/api/solicitudes/${solicitudId}/adjuntos/${calidadAdjunto.AdjuntoId}/descargar`}
                   className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
                   alt="Referencia Original"
-                  loading="lazy"
+                  loading="eager"
                 />
               ) : (
                 <div className="flex flex-col items-center p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
