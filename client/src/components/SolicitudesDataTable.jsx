@@ -5,32 +5,36 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   useReactTable,
 } from '@tanstack/react-table';
 import {
-  ArrowUpDown, Eye, Download, MoreHorizontal, Search,
-  ChevronLeft, ChevronRight, Inbox,
+  ArrowUpDown, Eye, Download, MoreHorizontal, Search, ListFilter, Calendar,
+  ChevronLeft, ChevronRight, Inbox, X, Check,
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-// ── Meta de estados (pills coloridas) ──
+// ── Meta de estados (pills coloridas + label legible) ──
 const ESTADO_META = {
-  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/15 text-orange-400 border-orange-500/30' },
-  'REG-011-APROBADO': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
-  'REG-011-PENDIENTE': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30' },
-  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
-  'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/15 text-green-400 border-green-500/30' },
-  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30', dot: 'bg-amber-400' },
+  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/15 text-orange-400 border-orange-500/30', dot: 'bg-orange-400' },
+  'REG-011-APROBADO': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30', dot: 'bg-blue-400' },
+  'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/15 text-green-400 border-green-500/30', dot: 'bg-green-400' },
+  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/15 text-red-400 border-red-500/30', dot: 'bg-red-400' },
 };
+const estadoLabel = (e) => ESTADO_META[e]?.label || e;
 
 function EstadoPill({ estado }) {
   const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-white/10 text-white/70 border-white/20' };
@@ -41,13 +45,12 @@ function EstadoPill({ estado }) {
   );
 }
 
-// Fecha relativa simple en español ("hace 2 h", "ayer", "12/3/2026")
+// Fecha relativa simple en español
 function fechaRelativa(value) {
   if (!value) return '—';
   const d = new Date(value);
   if (isNaN(d)) return '—';
-  const diffMs = Date.now() - d.getTime();
-  const min = Math.floor(diffMs / 60000);
+  const min = Math.floor((Date.now() - d.getTime()) / 60000);
   if (min < 1) return 'recién';
   if (min < 60) return `hace ${min} min`;
   const h = Math.floor(min / 60);
@@ -59,6 +62,20 @@ function fechaRelativa(value) {
 }
 
 const getFecha = (s) => s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime;
+
+// ── Filtros ──
+const estadoFilterFn = (row, id, value) =>
+  !value || value.length === 0 || value.includes(row.getValue(id));
+
+const fechaFilterFn = (row, id, value) => {
+  if (!value || (!value.from && !value.to)) return true;
+  const raw = row.getValue(id);
+  if (!raw) return false;
+  const d = new Date(raw); d.setHours(0, 0, 0, 0);
+  if (value.from) { const f = new Date(value.from); f.setHours(0, 0, 0, 0); if (d < f) return false; }
+  if (value.to) { const t = new Date(value.to); t.setHours(0, 0, 0, 0); if (d > t) return false; }
+  return true;
+};
 
 function SortHeader({ column, children }) {
   return (
@@ -72,29 +89,12 @@ function SortHeader({ column, children }) {
   );
 }
 
-export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, onPrint }) {
+export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, onPrint, initialEstado = [] }) {
   const [sorting, setSorting] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState('');
-
-  const RowActions = ({ s }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => onOpen(s.SolicitudId, focus)}>
-          <Eye className="h-4 w-4" /> Previsualizar
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onPrint(s.SolicitudId, focus)}>
-          <Download className="h-4 w-4" /> Descargar PDF
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const [columnFilters, setColumnFilters] = useState(
+    initialEstado?.length ? [{ id: 'Estado', value: initialEstado }] : []
   );
 
   const columns = [
@@ -132,6 +132,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
     {
       accessorKey: 'Estado',
       header: ({ column }) => <SortHeader column={column}>Estado</SortHeader>,
+      filterFn: estadoFilterFn,
       cell: ({ row }) => <EstadoPill estado={row.original.Estado} />,
     },
     {
@@ -139,6 +140,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
       accessorFn: (s) => getFecha(s),
       header: ({ column }) => <SortHeader column={column}>Fecha</SortHeader>,
       sortingFn: 'datetime',
+      filterFn: fechaFilterFn,
       cell: ({ row }) => <span className="text-muted-foreground text-sm whitespace-nowrap">{fechaRelativa(getFecha(row.original))}</span>,
     },
     {
@@ -153,7 +155,17 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
           <Button variant="ghost" size="icon" className="h-8 w-8 text-green-400" title="Descargar PDF" onClick={() => onPrint(row.original.SolicitudId, focus)}>
             <Download className="h-4 w-4" />
           </Button>
-          <RowActions s={row.original} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onOpen(row.original.SolicitudId, focus)}><Eye className="h-4 w-4" /> Previsualizar</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onPrint(row.original.SolicitudId, focus)}><Download className="h-4 w-4" /> Descargar PDF</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
@@ -162,10 +174,11 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, rowSelection, globalFilter },
+    state: { sorting, rowSelection, globalFilter, columnFilters },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     globalFilterFn: (row, _columnId, value) => {
       const q = String(value).toLowerCase();
       const s = row.original;
@@ -176,32 +189,145 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     initialState: { pagination: { pageSize: 8 } },
     getRowId: (s) => s.SolicitudId,
   });
+
+  const estadoCol = table.getColumn('Estado');
+  const fechaCol = table.getColumn('fecha');
+  const estadoSel = (estadoCol?.getFilterValue()) ?? [];
+  const fechaSel = (fechaCol?.getFilterValue()) ?? {};
+  const facetCounts = estadoCol?.getFacetedUniqueValues() ?? new Map();
+  const estadoOptions = Array.from(facetCounts.keys()).sort((a, b) => estadoLabel(a).localeCompare(estadoLabel(b)));
+
+  const toggleEstado = (e) => {
+    const cur = new Set(estadoSel);
+    cur.has(e) ? cur.delete(e) : cur.add(e);
+    estadoCol?.setFilterValue(cur.size ? Array.from(cur) : undefined);
+  };
+
+  const hayFiltros = globalFilter || estadoSel.length || fechaSel.from || fechaSel.to;
+  const resetFiltros = () => {
+    setGlobalFilter('');
+    setColumnFilters([]);
+  };
 
   const selectedCount = Object.keys(rowSelection).length;
   const rows = table.getRowModel().rows;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Toolbar: búsqueda rápida + contador */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative w-full sm:max-w-xs">
+      {/* ── Toolbar de filtros ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <div className="relative w-full lg:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar en la tabla..."
+            placeholder="Buscar producto, código, motivo..."
             value={globalFilter ?? ''}
             onChange={(e) => setGlobalFilter(e.target.value)}
             className="pl-9"
           />
         </div>
-        <div className="text-xs text-muted-foreground font-medium">
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Facet de Estado */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="border-dashed">
+                <ListFilter className="h-4 w-4" /> Estado
+                {estadoSel.length > 0 && (
+                  <span className="ml-1 rounded bg-primary/20 text-primary px-1.5 text-[10px] font-bold">{estadoSel.length}</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2 py-1.5">Filtrar por estado</p>
+              <div className="flex flex-col">
+                {estadoOptions.length === 0 && <p className="text-xs text-muted-foreground px-2 py-2">Sin estados</p>}
+                {estadoOptions.map((e) => {
+                  const checked = estadoSel.includes(e);
+                  return (
+                    <button
+                      key={e}
+                      onClick={() => toggleEstado(e)}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent text-left transition-colors"
+                    >
+                      <span className={cn('flex h-4 w-4 items-center justify-center rounded border', checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border')}>
+                        {checked && <Check className="h-3 w-3" />}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs flex-1">
+                        <span className={cn('h-1.5 w-1.5 rounded-full', ESTADO_META[e]?.dot || 'bg-white/40')} />
+                        {estadoLabel(e)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-bold">{facetCounts.get(e)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Rango de fechas */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="border-dashed">
+                <Calendar className="h-4 w-4" /> Fecha
+                {(fechaSel.from || fechaSel.to) && <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Rango de fechas</p>
+              <div className="flex flex-col gap-2">
+                <label className="text-[11px] text-muted-foreground">Desde
+                  <Input type="date" value={fechaSel.from || ''} onChange={(e) => fechaCol?.setFilterValue({ ...fechaSel, from: e.target.value })} className="mt-1" />
+                </label>
+                <label className="text-[11px] text-muted-foreground">Hasta
+                  <Input type="date" value={fechaSel.to || ''} onChange={(e) => fechaCol?.setFilterValue({ ...fechaSel, to: e.target.value })} className="mt-1" />
+                </label>
+                {(fechaSel.from || fechaSel.to) && (
+                  <Button variant="ghost" size="sm" onClick={() => fechaCol?.setFilterValue(undefined)}>Limpiar fechas</Button>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {hayFiltros ? (
+            <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300" onClick={resetFiltros}>
+              <X className="h-4 w-4" /> Limpiar
+            </Button>
+          ) : null}
+        </div>
+
+        <div className="lg:ml-auto text-xs text-muted-foreground font-medium">
           {selectedCount > 0
             ? <span className="text-primary font-bold">{selectedCount} seleccionada(s)</span>
             : <>{table.getFilteredRowModel().rows.length} registro(s)</>}
         </div>
       </div>
+
+      {/* ── Chips de filtros activos ── */}
+      {(estadoSel.length > 0 || fechaSel.from || fechaSel.to) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {estadoSel.map((e) => (
+            <button key={e} onClick={() => toggleEstado(e)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-foreground hover:bg-accent transition-colors">
+              <span className={cn('h-1.5 w-1.5 rounded-full', ESTADO_META[e]?.dot || 'bg-white/40')} />
+              {estadoLabel(e)}
+              <X className="h-3 w-3 opacity-60" />
+            </button>
+          ))}
+          {(fechaSel.from || fechaSel.to) && (
+            <button onClick={() => fechaCol?.setFilterValue(undefined)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-foreground hover:bg-accent transition-colors">
+              <Calendar className="h-3 w-3 opacity-70" />
+              {fechaSel.from ? new Date(fechaSel.from).toLocaleDateString() : '…'} – {fechaSel.to ? new Date(fechaSel.to).toLocaleDateString() : '…'}
+              <X className="h-3 w-3 opacity-60" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Vista de tabla (desktop) ── */}
       <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -225,7 +351,6 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
                   data-state={row.getIsSelected() && 'selected'}
                   className="cursor-pointer"
                   onClick={(e) => {
-                    // Ignorar clicks sobre controles (checkbox, botones)
                     if (e.target.closest('button, [role="checkbox"], [role="menu"]')) return;
                     onOpen(row.original.SolicitudId, focus);
                   }}
@@ -237,9 +362,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
               ))
             ) : (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={columns.length}>
-                  <EmptyState />
-                </TableCell>
+                <TableCell colSpan={columns.length}><EmptyState /></TableCell>
               </TableRow>
             )}
           </TableBody>
