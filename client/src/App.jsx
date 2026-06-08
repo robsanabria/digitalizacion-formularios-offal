@@ -79,6 +79,35 @@ function App() {
 
   const listFocus = activeTab === 'reg07' ? 'REG007' : 'REG011';
 
+  // Navega a una lista (REG-11/REG-07) con un filtro de estado preaplicado.
+  const goToList = (tab, estadoFilter = 'TODOS') => {
+    setActiveTab(tab);
+    setFilterEstado(estadoFilter);
+    setIsModalOpen(false);
+    setIsDetailOpen(false);
+  };
+
+  // Contadores del circuito para el dashboard.
+  const rol = user?.Rol;
+  const cuenta = (pred) => solicitudes.filter(pred).length;
+  const reg11PorAprobar = cuenta(s => s.Estado === 'REG-011-PENDIENTE-APROBACION');
+  const reg07PorCompletar = cuenta(s => ['REG-011-APROBADO', 'REG-011-PENDIENTE'].includes(s.Estado));
+  const reg07PorAprobar = cuenta(s => s.Estado === 'REG-007-PENDIENTE-APROBACION');
+  const observados = cuenta(s => s.Estado === 'REG-011-OBSERVADO');
+  const enCircuito = cuenta(s => s.Estado !== 'APROBADO' && s.Estado !== 'RECHAZADO');
+  const finalizadas = cuenta(s => s.Estado === 'APROBADO');
+
+  // Tarjetas "Pendientes de MI acción" según el rol.
+  const misPendientes = [];
+  if (rol === 'SISTEMAS' || rol === 'ADMIN') {
+    misPendientes.push({ label: 'REG-11 por aprobar', value: reg11PorAprobar, color: '#f59e0b', hint: 'Revisá y aprobá u observá la solicitud', onClick: () => goToList('reg11', 'PENDIENTE_APROB_SISTEMAS') });
+    misPendientes.push({ label: 'REG-07 por completar', value: reg07PorCompletar, color: '#06b6d4', hint: 'Cargá la respuesta técnica y etiquetas', onClick: () => goToList('reg11', 'PENDIENTE_REG07') });
+  }
+  if (rol === 'CALIDAD' || rol === 'ADMIN') {
+    misPendientes.push({ label: 'REG-07 por aprobar', value: reg07PorAprobar, color: '#3b82f6', hint: 'Aprobación final de Calidad', onClick: () => goToList('reg07', 'PENDIENTE_CALIDAD') });
+    misPendientes.push({ label: 'REG-11 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', 'OBSERVADO') });
+  }
+
   const filteredSolicitudes = solicitudes.filter(s => {
     // 1. Filtro Producto
     if (filterProducto && !s.NombreProducto?.toLowerCase().includes(filterProducto.toLowerCase())) {
@@ -259,11 +288,26 @@ function App() {
         {/* Contenido condicional según la pestaña activa */}
         {activeTab === 'dashboard' ? (
           <>
-            {/* Stats Grid */}
+            {/* Pendientes de MI acción (según rol) */}
+            {misPendientes.length > 0 && (
+              <section className="mb-10">
+                <h3 className="text-sm font-black uppercase tracking-widest text-text-muted mb-4 flex items-center gap-2">
+                  <Activity size={16} className="text-primary" /> Pendientes de tu acción
+                  <span className="text-[10px] font-bold text-primary normal-case tracking-normal">({rol})</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {misPendientes.map((c, i) => (
+                    <ActionCard key={i} {...c} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Stats Grid generales */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               <StatCard label="Total Solicitudes" value={solicitudes.length} color="var(--primary)" />
-              <StatCard label="Pendientes Acción" value={solicitudes.filter(s => s.Estado !== 'APROBADO' && s.Estado !== 'RECHAZADO').length} color="#fbbf24" />
-              <StatCard label="Finalizadas" value={solicitudes.filter(s => s.Estado === 'APROBADO').length} color="#10b981" />
+              <StatCard label="En circuito" value={enCircuito} color="#fbbf24" />
+              <StatCard label="Finalizadas" value={finalizadas} color="#10b981" />
             </div>
 
             {/* Recent Solicitudes */}
@@ -589,6 +633,38 @@ function EstadoBadge({ estado }) {
     <span className={`px-3 py-1 rounded-full text-xs font-bold ${meta.cls}`}>
       {meta.label}
     </span>
+  );
+}
+
+function ActionCard({ label, value, color, hint, onClick }) {
+  const tiene = value > 0;
+  return (
+    <motion.button
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      onClick={onClick}
+      className={`glass-card p-6 text-left relative overflow-hidden group shadow-lg transition-all duration-300 border ${
+        tiene ? 'border-white/10 hover:shadow-2xl' : 'border-white/5 opacity-60'
+      }`}
+    >
+      <div
+        className="absolute -right-10 -bottom-10 w-28 h-28 rounded-full blur-3xl opacity-10 group-hover:opacity-25 transition-opacity duration-300 pointer-events-none"
+        style={{ backgroundColor: color }}
+      />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col">
+          <span className="text-text-muted text-xs font-bold uppercase tracking-wider mb-1">{label}</span>
+          <span className="text-[11px] text-text-muted/70 font-medium">{hint}</span>
+        </div>
+        <h4 className="text-4xl font-black tracking-tight shrink-0" style={{ color: tiene ? color : 'var(--text-muted)' }}>{value}</h4>
+      </div>
+      {tiene && (
+        <div className="mt-3 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 group-hover:gap-2 transition-all" style={{ color }}>
+          Ver lista →
+        </div>
+      )}
+    </motion.button>
   );
 }
 
