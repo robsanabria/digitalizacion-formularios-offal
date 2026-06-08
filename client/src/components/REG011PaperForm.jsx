@@ -1,18 +1,30 @@
 import React from 'react';
 import { Check, Trash2, Plus, Loader2 } from 'lucide-react';
 
-const REG011PaperForm = ({ 
+const REG011PaperForm = ({
   solicitudId,
-  data, 
-  onChange, 
-  readOnly = false, 
+  data,
+  onChange,
+  readOnly = false,
   userRole = '',
   solicitudEstado = '',
-  adjuntos = [], 
-  onUploadAdjunto, 
+  adjuntos = [],
+  historial = [],
+  onUploadAdjunto,
   onDeleteAdjunto,
-  uploadLoading = false 
+  uploadLoading = false
 }) => {
+  // Firma del solicitante: usuario que creó el REG-11.
+  const solicitanteNombre = data.solicitanteNombre || '';
+  const solicitanteRol = data.rolSolicitante || '';
+  const solicitanteFecha = data.fechaCreacion || data.fechaSolicitud || null;
+
+  // Firma de Sistemas: se completa cuando Sistemas aprueba el REG-11.
+  const sistemasFirma = (() => {
+    if (!Array.isArray(historial)) return null;
+    const ev = historial.find(h => h.Accion?.includes('REG-11 aprobado por Sistemas'));
+    return ev ? { user: ev.NombreUsuario, date: ev.FechaEvento } : null;
+  })();
   const parseArray = (val) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -278,19 +290,39 @@ const REG011PaperForm = ({
       </div>
 
       {/* Footer / Signatures Area */}
-      <div className="flex border-t-[3px] border-black h-24">
-        <div className="w-2/3 border-r-[2px] border-black flex flex-col p-1">
-          <div className="text-[9px] font-bold">SOLICITANTE:</div>
-          <div className="flex-1 flex items-end">
-            <div className="w-1/2 border-r border-black/20 text-[8px] p-1">Firma y Aclaración de Personal de calidad</div>
-            <div className="w-1/2 text-[8px] p-1">Firma y Aclaración de Personal de Insumos</div>
+      <div className="flex border-t-[3px] border-black min-h-[96px]">
+        {/* Solicitante: usuario que generó el REG-11 */}
+        <div className="w-2/3 border-r-[2px] border-black flex flex-col p-2">
+          <div className="text-[9px] font-bold uppercase">Solicitante (Calidad):</div>
+          <div className="flex-1 flex flex-col items-center justify-center py-1">
+            {solicitanteNombre ? (
+              <div className="text-center">
+                <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-4 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
+                <div className="text-[7px] text-blue-500 uppercase tracking-widest mt-1 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
+              </div>
+            ) : (
+              <div className="text-[8px] text-gray-400 italic uppercase">Firma y aclaración del personal de Calidad</div>
+            )}
+          </div>
+          <div className="text-[8px] text-gray-500 border-t border-black/20 pt-1">
+            Fecha de generación: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}
           </div>
         </div>
-        <div className="w-1/3 flex flex-col p-1">
-          <div className="text-[9px] font-bold">SISTEMAS:</div>
-          <div className="flex-1 flex flex-col justify-end">
-             <div className="text-[8px] p-1">Firma y Aclaración del receptor</div>
-             <div className="text-[8px] p-1">Fecha:</div>
+        {/* Sistemas: se completa al aprobar el REG-11 */}
+        <div className="w-1/3 flex flex-col p-2">
+          <div className="text-[9px] font-bold uppercase">Sistemas (Receptor):</div>
+          <div className="flex-1 flex flex-col items-center justify-center py-1">
+            {sistemasFirma ? (
+              <div className="text-center">
+                <div className="font-serif italic text-sm text-green-900 border-b border-green-200 px-4 font-black py-0.5 transform rotate-[-2deg]">{sistemasFirma.user}</div>
+                <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">REG-11 Aprobado</div>
+              </div>
+            ) : (
+              <div className="text-[8px] text-gray-400 italic uppercase text-center">Pendiente de aprobación de Sistemas</div>
+            )}
+          </div>
+          <div className="text-[8px] text-gray-500 border-t border-black/20 pt-1">
+            Fecha: {sistemasFirma ? new Date(sistemasFirma.date).toLocaleDateString() : '____/____/______'}
           </div>
         </div>
       </div>
