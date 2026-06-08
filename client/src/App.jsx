@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, ChevronDown, FileText, FileCheck } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, Users, LogOut, Eye, Download, ChevronDown, FileText, FileCheck } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
 import GestionUsuarios from './components/GestionUsuarios';
 import SolicitudesDataTable from './components/SolicitudesDataTable';
+import Topbar from './components/Topbar';
 // Quitamos el import estático para que el build no falle
 const logoEmpresa = "/logo.png"; 
 
@@ -186,50 +187,33 @@ function App() {
             />
           )}
         </nav>
-
-        <div className="mt-auto flex flex-col gap-2">
-          <NavItem icon={<Settings size={20} />} label="Configuración" />
-          <NavItem 
-            icon={<LogOut size={20} />} 
-            label="Cerrar Sesión" 
-            onClick={handleLogout}
-          />
-        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 w-full overflow-x-hidden">
-        <header className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-8 md:mb-12">
-          <motion.div 
+      <main className="flex-1 w-full overflow-x-hidden flex flex-col min-w-0">
+        {/* Topbar global */}
+        <Topbar
+          user={user}
+          solicitudes={solicitudes}
+          pendientes={misPendientes}
+          onOpenDetail={(id, f) => openDetail(id, f)}
+          onNuevaSolicitud={() => setIsModalOpen(true)}
+          onGestionUsuarios={() => setIsUserMgmtOpen(true)}
+          onConfig={() => { setActiveTab('config'); setIsModalOpen(false); setIsDetailOpen(false); }}
+          onLogout={handleLogout}
+        />
+
+        <div className="p-4 md:p-8">
+        <header className="mb-8 md:mb-10">
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <h2 className="text-3xl font-bold">Hola, {user ? user.NombreUsuario : '...'}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold">Hola, {user ? user.NombreUsuario : '...'}</h2>
             <p className="text-text-muted">
               Rol: <span className="text-primary font-bold">{user ? user.Rol : 'Cargando...'}</span>
             </p>
           </motion.div>
-          
-          <div className="flex gap-3 flex-wrap mt-2 md:mt-0">
-            {user && user.Rol === 'ADMIN' && (
-              <button 
-                onClick={() => setIsUserMgmtOpen(true)}
-                className="btn btn-outline btn-info gap-2"
-              >
-                <Users size={20} />
-                Gestionar Usuarios
-              </button>
-            )}
-            {user?.Rol === 'CALIDAD' && (
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Nueva Solicitud
-              </button>
-            )}
-          </div>
         </header>
 
         {/* Modal de Nueva Solicitud */}
@@ -340,6 +324,8 @@ function App() {
               )}
             </section>
           </>
+        ) : activeTab === 'config' ? (
+          <ConfigPanel user={user} />
         ) : (
           <section className="glass-card p-8 min-h-[500px]">
             <h3 className="text-2xl font-bold mb-2">
@@ -361,6 +347,7 @@ function App() {
             />
           </section>
         )}
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation */}
@@ -476,6 +463,41 @@ function ActionCard({ label, value, color, hint, onClick }) {
         </div>
       )}
     </motion.button>
+  );
+}
+
+function ConfigPanel({ user }) {
+  return (
+    <section className="glass-card p-8 min-h-[400px]">
+      <h3 className="text-2xl font-bold mb-1 flex items-center gap-2">
+        <Settings size={22} className="text-primary" /> Configuración
+      </h3>
+      <p className="text-text-muted text-sm mb-8">Preferencias de tu cuenta y del sistema.</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+          <p className="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Mi cuenta</p>
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white text-sm font-bold">
+              {(user?.NombreUsuario || '?').slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <p className="font-bold">{user?.NombreUsuario || '—'}</p>
+              <p className="text-xs text-text-muted">Rol: <span className="text-primary font-bold">{user?.Rol || '—'}</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col justify-center">
+          <p className="text-xs font-black uppercase tracking-wider text-text-muted mb-2">Próximamente</p>
+          <ul className="text-sm text-text-muted space-y-1 list-disc list-inside">
+            <li>Tema claro / oscuro</li>
+            <li>Notificaciones por email</li>
+            <li>Preferencias de impresión</li>
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }
 
