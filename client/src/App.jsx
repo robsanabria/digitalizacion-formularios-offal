@@ -5,6 +5,7 @@ import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
 import GestionUsuarios from './components/GestionUsuarios';
+import SolicitudesDataTable from './components/SolicitudesDataTable';
 // Quitamos el import estático para que el build no falle
 const logoEmpresa = "/logo.png"; 
 
@@ -494,66 +495,12 @@ function App() {
               )}
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-text-muted border-b border-border">
-                    <th className="pb-4 font-medium">Producto</th>
-                    <th className="pb-4 font-medium">Motivo</th>
-                    <th className="pb-4 font-medium">Estado</th>
-                    <th className="pb-4 font-medium">Fecha</th>
-                    <th className="pb-4 font-medium">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSolicitudes.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-text-muted font-medium uppercase tracking-wider text-xs">
-                        No se encontraron solicitudes que coincidan con los filtros de búsqueda.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSolicitudes.map((s, i) => (
-                      <motion.tr 
-                        key={s.SolicitudId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="border-b border-border hover:bg-white/5 transition-colors group"
-                      >
-                        <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
-                        <td className="py-4 text-text-muted text-sm truncate max-w-[250px]">{s.Motivo}</td>
-                        <td className="py-4">
-                          <EstadoBadge estado={s.Estado} />
-                        </td>
-                        <td className="py-4 text-text-muted">
-                          {(
-                            s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime
-                          ) ? new Date(s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => openDetail(s.SolicitudId, listFocus)}
-                              className="p-2 hover:bg-primary/20 text-primary rounded-full transition-all"
-                              title="Previsualizar"
-                            >
-                              <Eye size={18} />
-                            </button>
-                            <button
-                              onClick={() => openDetail(s.SolicitudId, listFocus, true)}
-                              className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
-                              title="Descargar PDF"
-                            >
-                              <Download size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <SolicitudesDataTable
+              data={filteredSolicitudes}
+              focus={listFocus}
+              onOpen={(id, f) => openDetail(id, f)}
+              onPrint={(id, f) => openDetail(id, f, true)}
+            />
           </section>
         )}
       </main>
