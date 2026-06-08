@@ -11,15 +11,15 @@ El objetivo principal es **eliminar el uso de formularios de papel físicos** pa
 
 El sistema digitaliza de forma estricta un workflow encadenado:
 
-1. **Fase A — Solicitud (REG-SIS-011)**: El departamento de **Calidad** crea una solicitud completando los datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.) y adjunta el formato original. **Todos los campos son obligatorios.** Queda registrado el usuario que la generó. *Estado: `REG-011-PENDIENTE-APROBACION`*.
+1. **Fase A  Solicitud (REG-SIS-011)**: El departamento de **Calidad** crea una solicitud completando los datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.) y adjunta el formato original. **Todos los campos son obligatorios.** Queda registrado el usuario que la generó. *Estado: `REG-011-PENDIENTE-APROBACION`*.
 
-2. **Fase B — Aprobación del REG-11 por Sistemas** *(compuerta previa)*: El departamento de **Sistemas** revisa la solicitud y decide:
+2. **Fase B Aprobación del REG-11 por Sistemas** *(compuerta previa)*: El departamento de **Sistemas** revisa la solicitud y decide:
    * **Aprobar**: habilita la carga del REG-007 y su firma queda registrada en el REG-11. *Estado: `REG-011-APROBADO`*.
    * **Observar**: devuelve la solicitud a Calidad para corrección. *Estado: `REG-011-OBSERVADO`*. Calidad corrige y reenvía, volviendo a `REG-011-PENDIENTE-APROBACION`.
 
-3. **Fase C — Respuesta Técnica (REG-SIS-007)**: Sistemas visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
+3. **Fase C Respuesta Técnica (REG-SIS-007)**: Sistemas visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
 
-4. **Fase D — Aprobación Final**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
+4. **Fase D Aprobación Final**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
    * **Aprobar**: El circuito se cierra con éxito. *Estado: `APROBADO` (Finalizado)*.
    * **Rechazar**: El circuito se cancela y se registra el evento. *Estado: `RECHAZADO`*.
 
