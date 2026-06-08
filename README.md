@@ -10,11 +10,33 @@
 El objetivo principal es **eliminar el uso de formularios de papel físicos** para el circuito de solicitud y modificación de etiquetas en la planta, centralizando el proceso en una plataforma web accesible internamente.
 
 El sistema digitaliza de forma estricta un workflow encadenado:
-1. **Fase A (Solicitud - REG-SIS-011)**: El departamento de **Calidad** inicia una solicitud completando datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.). *Estado: `REG-011-PENDIENTE`*.
-2. **Fase B (Respuesta Técnica - REG-SIS-007)**: El departamento de **Sistemas** toma la solicitud, visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
-3. **Fase C (Aprobación Final)**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
+
+1. **Fase A — Solicitud (REG-SIS-011)**: El departamento de **Calidad** crea una solicitud completando los datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.) y adjunta el formato original. **Todos los campos son obligatorios.** Queda registrado el usuario que la generó. *Estado: `REG-011-PENDIENTE-APROBACION`*.
+
+2. **Fase B — Aprobación del REG-11 por Sistemas** *(compuerta previa)*: El departamento de **Sistemas** revisa la solicitud y decide:
+   * **Aprobar**: habilita la carga del REG-007 y su firma queda registrada en el REG-11. *Estado: `REG-011-APROBADO`*.
+   * **Observar**: devuelve la solicitud a Calidad para corrección. *Estado: `REG-011-OBSERVADO`*. Calidad corrige y reenvía, volviendo a `REG-011-PENDIENTE-APROBACION`.
+
+3. **Fase C — Respuesta Técnica (REG-SIS-007)**: Sistemas visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
+
+4. **Fase D — Aprobación Final**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
    * **Aprobar**: El circuito se cierra con éxito. *Estado: `APROBADO` (Finalizado)*.
    * **Rechazar**: El circuito se cancela y se registra el evento. *Estado: `RECHAZADO`*.
+
+---
+
+## ✨ Características clave
+
+* **Vistas separadas REG-11 / REG-07**: el menú *Solicitudes* se desglosa en dos submenús. La vista **REG-07 solo lista los registros que ya tienen respuesta de Sistemas**; un REG-11 recién creado aparece únicamente en la vista REG-11.
+* **Selector de documento e impresión independiente**: dentro del detalle se puede alternar entre REG-11 y REG-07; la descarga genera el **PDF del documento seleccionado por separado** (no mezcla ambos).
+* **Circuito de aprobación con compuerta**: Sistemas debe aprobar el REG-11 antes de poder completar el REG-07; si lo observa, vuelve a Calidad para corrección y reenvío.
+* **Firmas digitales en el papel**: el REG-11 muestra al **usuario solicitante** que lo creó y la **firma de Sistemas** al aprobarlo; el REG-07 refleja las firmas de Sistemas y Calidad según el historial.
+* **Stepper visual del circuito**: indicador de progreso (Solicitud → Aprob. Sistemas → REG-07 → Aprob. Calidad) que resalta la etapa actual.
+* **Dashboard por rol**: tarjetas de *“Pendientes de tu acción”* según el rol (Sistemas / Calidad) con acceso directo a la lista filtrada.
+* **Validaciones estrictas**: todos los campos son obligatorios al crear un REG-11, al completar un REG-07 (incluida al menos una etiqueta técnica) y al reenviar un REG-11 observado; validado en frontend y backend.
+* **Trazabilidad**: cada transición de estado se registra en el historial con usuario, fecha y comentario.
+
+> 🧰 **Utilidad de pruebas**: `scripts/clear_solicitudes.js` borra todas las solicitudes (Solicitudes / Adjuntos / Historial) **conservando los usuarios y el esquema**, para reiniciar un escenario de prueba desde cero (`node scripts/clear_solicitudes.js`).
 
 ---
 
