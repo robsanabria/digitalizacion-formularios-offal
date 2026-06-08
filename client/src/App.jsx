@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, Search, Calendar, Filter, XCircle, ChevronDown, FileText, FileCheck } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, User, Plus, Users, LogOut, Eye, Download, ChevronDown, FileText, FileCheck } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -22,11 +22,8 @@ function App() {
   const [detailFocus, setDetailFocus] = useState('REG011');
   const [printSignal, setPrintSignal] = useState(0);
 
-  const [filterProducto, setFilterProducto] = useState('');
-  const [filterCodigoTwins, setFilterCodigoTwins] = useState('');
-  const [filterFechaDesde, setFilterFechaDesde] = useState('');
-  const [filterFechaHasta, setFilterFechaHasta] = useState('');
-  const [filterEstado, setFilterEstado] = useState('TODOS');
+  // Estado(s) preseleccionado(s) para el data grid al navegar desde el dashboard.
+  const [presetEstado, setPresetEstado] = useState([]);
 
   const [logoError, setLogoError] = useState(false);
 
@@ -80,10 +77,18 @@ function App() {
 
   const listFocus = activeTab === 'reg07' ? 'REG007' : 'REG011';
 
-  // Navega a una lista (REG-11/REG-07) con un filtro de estado preaplicado.
-  const goToList = (tab, estadoFilter = 'TODOS') => {
+  // Navega a una lista (REG-11/REG-07) preseleccionando uno o más estados en el data grid.
+  const goToList = (tab, estados = []) => {
     setActiveTab(tab);
-    setFilterEstado(estadoFilter);
+    setPresetEstado(estados);
+    setIsModalOpen(false);
+    setIsDetailOpen(false);
+  };
+
+  // Cambia de submenú limpiando cualquier preset de estado.
+  const switchTab = (tab) => {
+    setActiveTab(tab);
+    setPresetEstado([]);
     setIsModalOpen(false);
     setIsDetailOpen(false);
   };
@@ -101,69 +106,22 @@ function App() {
   // Tarjetas "Pendientes de MI acción" según el rol.
   const misPendientes = [];
   if (rol === 'SISTEMAS' || rol === 'ADMIN') {
-    misPendientes.push({ label: 'REG-11 por aprobar', value: reg11PorAprobar, color: '#f59e0b', hint: 'Revisá y aprobá u observá la solicitud', onClick: () => goToList('reg11', 'PENDIENTE_APROB_SISTEMAS') });
-    misPendientes.push({ label: 'REG-07 por completar', value: reg07PorCompletar, color: '#06b6d4', hint: 'Cargá la respuesta técnica y etiquetas', onClick: () => goToList('reg11', 'PENDIENTE_REG07') });
+    misPendientes.push({ label: 'REG-11 por aprobar', value: reg11PorAprobar, color: '#f59e0b', hint: 'Revisá y aprobá u observá la solicitud', onClick: () => goToList('reg11', ['REG-011-PENDIENTE-APROBACION']) });
+    misPendientes.push({ label: 'REG-07 por completar', value: reg07PorCompletar, color: '#06b6d4', hint: 'Cargá la respuesta técnica y etiquetas', onClick: () => goToList('reg11', ['REG-011-APROBADO', 'REG-011-PENDIENTE']) });
   }
   if (rol === 'CALIDAD' || rol === 'ADMIN') {
-    misPendientes.push({ label: 'REG-07 por aprobar', value: reg07PorAprobar, color: '#3b82f6', hint: 'Aprobación final de Calidad', onClick: () => goToList('reg07', 'PENDIENTE_CALIDAD') });
-    misPendientes.push({ label: 'REG-11 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', 'OBSERVADO') });
+    misPendientes.push({ label: 'REG-07 por aprobar', value: reg07PorAprobar, color: '#3b82f6', hint: 'Aprobación final de Calidad', onClick: () => goToList('reg07', ['REG-007-PENDIENTE-APROBACION']) });
+    misPendientes.push({ label: 'REG-11 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', ['REG-011-OBSERVADO']) });
   }
 
   // Un registro "tiene REG-07" cuando Sistemas ya respondió (pendiente, aprobado o rechazado).
   const tieneReg07 = (estado) => ['REG-007-PENDIENTE-APROBACION', 'APROBADO', 'RECHAZADO'].includes(estado);
 
-  const filteredSolicitudes = solicitudes.filter(s => {
-    // 0. La vista REG-07 sólo muestra registros con REG-07 ya generado por Sistemas.
-    if (activeTab === 'reg07' && !tieneReg07(s.Estado)) return false;
-
-    // 1. Filtro Producto
-    if (filterProducto && !s.NombreProducto?.toLowerCase().includes(filterProducto.toLowerCase())) {
-      return false;
-    }
-
-    // 2. Filtro Código Twins o Producto
-    if (filterCodigoTwins) {
-      const query = filterCodigoTwins.toLowerCase();
-      const codeTwins = (s.CodigoTwins || '').toLowerCase();
-      const codeProd = (s.CodigoProducto || '').toLowerCase();
-      if (!codeTwins.includes(query) && !codeProd.includes(query)) {
-        return false;
-      }
-    }
-
-    // 3. Filtro Fechas
-    const itemDateStr = s.FechaPresentacion || s.PresentationDate || s.FechaCreacion || s.PresentationDateTime;
-    if (itemDateStr) {
-      const itemDate = new Date(itemDateStr);
-      itemDate.setHours(0,0,0,0);
-
-      if (filterFechaDesde) {
-        const desde = new Date(filterFechaDesde);
-        desde.setHours(0,0,0,0);
-        if (itemDate < desde) return false;
-      }
-
-      if (filterFechaHasta) {
-        const hasta = new Date(filterFechaHasta);
-        hasta.setHours(0,0,0,0);
-        if (itemDate > hasta) return false;
-      }
-    } else if (filterFechaDesde || filterFechaHasta) {
-      return false;
-    }
-
-    // 4. Filtro Estado
-    if (filterEstado !== 'TODOS') {
-      if (filterEstado === 'PENDIENTE_APROB_SISTEMAS' && s.Estado !== 'REG-011-PENDIENTE-APROBACION') return false;
-      if (filterEstado === 'OBSERVADO' && s.Estado !== 'REG-011-OBSERVADO') return false;
-      if (filterEstado === 'PENDIENTE_REG07' && !['REG-011-APROBADO', 'REG-011-PENDIENTE'].includes(s.Estado)) return false;
-      if (filterEstado === 'PENDIENTE_CALIDAD' && s.Estado !== 'REG-007-PENDIENTE-APROBACION') return false;
-      if (filterEstado === 'APROBADO' && s.Estado !== 'APROBADO') return false;
-      if (filterEstado === 'RECHAZADO' && s.Estado !== 'RECHAZADO') return false;
-    }
-
-    return true;
-  });
+  // La vista REG-07 sólo muestra registros con REG-07 ya generado. El resto del
+  // filtrado (búsqueda, estado, fechas) vive dentro del data grid.
+  const listData = activeTab === 'reg07'
+    ? solicitudes.filter(s => tieneReg07(s.Estado))
+    : solicitudes;
 
   return (
     <div className="flex min-h-screen pb-20 md:pb-0">
@@ -209,13 +167,13 @@ function App() {
                   icon={<FileText size={18} />}
                   label="REG-11"
                   active={activeTab === 'reg11'}
-                  onClick={() => { setActiveTab('reg11'); setIsModalOpen(false); setIsDetailOpen(false); }}
+                  onClick={() => { switchTab('reg11'); }}
                 />
                 <NavItem
                   icon={<FileCheck size={18} />}
                   label="REG-07"
                   active={activeTab === 'reg07'}
-                  onClick={() => { setActiveTab('reg07'); setIsModalOpen(false); setIsDetailOpen(false); }}
+                  onClick={() => { switchTab('reg07'); }}
                 />
               </div>
             )}
@@ -393,111 +351,11 @@ function App() {
                 : 'Cada registro abre directamente su formulario REG-11 (solicitud original de Calidad).'}
             </p>
 
-            {/* Panel de Filtros */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-8 flex flex-col gap-4 animate-in fade-in duration-300">
-              <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
-                <Filter size={14} /> Filtros de Búsqueda
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                {/* Filtro Producto */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Producto</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      placeholder="Buscar producto..."
-                      value={filterProducto}
-                      onChange={e => setFilterProducto(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
-                    />
-                    <Search className="absolute left-2.5 top-2.5 text-white/30" size={14} />
-                  </div>
-                </div>
-
-                {/* Filtro Código Twins */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Código Twins / Prod</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      placeholder="Ej: Twins..."
-                      value={filterCodigoTwins}
-                      onChange={e => setFilterCodigoTwins(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-colors"
-                    />
-                    <Search className="absolute left-2.5 top-2.5 text-white/30" size={14} />
-                  </div>
-                </div>
-
-                {/* Filtro Fecha Desde */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Fecha Desde</label>
-                  <div className="relative">
-                    <input 
-                      type="date"
-                      value={filterFechaDesde}
-                      onChange={e => setFilterFechaDesde(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-primary transition-colors scheme-dark"
-                    />
-                    <Calendar className="absolute left-2.5 top-2.5 text-white/30" size={14} />
-                  </div>
-                </div>
-
-                {/* Filtro Fecha Hasta */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Fecha Hasta</label>
-                  <div className="relative">
-                    <input 
-                      type="date"
-                      value={filterFechaHasta}
-                      onChange={e => setFilterFechaHasta(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-8 pr-3 text-xs text-white focus:outline-none focus:border-primary transition-colors scheme-dark"
-                    />
-                    <Calendar className="absolute left-2.5 top-2.5 text-white/30" size={14} />
-                  </div>
-                </div>
-
-                {/* Filtro Estado */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Estado</label>
-                  <select
-                    value={filterEstado}
-                    onChange={e => setFilterEstado(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-primary transition-colors cursor-pointer"
-                  >
-                    <option value="TODOS" className="bg-slate-900 text-white">Todos</option>
-                    <option value="PENDIENTE_APROB_SISTEMAS" className="bg-slate-900 text-white">Pendiente Aprob. Sistemas</option>
-                    <option value="OBSERVADO" className="bg-slate-900 text-white">Observadas</option>
-                    <option value="PENDIENTE_REG07" className="bg-slate-900 text-white">Pendiente REG-07</option>
-                    <option value="PENDIENTE_CALIDAD" className="bg-slate-900 text-white">Pendiente Calidad</option>
-                    <option value="APROBADO" className="bg-slate-900 text-white">Aprobadas</option>
-                    <option value="RECHAZADO" className="bg-slate-900 text-white">Rechazadas</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Botón de limpiar si hay filtros activos */}
-              {(filterProducto || filterCodigoTwins || filterFechaDesde || filterFechaHasta || filterEstado !== 'TODOS') && (
-                <div className="flex justify-end mt-2 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <button 
-                    onClick={() => {
-                      setFilterProducto('');
-                      setFilterCodigoTwins('');
-                      setFilterFechaDesde('');
-                      setFilterFechaHasta('');
-                      setFilterEstado('TODOS');
-                    }}
-                    className="flex items-center gap-1.5 text-red-400 hover:text-red-300 text-xs font-bold transition-colors uppercase tracking-wider"
-                  >
-                    <XCircle size={14} /> Limpiar Filtros
-                  </button>
-                </div>
-              )}
-            </div>
-
             <SolicitudesDataTable
-              data={filteredSolicitudes}
+              key={`${activeTab}-${presetEstado.join(',')}`}
+              data={listData}
               focus={listFocus}
+              initialEstado={presetEstado}
               onOpen={(id, f) => openDetail(id, f)}
               onPrint={(id, f) => openDetail(id, f, true)}
             />
@@ -511,11 +369,11 @@ function App() {
           <Activity size={20} />
           <span className="text-[10px] mt-1 font-medium">Dashboard</span>
         </button>
-        <button onClick={() => { setActiveTab('reg11'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg11' ? 'text-primary' : 'text-text-muted'}`}>
+        <button onClick={() => { switchTab('reg11'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg11' ? 'text-primary' : 'text-text-muted'}`}>
           <FileText size={20} />
           <span className="text-[10px] mt-1 font-medium">REG-11</span>
         </button>
-        <button onClick={() => { setActiveTab('reg07'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg07' ? 'text-primary' : 'text-text-muted'}`}>
+        <button onClick={() => { switchTab('reg07'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg07' ? 'text-primary' : 'text-text-muted'}`}>
           <FileCheck size={20} />
           <span className="text-[10px] mt-1 font-medium">REG-07</span>
         </button>
