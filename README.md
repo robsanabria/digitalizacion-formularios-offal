@@ -11,97 +11,250 @@ El objetivo principal es **eliminar el uso de formularios de papel físicos** pa
 
 El sistema digitaliza de forma estricta un workflow encadenado:
 
-1. **Fase A  Solicitud (REG-SIS-011)**: El departamento de **Calidad** crea una solicitud completando los datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.) y adjunta el formato original. **Todos los campos son obligatorios.** Queda registrado el usuario que la generó. *Estado: `REG-011-PENDIENTE-APROBACION`*.
+1. **Fase A — Solicitud (REG-SIS-011)**: El departamento de **Calidad** crea una solicitud completando los datos técnicos del producto (tara, pesos mínimos/máximos, impresoras afectadas, etc.) y adjunta el formato original. **Todos los campos son obligatorios.** Queda registrado el usuario que la generó. *Estado: `REG-011-PENDIENTE-APROBACION`*.
 
-2. **Fase B Aprobación del REG-11 por Sistemas** *(compuerta previa)*: El departamento de **Sistemas** revisa la solicitud y decide:
+2. **Fase B — Aprobación del REG-11 por Sistemas** *(compuerta previa)*: El departamento de **Sistemas** revisa la solicitud y decide:
    * **Aprobar**: habilita la carga del REG-007 y su firma queda registrada en el REG-11. *Estado: `REG-011-APROBADO`*.
    * **Observar**: devuelve la solicitud a Calidad para corrección. *Estado: `REG-011-OBSERVADO`*. Calidad corrige y reenvía, volviendo a `REG-011-PENDIENTE-APROBACION`.
 
-3. **Fase C Respuesta Técnica (REG-SIS-007)**: Sistemas visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
+3. **Fase C — Respuesta Técnica (REG-SIS-007)**: Sistemas visualiza los datos del REG-011 como referencia y completa el REG-007, subiendo las capturas y muestras digitales de las etiquetas modificadas en planta. *Estado: `REG-007-PENDIENTE-APROBACION`*.
 
-4. **Fase D Aprobación Final**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
+4. **Fase D — Aprobación Final**: **Calidad** inspecciona visualmente el REG-007 finalizado por Sistemas y valida los cambios.
    * **Aprobar**: El circuito se cierra con éxito. *Estado: `APROBADO` (Finalizado)*.
    * **Rechazar**: El circuito se cancela y se registra el evento. *Estado: `RECHAZADO`*.
+
+### Diagrama de estados
+
+```
+                          ┌──────────────────────────────┐
+   Calidad crea  ───────► │  REG-011-PENDIENTE-APROBACION │ ◄────┐ (reenvío Calidad)
+                          └──────────────┬───────────────┘      │
+                          Sistemas       │                      │
+                ┌── Observar ────────────┼──────────────────────┤
+                ▼                        │ Aprobar              │
+        ┌───────────────────┐           ▼              ┌────────┴─────────┐
+        │ REG-011-OBSERVADO │     ┌────────────────┐   │  (Calidad corrige │
+        └───────────────────┘     │ REG-011-APROBADO│   │   y reenvía)      │
+                                  └───────┬────────┘   └──────────────────┘
+                          Sistemas completa│ REG-07
+                                           ▼
+                          ┌────────────────────────────────┐
+                          │ REG-007-PENDIENTE-APROBACION    │
+                          └───────┬───────────────┬────────┘
+                       Calidad    │               │  Calidad
+                       Aprobar    ▼               ▼  Rechazar
+                          ┌──────────┐      ┌────────────┐
+                          │ APROBADO │      │ RECHAZADO  │
+                          └──────────┘      └────────────┘
+```
 
 ---
 
 ## ✨ Características clave
 
-* **Vistas separadas REG-11 / REG-07**: el menú *Solicitudes* se desglosa en dos submenús. La vista **REG-07 solo lista los registros que ya tienen respuesta de Sistemas**; un REG-11 recién creado aparece únicamente en la vista REG-11.
-* **Selector de documento e impresión independiente**: dentro del detalle se puede alternar entre REG-11 y REG-07; la descarga genera el **PDF del documento seleccionado por separado** (no mezcla ambos).
-* **Circuito de aprobación con compuerta**: Sistemas debe aprobar el REG-11 antes de poder completar el REG-07; si lo observa, vuelve a Calidad para corrección y reenvío.
+### Circuito y negocio
+* **Circuito de aprobación con compuerta**: Sistemas debe aprobar el REG-11 antes de completar el REG-07; si lo observa, vuelve a Calidad para corrección y reenvío.
 * **Firmas digitales en el papel**: el REG-11 muestra al **usuario solicitante** que lo creó y la **firma de Sistemas** al aprobarlo; el REG-07 refleja las firmas de Sistemas y Calidad según el historial.
-* **Stepper visual del circuito**: indicador de progreso (Solicitud → Aprob. Sistemas → REG-07 → Aprob. Calidad) que resalta la etapa actual.
-* **Dashboard por rol**: tarjetas de *“Pendientes de tu acción”* según el rol (Sistemas / Calidad) con acceso directo a la lista filtrada.
-* **Validaciones estrictas**: todos los campos son obligatorios al crear un REG-11, al completar un REG-07 (incluida al menos una etiqueta técnica) y al reenviar un REG-11 observado; validado en frontend y backend.
-* **Trazabilidad**: cada transición de estado se registra en el historial con usuario, fecha y comentario.
+* **Validaciones estrictas** (frontend + backend): todos los campos obligatorios al crear un REG-11, al completar un REG-07 (incluida al menos una etiqueta técnica) y al reenviar un REG-11 observado.
+* **Trazabilidad**: cada transición de estado se registra en `Historial` con usuario, fecha y comentario.
 
-> 🧰 **Utilidad de pruebas**: `scripts/clear_solicitudes.js` borra todas las solicitudes (Solicitudes / Adjuntos / Historial) **conservando los usuarios y el esquema**, para reiniciar un escenario de prueba desde cero (`node scripts/clear_solicitudes.js`).
+### Experiencia de usuario (UI/UX tipo CRM)
+* **Topbar global** con buscador de solicitudes en vivo, campana de notificaciones ("pendientes de tu acción" según rol) y menú de usuario (Configuración, Gestión de usuarios, Cerrar sesión).
+* **Data grid** (TanStack Table) en las listas REG-11 / REG-07: orden por columna, búsqueda, filtros integrados (facet de estado con contadores, rango de fechas, chips removibles), paginación, selección de filas y fechas relativas.
+* **Vistas separadas REG-11 / REG-07**: el menú *Solicitudes* se desglosa en dos submenús. La vista **REG-07 solo lista los registros que ya tienen respuesta de Sistemas**.
+* **Selector de documento e impresión independiente**: dentro del detalle se alterna entre REG-11 y REG-07; la descarga genera el **PDF del documento seleccionado por separado**.
+* **Stepper visual del circuito** (Solicitud → Aprob. Sistemas → REG-07 → Aprob. Calidad) que resalta la etapa actual.
+* **Dashboard por rol** con tarjetas de *"Pendientes de tu acción"* y acceso directo a la lista filtrada.
+* **Mobile-friendly**: data grid como tarjetas apiladas, bottom-nav y layouts responsivos.
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-El stack tecnológico ha sido seleccionado para garantizar un rendimiento óptimo, compatibilidad on-premise/cloud y cumplimiento de políticas de seguridad corporativas:
+### Frontend (`/client`)
+| Tecnología | Uso |
+| :--- | :--- |
+| **React 19** + **Vite** | SPA y tooling de build/dev. |
+| **Tailwind CSS 3** | Sistema de utilidades y diseño. |
+| **shadcn/ui** (sobre **Radix UI**) | Componentes accesibles (Button, Table, Dropdown, Popover, Checkbox…). Tokens namespaced `--sh-*`. |
+| **TanStack Table** | Data grid (orden, filtros, paginación, faceting). |
+| **Framer Motion** | Micro-animaciones y transiciones. |
+| **Lucide React** | Iconografía vectorial. |
+| **DaisyUI** | *(legacy)* componentes previos, en proceso de migración a shadcn/ui. |
+| **Axios** | Cliente HTTP hacia la API. |
 
-### Frontend (Cliente)
-* **React 18** (scaffolding rápido mediante Vite).
-* **Tailwind CSS & DaisyUI**: Diseño premium en modo oscuro "Pro Slate" combinado con componentes realistas de alta precisión que imitan el papel impreso técnico.
-* **Framer Motion**: Micro-animaciones fluidas para transiciones y modales.
-* **Lucide React**: Biblioteca de iconos vectoriales modernos.
+### Backend (raíz)
+| Tecnología | Uso |
+| :--- | :--- |
+| **Node.js** + **Express** | Servidor HTTP y API REST; sirve el frontend compilado (`client/dist`). |
+| **mssql** | Driver oficial de Microsoft SQL Server / Azure SQL (consultas parametrizadas). |
+| **Multer** | Carga de archivos `multipart/form-data` (en memoria). |
+| **@azure/storage-blob** | SDK de Azure Blob Storage para adjuntos. |
+| **cors**, **dotenv** | CORS y variables de entorno. |
+| **express-validator** | *(instalado; validación adicional pendiente de adopción uniforme)*. |
 
-### Backend (Servidor)
-* **Node.js** con el framework de alto rendimiento **Express**.
-* **Microsoft SQL Server Client (`mssql`)**: Driver oficial optimizado para Azure SQL.
-* **Multer**: Middleware para la gestión eficiente de flujos de archivos (`multipart/form-data`).
+### Servicios y almacenamiento (Azure)
+* **Microsoft Entra ID (EasyAuth)**: SSO corporativo. El App Service inyecta las cabeceras `x-ms-client-principal-*`; el backend hace **JIT provisioning** del usuario en la tabla `Usuarios` al primer login.
+* **Azure Blob Storage**: contenedor `regsis-attachments`, convención `requests/{SolicitudId}/{archivo}`. La DB guarda solo metadatos/URLs.
+* **Azure AI Document Intelligence**: *previsto en la especificación para OCR/autocompletado de etiquetas; **aún no implementado** en el código.*
 
-### Servicios de Inteligencia y Almacenamiento (Azure)
-* **Azure AI Document Intelligence**: Procesamiento OCR inteligente para la lectura, validación y autocompletado automático de datos a partir de etiquetas y archivos PDF subidos.
-* **Azure Blob Storage**: Almacenamiento seguro en la nube de evidencias físicas en el contenedor `regsis-attachments` usando el SDK oficial de Azure.
-* **Microsoft Entra ID (Azure AD / EasyAuth)**: Sistema de autenticación Single Sign-On (SSO) corporativo de Microsoft 365, con sincronización automática de roles (`CALIDAD`, `SISTEMAS`, `ADMIN`) al primer login.
+---
+
+## 🧱 Arquitectura
+
+```
+Navegador (React SPA)
+   │  HTTPS  (Axios → /api)
+   ▼
+Azure App Service  ──────────────────────────────────────────┐
+   │  Express (index.js)                                       │
+   │   ├─ authMiddleware  → identidad (EasyAuth) + JIT user    │
+   │   ├─ roleMiddleware  → autorización por rol               │
+   │   ├─ routes/ → controllers/ → services/                   │
+   │   └─ static: client/dist (frontend compilado)             │
+   ▼                         ▼                                 ▼
+Azure SQL Database     Azure Blob Storage              Microsoft Entra ID
+(Usuarios, Solicitudes, (regsis-attachments)            (SSO / roles)
+ Adjuntos, Historial)
+```
+
+---
+
+## 🗄️ Modelo de datos (SQL Server)
+
+| Tabla | Descripción |
+| :--- | :--- |
+| **Usuarios** | `UsuarioId`, `NombreUsuario`, `Email`, `Rol` (`CALIDAD` / `SISTEMAS` / `ADMIN`). |
+| **Solicitudes** | Registro unificado REG-011 + REG-007: datos del producto, pesos, impresoras, estado del circuito, campos de respuesta de Sistemas (`FechaPresentacion`, `CodigoTwins`, `CorrespondeSolicitud`), y `SolicitadoPor` (FK a Usuarios). |
+| **Adjuntos** | Archivos por solicitud: `RutaArchivo` (URL del blob), `TipoContenido`, `TamanoArchivo`, `TipoAdjunto` (`ORIGINAL` de Calidad / `PROPUESTO` de Sistemas). |
+| **Historial** | Trazabilidad: `EstadoAnterior`, `EstadoNuevo`, `Accion`, `Comentario`, `UsuarioId`, `FechaEvento`. |
+
+---
+
+## 🔌 API REST (principales endpoints)
+
+> Todas las rutas `/api/*` requieren autenticación; la autorización por rol se aplica por endpoint/acción.
+
+| Método | Endpoint | Rol | Descripción |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/auth/me` | * | Identidad del usuario autenticado. |
+| `GET` | `/api/solicitudes` | * | Lista de solicitudes. |
+| `GET` | `/api/solicitudes/:id` | * | Detalle + nombre del solicitante. |
+| `POST` | `/api/solicitudes` | CALIDAD/ADMIN | Crea un REG-11 (valida campos obligatorios). |
+| `PUT` | `/api/solicitudes/:id` | CALIDAD/SISTEMAS/ADMIN | Sistemas completa el REG-07 **o** Calidad corrige/reenvía un REG-11 observado. |
+| `POST` | `/api/solicitudes/:id/transition` | CALIDAD/SISTEMAS/ADMIN | Máquina de estados (`aprobar_reg11`, `rechazar_reg11`, `approve`, `reject`). |
+| `GET` | `/api/solicitudes/:id/historial` | * | Trazabilidad. |
+| `GET/POST/DELETE` | `/api/solicitudes/:id/adjuntos[...]` | según tipo | Listar / subir / descargar / eliminar adjuntos. |
+| `GET` | `/api/users` | ADMIN | Gestión de usuarios. |
+| `PUT` | `/api/users/:id/role` | ADMIN | Cambia el rol de un usuario. |
+
+---
+
+## 👤 Roles y autorización
+
+* **CALIDAD**: crea REG-11, corrige observados, aprueba/rechaza el REG-07 final.
+* **SISTEMAS**: aprueba/observa el REG-11, completa el REG-07.
+* **ADMIN**: todo lo anterior + gestión de usuarios.
+
+La autorización vive en `middlewares/roleMiddleware.js` (`checkRole([...])`) por endpoint, y se refuerza con validaciones de estado/rol dentro de cada controlador.
 
 ---
 
 ## ☁️ Infraestructura y Hosting
 
-El sistema está diseñado para operar en un entorno de nube administrado en **Microsoft Azure**:
-
-| Componente | Tipo de Recurso | Identificador / Configuración |
+| Componente | Recurso | Configuración |
 | :--- | :--- | :--- |
-| **Hosting Web** | **Azure App Service** | Aloja el backend de Node.js y sirve el frontend compilado. Integrado bajo el dominio corporativo personalizado: `https://etiquetas.offalexpsa.ar` |
-| **Base de Datos** | **Azure SQL Database** | Servidor administrado: `controletiquetas-server.database.windows.net` <br> Base de datos relacional: `controletiquetas` |
-| **Almacenamiento** | **Azure Storage Account** | Cuenta de almacenamiento: `datos4etiquetas` <br> Contenedor dedicado: `regsis-attachments` |
-| **SSO & Auth** | **App Registration** | Microsoft Entra ID. Cliente ID: `0b35d62f-ea21-4ec0-b904-a885ac16bf7a` |
+| **Hosting Web** | Azure App Service (`controlEtiquetas`) | Node.js + frontend compilado. Dominio: `https://etiquetas.offalexpsa.ar` |
+| **Base de Datos** | Azure SQL Database | `controletiquetas-server.database.windows.net` / `controletiquetas` |
+| **Almacenamiento** | Azure Storage Account | `datos4etiquetas` / contenedor `regsis-attachments` |
+| **SSO & Auth** | Microsoft Entra ID (App Registration) | Client ID: `0b35d62f-ea21-4ec0-b904-a885ac16bf7a` |
 
 ---
 
-## 🚀 Pipeline de Despliegue (Deploy)
+## 🚀 CI/CD
 
-El despliegue está **100% automatizado** bajo un enfoque de **Integración y Entrega Continua (CI/CD)**:
+* **GitHub Actions** (`.github/workflows/main_controletiquetas.yml`).
+* **Trigger**: `push` a `main` (o ejecución manual).
+* **Job**: instala dependencias del server, compila el cliente (`cd client && npm run build`), empaqueta y despliega al **Azure App Service** con `azure/webapps-deploy`.
 
-* **Herramienta**: **GitHub Actions** (`.github/workflows/`).
-* **Trigger**: Cualquier `git push` a la rama principal `main` ejecuta el pipeline automáticamente.
-* **Flujo del Job**:
-  1. Descarga el repositorio y realiza la compilación de producción del cliente React (`npm run build`).
-  2. Empaqueta el backend y el frontend compilado.
-  3. Despliega la aplicación hacia el **Azure App Service** utilizando perfiles de publicación seguros (`AZURE_WEBAPP_PUBLISH_PROFILE`).
+---
+
+## 💻 Desarrollo local
+
+```bash
+# 1) Backend (raíz)
+npm install
+node index.js          # API en http://localhost:3001
+
+# 2) Frontend (otra terminal)
+cd client
+npm install
+npm run dev            # Vite en http://localhost:5173 (proxy /api → 3001)
+```
+
+**Variables de entorno** (`.env` en la raíz, fuera del repo):
+
+```
+PORT=3001
+NODE_ENV=development
+DB_SERVER=...        DB_NAME=...        DB_USER=...        DB_PASS=...
+AZURE_STORAGE_CONNECTION_STRING=...
+AZURE_STORAGE_CONTAINER_NAME=regsis-attachments
+```
+
+> En desarrollo (sin EasyAuth), `authMiddleware` inyecta un usuario simulado para poder probar las vistas. Cambiá su `Rol` en `middlewares/authMiddleware.js` para emular CALIDAD / SISTEMAS / ADMIN.
+
+---
+
+## 🧰 Scripts útiles (`/scripts`)
+
+| Script | Acción |
+| :--- | :--- |
+| `clear_solicitudes.js` | Borra Solicitudes/Adjuntos/Historial **conservando usuarios y esquema** (reset de pruebas). |
+| `reset_db_v2.js` | Recrea el esquema completo *(⚠️ DROP/CREATE; revisar columnas antes de usar)*. |
+| `migrate_*.js`, `check_*.js` | Migraciones/diagnósticos puntuales. |
+
+---
+
+## ✅ Buenas prácticas aplicadas
+
+* **Consultas parametrizadas** con `mssql` (mitigación de SQL injection).
+* **Autorización por rol** centralizada en middleware + validación de estado en controladores.
+* **Secrets fuera del repo**: `.env` ignorado; credenciales en *App Settings* de Azure.
+* **Separación de capas**: `routes` → `controllers` → `services` (Blob) / `config` (DB).
+* **Design system**: tokens shadcn namespaced `--sh-*` para convivir sin romper estilos legacy; componentes accesibles (Radix).
+* **Validación doble** (cliente para UX, servidor como fuente de verdad).
+* **Flujo de trabajo Git**: una rama por feature, PR con descripción, build verde como gate, deploy automático en `main`.
+* **Trazabilidad** de todas las transiciones de estado.
+
+> 🔭 Mejoras y deuda técnica priorizada: ver **[SUGGESTIONS.md](SUGGESTIONS.md)**.
 
 ---
 
 ## 📁 Estructura del Repositorio
 
 ```bash
-├── client/                 # Aplicación Frontend (React + Vite + Tailwind)
+├── client/                      # Frontend (React 19 + Vite + Tailwind + shadcn/ui)
 │   ├── src/
-│   │   ├── components/     # Componentes visuales (Formularios REG-007, REG-011, modales)
-│   │   ├── App.jsx         # Orquestador del Dashboard principal
-│   │   └── index.css       # Sistema de diseño y estilos CSS de impresión
-├── config/                 # Configuraciones del sistema (Conexión a Base de Datos SQL)
-├── controllers/            # Controladores del Backend (Lógica de solicitudes y estados)
-├── middlewares/            # Middlewares de Express (Autenticación y autorización por rol)
-├── routes/                 # Definición de Endpoints de la API REST
-├── services/               # Conectores y servicios externos (Azure Blob Storage)
-├── scripts/                # Scripts de automatización y migraciones de DB
-├── index.js                # Punto de entrada de la aplicación Node.js
-├── REG-SIS-007-specs.md    # Especificaciones técnicas completas
-└── WALKTHROUGH_V2.md       # Recorrido de flujos y UX v2.0
+│   │   ├── components/
+│   │   │   ├── ui/              # Primitivas shadcn/ui (button, table, popover, ...)
+│   │   │   ├── App.jsx          # (en src/) orquestador principal
+│   │   │   ├── Topbar.jsx       # Topbar global (buscador, notificaciones, menú usuario)
+│   │   │   ├── SolicitudesDataTable.jsx  # Data grid (TanStack Table)
+│   │   │   ├── DetalleSolicitud.jsx       # Panel de detalle + stepper + impresión
+│   │   │   ├── REG011PaperForm.jsx / REG007PaperForm.jsx  # "Papel digital"
+│   │   │   ├── NuevaSolicitud.jsx / GestionUsuarios.jsx / Toast.jsx
+│   │   ├── lib/utils.js         # helper cn() (clsx + tailwind-merge)
+│   │   └── index.css            # design tokens + estilos de impresión (@media print)
+│   ├── tailwind.config.js / vite.config.js / jsconfig.json
+├── config/                      # Conexión a SQL Server (pool mssql)
+├── controllers/                 # Lógica de solicitudes, usuarios y máquina de estados
+├── middlewares/                 # authMiddleware (EasyAuth + JIT) y roleMiddleware
+├── routes/                      # Endpoints REST
+├── services/                    # storageService (Azure Blob)
+├── scripts/                     # Utilidades y migraciones
+├── index.js                     # Punto de entrada Express
+├── REG-SIS-007-specs.md         # Especificación técnica
+├── WALKTHROUGH_V2.md            # Recorrido de flujos / UX
+└── SUGGESTIONS.md               # Roadmap de mejoras y deuda técnica
+```
