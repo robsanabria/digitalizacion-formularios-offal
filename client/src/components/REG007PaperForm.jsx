@@ -15,8 +15,8 @@ const REG007PaperForm = ({
   uploadLoading = false 
 }) => {
   
-  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') && 
-                          (solicitudEstado === 'REG-011-PENDIENTE' || solicitudEstado === 'REG-007-PENDIENTE-APROBACION');
+  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
+                          !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
   const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
 
   const parseArray = (val) => {
@@ -180,7 +180,7 @@ const REG007PaperForm = ({
                     src={`/api/solicitudes/${solicitudId}/adjuntos/${calidadAdjunto.AdjuntoId}/descargar`}
                     className="max-h-[380px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
                     alt="Referencia Original"
-                    loading="lazy"
+                    loading="eager"
                   />
                 ) : (
                   <div className="flex flex-col items-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
@@ -237,7 +237,7 @@ const REG007PaperForm = ({
                   src={`/api/solicitudes/${solicitudId}/adjuntos/${img.AdjuntoId}/descargar`}
                   className="h-[140px] max-w-full object-contain border border-gray-200"
                   alt={`Etiqueta Modificada ${idx + 1}`}
-                  loading="lazy"
+                  loading="eager"
                 />
                 <span className="text-[8px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
               </div>
@@ -281,7 +281,7 @@ const REG007PaperForm = ({
                   src={`/api/solicitudes/${solicitudId}/adjuntos/${sistemasAdjuntos[0].AdjuntoId}/descargar`}
                   className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
                   alt="Propuesta Principal"
-                  loading="lazy"
+                  loading="eager"
                 />
                 <span className="text-[8px] mt-2 text-gray-400 font-black uppercase tracking-wider">Muestra Técnica Principal de Etiquetas Modificadas</span>
               </div>

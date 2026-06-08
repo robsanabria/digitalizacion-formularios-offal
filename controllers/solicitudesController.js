@@ -44,8 +44,9 @@ const createSolicitud = async (req, res) => {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
         
-        // Estado inicial para el REG-SIS-011 creado por Calidad
-        const estadoInicial = 'REG-011-PENDIENTE';
+        // Estado inicial: el REG-SIS-011 creado por Calidad queda pendiente de
+        // aprobación por parte de Sistemas (nueva compuerta previa al REG-007).
+        const estadoInicial = 'REG-011-PENDIENTE-APROBACION';
 
         const result = await pool.request()
             .input('solicitadoPor', sql.UniqueIdentifier, solicitadoPor)
@@ -105,23 +106,119 @@ const createSolicitud = async (req, res) => {
     }
 };
 
+// Estados en los que Sistemas tiene habilitado completar el REG-007.
+// Incluye el legacy 'REG-011-PENDIENTE' por retrocompatibilidad con registros previos.
+const ESTADOS_REG011_APROBADO = ['REG-011-APROBADO', 'REG-011-PENDIENTE'];
+
 const updateSolicitud = async (req, res) => {
     const { id } = req.params;
     const b = req.body;
+    const { UsuarioId, Rol } = req.user;
 
     try {
         const pool = await poolPromise;
         if (!pool) throw new Error('No hay conexión con la base de datos');
 
-        // Esta función se usará principalmente para que Sistemas complete el REG-007
+        // Estado actual para validar la transición
+        const solRes = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query('SELECT Estado FROM Solicitudes WHERE SolicitudId = @id');
+
+        if (solRes.recordset.length === 0) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+        const estadoActual = solRes.recordset[0].Estado;
+
+        // ── Caso A: Calidad corrige y reenvía un REG-11 observado ──────────────
+        if (b.intent === 'reenviar_reg11' || estadoActual === 'REG-011-OBSERVADO') {
+            if (!['CALIDAD', 'ADMIN'].includes(Rol)) {
+                return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Calidad puede corregir y reenviar el REG-11.' });
+            }
+            if (estadoActual !== 'REG-011-OBSERVADO') {
+                return res.status(400).json({ error: 'Operación no permitida', detalle: 'El REG-11 no está observado, no puede reenviarse.' });
+            }
+
+            const nuevoEstado = 'REG-011-PENDIENTE-APROBACION';
+            await pool.request()
+                .input('id', sql.UniqueIdentifier, id)
+                .input('fechaSolicitud', sql.Date, b.fechaSolicitud)
+                .input('sectorSolicitante', sql.NVarChar, b.sectorSolicitante)
+                .input('motivo', sql.NVarChar, b.motivo == null ? null : (typeof b.motivo === 'string' ? b.motivo : JSON.stringify(b.motivo)))
+                .input('nombreProducto', sql.NVarChar, b.nombreProducto)
+                .input('codigoProducto', sql.NVarChar, b.codigoProducto)
+                .input('destino', sql.NVarChar, b.destino)
+                .input('vidaUtil', sql.NVarChar, b.vidaUtil)
+                .input('codigoSenasa', sql.NVarChar, b.codigoSenasa)
+                .input('impresoras', sql.NVarChar, b.impresoras == null ? null : (typeof b.impresoras === 'string' ? b.impresoras : JSON.stringify(b.impresoras)))
+                .input('tara', sql.NVarChar, b.tara)
+                .input('pesoMinimo', sql.NVarChar, b.pesoMinimo)
+                .input('pesoMaximo', sql.NVarChar, b.pesoMaximo)
+                .input('pesoEstandar', sql.NVarChar, b.pesoEstandar)
+                .input('numCaja', sql.NVarChar, b.numCaja)
+                .input('faja', sql.NVarChar, b.faja)
+                .input('codigoExterno', sql.NVarChar, b.codigoExterno)
+                .input('comentariosSolicitante', sql.NVarChar, b.comentariosSolicitante)
+                .input('cambioSolicitado', sql.NVarChar, b.cambioSolicitado)
+                .input('estado', sql.NVarChar, nuevoEstado)
+                .query(`
+                    UPDATE Solicitudes
+                    SET FechaSolicitud = ISNULL(@fechaSolicitud, FechaSolicitud),
+                        SectorSolicitante = ISNULL(@sectorSolicitante, SectorSolicitante),
+                        Motivo = ISNULL(@motivo, Motivo),
+                        NombreProducto = ISNULL(@nombreProducto, NombreProducto),
+                        CodigoProducto = ISNULL(@codigoProducto, CodigoProducto),
+                        Destino = ISNULL(@destino, Destino),
+                        VidaUtil = ISNULL(@vidaUtil, VidaUtil),
+                        CodigoSenasa = ISNULL(@codigoSenasa, CodigoSenasa),
+                        Impresoras = ISNULL(@impresoras, Impresoras),
+                        Tara = ISNULL(@tara, Tara),
+                        PesoMinimo = ISNULL(@pesoMinimo, PesoMinimo),
+                        PesoMaximo = ISNULL(@pesoMaximo, PesoMaximo),
+                        PesoEstandar = ISNULL(@pesoEstandar, PesoEstandar),
+                        NumCaja = ISNULL(@numCaja, NumCaja),
+                        Faja = ISNULL(@faja, Faja),
+                        CodigoExterno = ISNULL(@codigoExterno, CodigoExterno),
+                        ComentariosSolicitante = ISNULL(@comentariosSolicitante, ComentariosSolicitante),
+                        CambioSolicitado = ISNULL(@cambioSolicitado, CambioSolicitado),
+                        Estado = @estado
+                    WHERE SolicitudId = @id
+                `);
+
+            await pool.request()
+                .input('solicitudId', sql.UniqueIdentifier, id)
+                .input('usuarioId', sql.UniqueIdentifier, UsuarioId)
+                .input('estadoAnterior', sql.NVarChar, estadoActual)
+                .input('estadoNuevo', sql.NVarChar, nuevoEstado)
+                .input('accion', sql.NVarChar, 'REG-11 corregido y reenviado a Sistemas')
+                .input('comentario', sql.NVarChar, b.comentario || null)
+                .query(`
+                    INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion, Comentario)
+                    VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion, @comentario)
+                `);
+
+            return res.json({ mensaje: 'REG-11 corregido y reenviado a Sistemas', nuevoEstado });
+        }
+
+        // ── Caso B: Sistemas completa el REG-007 ───────────────────────────────
+        if (!['SISTEMAS', 'ADMIN'].includes(Rol)) {
+            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas puede completar el REG-007.' });
+        }
+        if (!ESTADOS_REG011_APROBADO.includes(estadoActual)) {
+            return res.status(400).json({
+                error: 'Operación no permitida',
+                detalle: 'El REG-11 debe estar aprobado por Sistemas antes de completar el REG-007.'
+            });
+        }
+
+        const nuevoEstado = b.estado || 'REG-007-PENDIENTE-APROBACION';
         await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .input('fechaPresentacion', sql.Date, b.fechaPresentacion)
             .input('codigoTwins', sql.NVarChar, b.codigoTwins)
             .input('correspondeSolicitud', sql.NVarChar, b.correspondeSolicitud)
-            .input('estado', sql.NVarChar, b.estado || 'REG-007-PENDIENTE-APROBACION')
+            .input('estado', sql.NVarChar, nuevoEstado)
             .query(`
-                UPDATE Solicitudes 
+                UPDATE Solicitudes
                 SET FechaPresentacion = ISNULL(@fechaPresentacion, FechaPresentacion),
                     CodigoTwins = ISNULL(@codigoTwins, CodigoTwins),
                     CorrespondeSolicitud = ISNULL(@correspondeSolicitud, CorrespondeSolicitud),
@@ -129,18 +226,16 @@ const updateSolicitud = async (req, res) => {
                 WHERE SolicitudId = @id
             `);
 
-        // Registrar en historial si hubo cambio de estado
-        if (b.estado) {
-            await pool.request()
-                .input('solicitudId', sql.UniqueIdentifier, id)
-                .input('usuarioId', sql.UniqueIdentifier, req.user.UsuarioId)
-                .input('estadoNuevo', sql.NVarChar, b.estado)
-                .input('accion', sql.NVarChar, 'Respuesta Sistemas (REG-SIS-007)')
-                .query(`
-                    INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion)
-                    VALUES (@solicitudId, @usuarioId, 'REG-011-PENDIENTE', @estadoNuevo, @accion)
-                `);
-        }
+        await pool.request()
+            .input('solicitudId', sql.UniqueIdentifier, id)
+            .input('usuarioId', sql.UniqueIdentifier, UsuarioId)
+            .input('estadoAnterior', sql.NVarChar, estadoActual)
+            .input('estadoNuevo', sql.NVarChar, nuevoEstado)
+            .input('accion', sql.NVarChar, 'Respuesta Sistemas (REG-SIS-007)')
+            .query(`
+                INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion)
+                VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion)
+            `);
 
         res.json({ mensaje: 'Solicitud actualizada (REG-007 completado)' });
     } catch (err) {
@@ -281,23 +376,31 @@ const downloadAdjunto = async (req, res) => {
 // ─── Máquina de estados ────────────────────────────────────────────────────────
 /**
  * POST /api/solicitudes/:id/transition
- * Body: { action: 'approve' | 'reject', comentario?: string }
+ * Body: { action, comentario?: string }
  *
- * Lógica de transición de estados con validación de rol:
- *   approve (CALIDAD/ADMIN) + Pendiente/En revisión → 'Aprobado por calidad'
- *   approve (SISTEMAS/ADMIN) + Pendiente/En revisión → 'Aprobado por sistemas'
- *   approve (CALIDAD/ADMIN)  + 'Aprobado por sistemas' → 'Aprobado por Sistemas y Calidad'
- *   approve (SISTEMAS/ADMIN) + 'Aprobado por calidad'  → 'Aprobado por Sistemas y Calidad'
- *   reject  (cualquier rol)                            → 'rechazado'
+ * Acciones y circuito:
+ *   aprobar_reg11  (SISTEMAS/ADMIN): REG-011-PENDIENTE-APROBACION → REG-011-APROBADO
+ *   rechazar_reg11 (SISTEMAS/ADMIN): REG-011-PENDIENTE-APROBACION → REG-011-OBSERVADO (vuelve a Calidad)
+ *   approve        (CALIDAD/ADMIN) : REG-007-PENDIENTE-APROBACION → APROBADO (aprobación final)
+ *   reject         (CALIDAD/ADMIN) : REG-007-PENDIENTE-APROBACION → RECHAZADO
  */
 const transitionSolicitud = async (req, res) => {
     const { id } = req.params;
     const { action, comentario } = req.body;
     const { UsuarioId, Rol } = req.user;
 
-    if (!['approve', 'reject'].includes(action)) {
-        return res.status(400).json({ error: "La acción debe ser 'approve' o 'reject'" });
+    // 'approve'/'reject' se mantienen como la aprobación final de Calidad (compatibilidad).
+    const ACCIONES_VALIDAS = ['aprobar_reg11', 'rechazar_reg11', 'approve', 'reject'];
+    if (!ACCIONES_VALIDAS.includes(action)) {
+        return res.status(400).json({ error: `Acción inválida. Use una de: ${ACCIONES_VALIDAS.join(', ')}` });
     }
+
+    const esSistemas = Rol === 'SISTEMAS' || Rol === 'ADMIN';
+    const esCalidad = Rol === 'CALIDAD' || Rol === 'ADMIN';
+    // Estados desde los que Sistemas puede aprobar/rechazar el REG-11.
+    // El legacy 'REG-011-PENDIENTE' NO entra aquí: predata la compuerta y se trata
+    // como ya aprobado (listo para completar el REG-07).
+    const PENDIENTE_REG11 = ['REG-011-PENDIENTE-APROBACION'];
 
     try {
         const pool = await poolPromise;
@@ -314,57 +417,46 @@ const transitionSolicitud = async (req, res) => {
 
         const estadoActual = solRes.recordset[0].Estado;
 
-        // 2. Calcular nuevo estado
+        // 2. Calcular nuevo estado según la acción
         let nuevoEstado;
         let accionDescripcion;
 
-        if (action === 'reject') {
-            nuevoEstado = 'RECHAZADO';
-            accionDescripcion = `Rechazado por ${Rol}`;
-        } else {
-            // approve — validar que no haya aprobado ya
-            const yaAprobadoCalidad   = estadoActual === 'Aprobado por calidad' || estadoActual === 'APROBADO';
-            const yaAprobadoSistemas  = estadoActual === 'Aprobado por sistemas' || estadoActual === 'REG-007-PENDIENTE-APROBACION';
-            const aprobacionFinal     = estadoActual === 'APROBADO';
-
-            if (aprobacionFinal) {
-                return res.status(400).json({ error: 'La solicitud ya tiene aprobación final' });
-            }
-
-            if ((Rol === 'CALIDAD' || Rol === 'ADMIN') && yaAprobadoCalidad && Rol !== 'ADMIN') {
-                return res.status(400).json({ error: 'Calidad ya aprobó esta solicitud' });
-            }
-            if (Rol === 'SISTEMAS' && yaAprobadoSistemas) {
-                return res.status(400).json({ error: 'Sistemas ya aprobó esta solicitud' });
-            }
-
-            if (Rol === 'CALIDAD') {
-                nuevoEstado = yaAprobadoSistemas
-                    ? 'APROBADO'
-                    : 'Aprobado por calidad';
-                accionDescripcion = nuevoEstado === 'APROBADO'
-                    ? 'Aprobado por Calidad → Finalizado'
-                    : `Aprobado por Calidad → ${nuevoEstado}`;
-            } else if (Rol === 'SISTEMAS') {
-                nuevoEstado = yaAprobadoCalidad
-                    ? 'APROBADO'
-                    : 'Aprobado por sistemas';
-                accionDescripcion = nuevoEstado === 'APROBADO'
-                    ? 'Aprobado por Sistemas → Finalizado'
-                    : `Aprobado por Sistemas → ${nuevoEstado}`;
-            } else if (Rol === 'ADMIN') {
-                // ADMIN puede aprobar en nombre de cualquiera
-                if (yaAprobadoCalidad || yaAprobadoSistemas) {
-                    nuevoEstado = 'APROBADO';
-                } else {
-                    nuevoEstado = 'Aprobado por calidad'; // Admin aprueba como Calidad primero
+        switch (action) {
+            case 'aprobar_reg11':
+                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede aprobar el REG-11' });
+                if (!PENDIENTE_REG11.includes(estadoActual)) {
+                    return res.status(400).json({ error: 'El REG-11 no está pendiente de aprobación de Sistemas' });
                 }
-                accionDescripcion = nuevoEstado === 'APROBADO'
-                    ? 'Aprobado por Admin → Finalizado'
-                    : `Aprobado por Admin → ${nuevoEstado}`;
-            } else {
-                return res.status(403).json({ error: 'Tu rol no tiene permisos para aprobar solicitudes' });
-            }
+                nuevoEstado = 'REG-011-APROBADO';
+                accionDescripcion = 'REG-11 aprobado por Sistemas';
+                break;
+
+            case 'rechazar_reg11':
+                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede observar el REG-11' });
+                if (!PENDIENTE_REG11.includes(estadoActual)) {
+                    return res.status(400).json({ error: 'El REG-11 no está pendiente de aprobación de Sistemas' });
+                }
+                nuevoEstado = 'REG-011-OBSERVADO';
+                accionDescripcion = 'REG-11 observado por Sistemas (devuelto a Calidad)';
+                break;
+
+            case 'approve':
+                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede dar la aprobación final' });
+                if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
+                    return res.status(400).json({ error: 'El REG-07 no está pendiente de aprobación de Calidad' });
+                }
+                nuevoEstado = 'APROBADO';
+                accionDescripcion = 'Aprobado por Calidad → Finalizado';
+                break;
+
+            case 'reject':
+                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede rechazar el REG-07' });
+                if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
+                    return res.status(400).json({ error: 'El REG-07 no está pendiente de aprobación de Calidad' });
+                }
+                nuevoEstado = 'RECHAZADO';
+                accionDescripcion = 'Rechazado por Calidad';
+                break;
         }
 
         // 3. Actualizar estado en Solicitudes

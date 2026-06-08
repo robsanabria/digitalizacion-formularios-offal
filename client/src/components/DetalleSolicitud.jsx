@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, FileText, Download, ExternalLink, Loader2, Check, X as XIcon, Upload, Clock, History, Save, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Download, Loader2, Check, Upload, History, Send, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -7,13 +7,16 @@ import REG011PaperForm from './REG011PaperForm';
 import REG007PaperForm from './REG007PaperForm';
 
 const ESTADOS_APROBACION = {
-  'REG-011-PENDIENTE': { label: 'REG-011: Pendiente Sistemas', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-  'REG-007-PENDIENTE-APROBACION': { label: 'REG-007: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+  'REG-011-PENDIENTE-APROBACION': { label: 'REG-11: Pendiente Aprob. Sistemas', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+  'REG-011-OBSERVADO': { label: 'REG-11: Observado (devuelto a Calidad)', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+  'REG-011-APROBADO': { label: 'REG-11: Aprobado — Pendiente REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+  'REG-011-PENDIENTE': { label: 'REG-11: Pendiente REG-07 (Sistemas)', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
+  'REG-007-PENDIENTE-APROBACION': { label: 'REG-07: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   'APROBADO': { label: '✅ Finalizado / Aprobado', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
   'RECHAZADO': { label: '❌ Rechazado', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
 };
 
-const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => {
+const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focusForm = 'REG011', printSignal = 0 }) => {
   const toast = useToast();
   const [solicitud, setSolicitud] = useState(null);
   const [adjuntos, setAdjuntos] = useState([]);
@@ -22,7 +25,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   const [statusLoading, setStatusLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
-  
+
   // Estado para la respuesta de Sistemas (REG-007)
   const [isResponding, setIsResponding] = useState(false);
   const [responseData, setResponseData] = useState({
@@ -30,6 +33,12 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
     codigoTwins: '',
     correspondeSolicitud: ''
   });
+
+  // Estado para que Calidad corrija y reenvíe un REG-11 observado
+  const [isEditing011, setIsEditing011] = useState(false);
+  const [edit011Data, setEdit011Data] = useState({});
+
+  const printedSignalRef = useRef(0);
 
   const fetchData = async () => {
     setLoading(true);
@@ -69,11 +78,33 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
       setSolicitud(normalized);
       setAdjuntos(adjRes.data);
       setHistorial(histRes.data);
-      
+
+      // Copia editable del REG-11 para el flujo de corrección de Calidad
+      setEdit011Data({
+        fechaSolicitud: normalized.fechaSolicitud ? new Date(normalized.fechaSolicitud).toISOString().split('T')[0] : '',
+        sectorSolicitante: normalized.sectorSolicitante || '',
+        motivo: normalized.motivo || '[]',
+        nombreProducto: normalized.nombreProducto || '',
+        codigoProducto: normalized.codigoProducto || '',
+        destino: normalized.destino || '',
+        vidaUtil: normalized.vidaUtil || '',
+        codigoSenasa: normalized.codigoSenasa || '',
+        impresoras: normalized.impresoras || '[]',
+        tara: normalized.tara || '',
+        pesoMinimo: normalized.pesoMinimo || '',
+        pesoMaximo: normalized.pesoMaximo || '',
+        pesoEstandar: normalized.pesoEstandar || '',
+        numCaja: normalized.numCaja || '',
+        faja: normalized.faja || '',
+        codigoExterno: normalized.codigoExterno || '',
+        comentariosSolicitante: normalized.comentariosSolicitante || '',
+        cambioSolicitado: normalized.cambioSolicitado || ''
+      });
+
       setResponseData({
         fechaPresentacion: normalized.fechaPresentacion ? new Date(normalized.fechaPresentacion).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         codigoTwins: normalized.codigoTwins || normalized.codigoProducto || '',
-        correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0,8) || ''
+        correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0, 8) || ''
       });
     } catch (err) {
       console.error('Error al cargar datos', err);
@@ -85,13 +116,38 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
   useEffect(() => {
     if (isOpen && solicitudId) fetchData();
     setIsResponding(false);
+    setIsEditing011(false);
   }, [isOpen, solicitudId]);
 
-  const handleStatusUpdate = async (action, comentario = '') => {
+  // ── Impresión robusta: espera a que todas las imágenes del formulario carguen ──
+  const waitForImagesAndPrint = async () => {
+    const container = document.getElementById('paper-form-container');
+    if (container) {
+      const imgs = Array.from(container.querySelectorAll('img'));
+      await Promise.all(
+        imgs.map(img =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise(resolve => { img.onload = img.onerror = resolve; })
+        )
+      );
+    }
+    window.print();
+  };
+
+  // Impresión disparada desde el listado (App incrementa printSignal)
+  useEffect(() => {
+    if (printSignal && printSignal !== printedSignalRef.current && isOpen && !loading && solicitud) {
+      printedSignalRef.current = printSignal;
+      waitForImagesAndPrint();
+    }
+  }, [printSignal, loading, isOpen, solicitud]);
+
+  const handleStatusUpdate = async (action, successMsg, comentario = '') => {
     setStatusLoading(true);
     try {
       await axios.post(`/api/solicitudes/${solicitudId}/transition`, { action, comentario });
-      toast.success(action === 'approve' ? "Solicitud aprobada con éxito" : "Solicitud rechazada con éxito");
+      toast.success(successMsg);
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
@@ -113,7 +169,25 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
-      toast.error('Error al enviar respuesta: ' + (err.response?.data?.detalle || err.message));
+      toast.error('Error al enviar respuesta: ' + (err.response?.data?.detalle || err.response?.data?.error || err.message));
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleResend011 = async () => {
+    setStatusLoading(true);
+    try {
+      await axios.put(`/api/solicitudes/${solicitudId}`, {
+        ...edit011Data,
+        intent: 'reenviar_reg11'
+      });
+      toast.success("REG-11 corregido y reenviado a Sistemas");
+      setIsEditing011(false);
+      if (onUpdated) onUpdated();
+      await fetchData();
+    } catch (err) {
+      toast.error('Error al reenviar el REG-11: ' + (err.response?.data?.detalle || err.response?.data?.error || err.message));
     } finally {
       setStatusLoading(false);
     }
@@ -153,204 +227,362 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
     });
   };
 
-
   if (!isOpen) return null;
 
-  const estadoInfo = ESTADOS_APROBACION[solicitud?.estado] || { label: solicitud?.estado, color: 'text-text-muted', bg: 'bg-white/5 border-border' };
+  const estado = solicitud?.estado;
+  const estadoInfo = ESTADOS_APROBACION[estado] || { label: estado, color: 'text-text-muted', bg: 'bg-white/5 border-border' };
+
   const esSistemas = user?.Rol === 'SISTEMAS' || user?.Rol === 'ADMIN';
   const esCalidad = user?.Rol === 'CALIDAD' || user?.Rol === 'ADMIN';
+
+  // Etapas del circuito
+  const esReg11PendienteAprob = estado === 'REG-011-PENDIENTE-APROBACION';
+  const esReg11Observado = estado === 'REG-011-OBSERVADO';
+  const esReg11Aprobado = estado === 'REG-011-APROBADO' || estado === 'REG-011-PENDIENTE'; // listo para REG-07 (incl. legacy)
+  const esReg07Pendiente = estado === 'REG-007-PENDIENTE-APROBACION';
+  const esFinalizado = estado === 'APROBADO' || estado === 'RECHAZADO';
+
+  // ¿Ya existe un REG-07 generado por Sistemas?
+  const tieneReg07 = esReg07Pendiente || esFinalizado;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md">
       <div className="bg-[#f3f4f6] w-full max-w-5xl h-full shadow-2xl relative overflow-y-auto flex flex-col">
-        
+
         {/* Toolbar Superior */}
-        <div className="bg-white border-b border-gray-300 p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+        <div className="bg-white border-b border-gray-300 p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print">
           <div className="flex items-center gap-4">
-             <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest ${estadoInfo.bg} ${estadoInfo.color}`}>
-                {estadoInfo.label}
-             </div>
-             <h2 className="text-xl font-bold text-gray-800">{solicitud?.nombreProducto}</h2>
+            <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest ${estadoInfo.bg} ${estadoInfo.color}`}>
+              {estadoInfo.label}
+            </div>
+            <h2 className="text-xl font-bold text-gray-800">{solicitud?.nombreProducto}</h2>
           </div>
-          <div className="flex gap-3">
-             {/* Acciones para Sistemas */}
-             {esSistemas && solicitud?.estado === 'REG-011-PENDIENTE' && !isResponding && (
-                <button 
-                   onClick={() => setIsResponding(true)}
-                   className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-blue-700 transition-all flex items-center gap-2"
+          <div className="flex gap-3 items-center flex-wrap justify-end">
+
+            {/* ── Compuerta REG-11: aprobación de Sistemas ── */}
+            {esSistemas && esReg11PendienteAprob && (
+              <>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Observar / Devolver REG-11",
+                    message: "¿Desea devolver este REG-11 a Calidad para su corrección? Quedará en estado 'Observado' y Calidad podrá ajustarlo y reenviarlo.",
+                    btnClass: "btn-error text-white",
+                    onConfirm: () => handleStatusUpdate('rechazar_reg11', 'REG-11 devuelto a Calidad para corrección')
+                  })}
+                  className="bg-orange-100 text-orange-600 px-5 py-2 rounded-lg font-bold uppercase text-xs hover:bg-orange-200 transition-all flex items-center gap-2 border border-orange-200"
                 >
-                   Completar REG-SIS-007
+                  <ThumbsDown size={14} /> Observar REG-11
                 </button>
-             )}
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Aprobar REG-11",
+                    message: "¿Confirma la aprobación del REG-11? Una vez aprobado, Sistemas podrá completar el REG-07 con las etiquetas técnicas.",
+                    btnClass: "btn-success",
+                    onConfirm: () => handleStatusUpdate('aprobar_reg11', 'REG-11 aprobado por Sistemas')
+                  })}
+                  className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
+                >
+                  {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <ThumbsUp size={14} />}
+                  Aprobar REG-11
+                </button>
+              </>
+            )}
 
-             {isResponding && (
-                <>
-                  <button 
-                    onClick={() => setIsResponding(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 font-bold uppercase text-xs"
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    disabled={statusLoading}
-                    onClick={() => {
-                      setConfirmConfig({
-                        title: "Enviar REG-SIS-007",
-                        message: "¿Confirma el envío de este formulario REG-SIS-007 completo a Calidad para su aprobación final?",
-                        btnClass: "btn-success",
-                        onConfirm: handleSystemsResponse
-                      });
-                    }}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2"
-                  >
-                    {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
-                    Enviar REG-007 a Calidad
-                  </button>
-                </>
-             )}
+            {/* ── Sistemas: completar REG-07 (sólo si el REG-11 ya fue aprobado) ── */}
+            {esSistemas && esReg11Aprobado && !isResponding && (
+              <button
+                onClick={() => setIsResponding(true)}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-blue-700 transition-all flex items-center gap-2"
+              >
+                Completar REG-SIS-007
+              </button>
+            )}
 
-             {/* Acciones para Calidad */}
-             {esCalidad && solicitud?.estado === 'REG-007-PENDIENTE-APROBACION' && (
-                <>
-                   <button 
-                      disabled={statusLoading}
-                      onClick={() => {
-                        setConfirmConfig({
-                          title: "Rechazar Solicitud",
-                          message: "¿Está seguro de que desea rechazar esta solicitud de etiqueta? Se registrará la acción y se cancelará el circuito actual.",
-                          btnClass: "btn-error text-white",
-                          onConfirm: () => handleStatusUpdate('reject')
-                        });
-                      }}
-                      className="bg-red-100 text-red-600 px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-red-200 transition-all flex items-center gap-2 border border-red-200"
-                   >
-                      Rechazar
-                   </button>
-                   <button 
-                      disabled={statusLoading}
-                      onClick={() => {
-                        setConfirmConfig({
-                          title: "Aprobar Solicitud Final",
-                          message: "¿Confirma la aprobación final de esta solicitud de etiquetas? Esto dará por concluido el circuito técnico de Calidad y Sistemas.",
-                          btnClass: "btn-success",
-                          onConfirm: () => handleStatusUpdate('approve')
-                        });
-                      }}
-                      className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
-                   >
-                      {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
-                      Aprobar Solicitud Final
-                   </button>
-                </>
-             )}
+            {isResponding && (
+              <>
+                <button
+                  onClick={() => setIsResponding(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 font-bold uppercase text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Enviar REG-SIS-007",
+                    message: "¿Confirma el envío de este formulario REG-SIS-007 completo a Calidad para su aprobación final?",
+                    btnClass: "btn-success",
+                    onConfirm: handleSystemsResponse
+                  })}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2"
+                >
+                  {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
+                  Enviar REG-007 a Calidad
+                </button>
+              </>
+            )}
 
-             <button 
-               onClick={() => window.print()}
-               className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-               title="Descargar PDF"
-             >
-               <Download size={24} />
-             </button>
+            {/* ── Calidad: corregir y reenviar un REG-11 observado ── */}
+            {esCalidad && esReg11Observado && !isEditing011 && (
+              <button
+                onClick={() => setIsEditing011(true)}
+                className="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-orange-700 transition-all flex items-center gap-2"
+              >
+                <RotateCcw size={14} /> Corregir y Reenviar REG-11
+              </button>
+            )}
 
-             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
-               <X size={24} />
-             </button>
+            {isEditing011 && (
+              <>
+                <button
+                  onClick={() => setIsEditing011(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-gray-600 font-bold uppercase text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Reenviar REG-11 a Sistemas",
+                    message: "¿Confirma el reenvío del REG-11 corregido? Volverá a quedar pendiente de aprobación por parte de Sistemas.",
+                    btnClass: "btn-success",
+                    onConfirm: handleResend011
+                  })}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2"
+                >
+                  {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
+                  Reenviar a Sistemas
+                </button>
+              </>
+            )}
+
+            {/* ── Calidad: aprobación final del REG-07 ── */}
+            {esCalidad && esReg07Pendiente && (
+              <>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Rechazar Solicitud",
+                    message: "¿Está seguro de que desea rechazar esta solicitud de etiqueta? Se registrará la acción y se cancelará el circuito actual.",
+                    btnClass: "btn-error text-white",
+                    onConfirm: () => handleStatusUpdate('reject', 'Solicitud rechazada')
+                  })}
+                  className="bg-red-100 text-red-600 px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-red-200 transition-all flex items-center gap-2 border border-red-200"
+                >
+                  Rechazar
+                </button>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => setConfirmConfig({
+                    title: "Aprobar Solicitud Final",
+                    message: "¿Confirma la aprobación final de esta solicitud de etiquetas? Esto dará por concluido el circuito técnico de Calidad y Sistemas.",
+                    btnClass: "btn-success",
+                    onConfirm: () => handleStatusUpdate('approve', 'Solicitud aprobada con éxito')
+                  })}
+                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
+                >
+                  {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                  Aprobar Solicitud Final
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={waitForImagesAndPrint}
+              className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
+              title="Descargar / Imprimir PDF"
+            >
+              <Download size={24} />
+            </button>
+
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+              <X size={24} />
+            </button>
           </div>
         </div>
 
         {/* Contenido Principal (Documentos) */}
         <div className="flex-1 p-4 md:p-8 overflow-x-hidden" id="paper-form-container">
-           {loading ? (
-             <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <Loader2 className="animate-spin text-blue-600" size={48} />
-                <p className="text-gray-500 font-medium">Cargando registros...</p>
-             </div>
-           ) : (
-             <div className="flex flex-col gap-12 max-w-full">
-                
-                {/* Hint de scroll horizontal para móviles */}
-                <div className="md:hidden flex items-center justify-center gap-2 mb-3 text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-200 p-2.5 rounded-lg animate-pulse uppercase tracking-wider no-print select-none">
-                  <span>↔️ Desliza horizontalmente para ver el documento completo</span>
+          {loading || !solicitud ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-4">
+              <Loader2 className="animate-spin text-blue-600" size={48} />
+              <p className="text-gray-500 font-medium">Cargando registros...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-12 max-w-full">
+
+              {/* Hint de scroll horizontal para móviles */}
+              <div className="md:hidden flex items-center justify-center gap-2 mb-3 text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-200 p-2.5 rounded-lg animate-pulse uppercase tracking-wider no-print select-none">
+                <span>↔️ Desliza horizontalmente para ver el documento completo</span>
+              </div>
+
+              {/* Aviso cuando se pide ver REG-07 pero todavía no fue generado */}
+              {!isResponding && !isEditing011 && focusForm === 'REG007' && !tieneReg07 && (
+                <div className="no-print bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold p-3 rounded-lg text-center uppercase tracking-wide">
+                  El REG-07 aún no fue completado por Sistemas. Se muestra una vista previa con los datos disponibles.
                 </div>
+              )}
 
-                {/* Visualizador de Documentos con Scroll Horizontal en móvil */}
-                <div className="relative overflow-x-auto pb-4 custom-scrollbar">
-                   <div className="min-w-[800px] md:min-w-0">
-                      {/* Si el estado es 011 o estamos respondiendo, mostramos el 011 arriba como referencia */}
-                      {(solicitud.estado === 'REG-011-PENDIENTE' || isResponding) && (
-                         <div className="animate-in fade-in slide-in-from-bottom-4 mb-12">
-                            <div className="text-center mb-4"><span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span></div>
-                            <REG011PaperForm 
-                              solicitudId={solicitudId}
-                              data={solicitud} 
-                              readOnly={true} 
-                              userRole={user?.Rol}
-                              solicitudEstado={solicitud?.estado}
-                              adjuntos={adjuntos}
-                              onUploadAdjunto={handleUploadEvidencia}
-                              onDeleteAdjunto={handleDeleteAdjunto}
-                              uploadLoading={uploadLoading}
-                            />
-                         </div>
-                      )}
+              {/* Visualizador de Documentos con Scroll Horizontal en móvil */}
+              <div className="relative overflow-x-auto pb-4 custom-scrollbar">
+                <div className="min-w-[800px] md:min-w-0">
 
-                      {/* Modo Respuesta Sistemas o Vista 007 */}
-                      {(isResponding || solicitud.estado === 'REG-007-PENDIENTE-APROBACION' || solicitud.estado === 'APROBADO') && (
-                         <div className="animate-in fade-in zoom-in-95 duration-300">
-                            <div className="text-center mb-4"><span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span></div>
-                            <REG007PaperForm 
-                               solicitudId={solicitudId}
-                               data={isResponding ? { ...solicitud, ...responseData } : solicitud} 
-                               readOnly={!isResponding}
-                               userRole={user?.Rol}
-                               solicitudEstado={solicitud?.estado}
-                               adjuntos={adjuntos}
-                               historial={historial}
-                               onUploadAdjunto={handleUploadEvidencia}
-                               onDeleteAdjunto={handleDeleteAdjunto}
-                               uploadLoading={uploadLoading}
-                               onChange={(field, val) => setResponseData(prev => ({ ...prev, [field]: val }))}
-                            />
-                         </div>
-                      )}
-                   </div>
+                  {/* CASO 1: Calidad corrige un REG-11 observado */}
+                  {isEditing011 ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-4">
+                      <div className="text-center mb-4">
+                        <span className="bg-orange-100 text-orange-700 text-[10px] font-black px-4 py-1 rounded-full border border-orange-200 uppercase tracking-tighter">
+                          Corrigiendo REG-SIS-011 (observado)
+                        </span>
+                      </div>
+                      <REG011PaperForm
+                        solicitudId={solicitudId}
+                        data={edit011Data}
+                        readOnly={false}
+                        userRole={user?.Rol}
+                        solicitudEstado={estado}
+                        adjuntos={adjuntos}
+                        onUploadAdjunto={handleUploadEvidencia}
+                        onDeleteAdjunto={handleDeleteAdjunto}
+                        uploadLoading={uploadLoading}
+                        onChange={(field, val) => setEdit011Data(prev => ({ ...prev, [field]: val }))}
+                      />
+                    </div>
+                  ) : isResponding ? (
+                    /* CASO 2: Sistemas responde (011 referencia arriba + 007 editable) */
+                    <>
+                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-12">
+                        <div className="text-center mb-4">
+                          <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span>
+                        </div>
+                        <REG011PaperForm
+                          solicitudId={solicitudId}
+                          data={solicitud}
+                          readOnly={true}
+                          userRole={user?.Rol}
+                          solicitudEstado={estado}
+                          adjuntos={adjuntos}
+                          onUploadAdjunto={handleUploadEvidencia}
+                          onDeleteAdjunto={handleDeleteAdjunto}
+                          uploadLoading={uploadLoading}
+                        />
+                      </div>
+                      <div className="animate-in fade-in zoom-in-95 duration-300">
+                        <div className="text-center mb-4">
+                          <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span>
+                        </div>
+                        <REG007PaperForm
+                          solicitudId={solicitudId}
+                          data={{ ...solicitud, ...responseData }}
+                          readOnly={false}
+                          userRole={user?.Rol}
+                          solicitudEstado={estado}
+                          adjuntos={adjuntos}
+                          historial={historial}
+                          onUploadAdjunto={handleUploadEvidencia}
+                          onDeleteAdjunto={handleDeleteAdjunto}
+                          uploadLoading={uploadLoading}
+                          onChange={(field, val) => setResponseData(prev => ({ ...prev, [field]: val }))}
+                        />
+                      </div>
+                    </>
+                  ) : focusForm === 'REG007' ? (
+                    /* CASO 3: Submenú REG-07 → mostrar el REG-007 (solo lectura) */
+                    <div className="animate-in fade-in zoom-in-95 duration-300">
+                      <div className="text-center mb-4">
+                        <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span>
+                      </div>
+                      <REG007PaperForm
+                        solicitudId={solicitudId}
+                        data={solicitud}
+                        readOnly={true}
+                        userRole={user?.Rol}
+                        solicitudEstado={estado}
+                        adjuntos={adjuntos}
+                        historial={historial}
+                        onUploadAdjunto={handleUploadEvidencia}
+                        onDeleteAdjunto={handleDeleteAdjunto}
+                        uploadLoading={uploadLoading}
+                      />
+                    </div>
+                  ) : (
+                    /* CASO 4 (por defecto): Submenú REG-11 → mostrar el REG-011 */
+                    <div className="animate-in fade-in slide-in-from-bottom-4">
+                      <div className="text-center mb-4">
+                        <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento: REG-SIS-011</span>
+                      </div>
+                      <REG011PaperForm
+                        solicitudId={solicitudId}
+                        data={solicitud}
+                        readOnly={true}
+                        userRole={user?.Rol}
+                        solicitudEstado={estado}
+                        adjuntos={adjuntos}
+                        onUploadAdjunto={handleUploadEvidencia}
+                        onDeleteAdjunto={handleDeleteAdjunto}
+                        uploadLoading={uploadLoading}
+                      />
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Mostrar el 011 original abajo colapsado como referencia */}
-                <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity">
-                   <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">Ver Solicitud Original (REG-SIS-011)</summary>
-                   <REG011PaperForm 
+              {/* Documento complementario colapsado como referencia (no se imprime) */}
+              {!isEditing011 && !isResponding && (
+                <details className="mt-8 opacity-60 hover:opacity-100 transition-opacity no-print">
+                  <summary className="cursor-pointer text-xs font-bold text-gray-500 uppercase text-center mb-4">
+                    {focusForm === 'REG007' ? 'Ver Solicitud Original (REG-SIS-011)' : 'Ver Respuesta Técnica (REG-SIS-007)'}
+                  </summary>
+                  {focusForm === 'REG007' ? (
+                    <REG011PaperForm
                       solicitudId={solicitudId}
-                      data={solicitud} 
-                      readOnly={true} 
+                      data={solicitud}
+                      readOnly={true}
                       userRole={user?.Rol}
-                      solicitudEstado={solicitud?.estado}
+                      solicitudEstado={estado}
                       adjuntos={adjuntos}
                       onUploadAdjunto={handleUploadEvidencia}
                       onDeleteAdjunto={handleDeleteAdjunto}
                       uploadLoading={uploadLoading}
                     />
+                  ) : (
+                    <REG007PaperForm
+                      solicitudId={solicitudId}
+                      data={solicitud}
+                      readOnly={true}
+                      userRole={user?.Rol}
+                      solicitudEstado={estado}
+                      adjuntos={adjuntos}
+                      historial={historial}
+                      onUploadAdjunto={handleUploadEvidencia}
+                      onDeleteAdjunto={handleDeleteAdjunto}
+                      uploadLoading={uploadLoading}
+                    />
+                  )}
                 </details>
+              )}
 
-                {/* Historial (lateral o inferior) */}
-                <section className="max-w-4xl mx-auto w-full border-t border-gray-300 pt-8 mt-8">
-                   <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
-                      <History size={16} /> Trazabilidad del Documento
-                   </h3>
-                   <div className="flex flex-col gap-4">
-                      {historial.map((evt, i) => (
-                        <div key={i} className="flex gap-4 items-start border-l-2 border-blue-200 pl-4 py-1">
-                           <div className="min-w-[100px] text-[10px] text-gray-400 font-bold uppercase">{new Date(evt.FechaEvento).toLocaleString()}</div>
-                           <div>
-                              <p className="text-xs font-bold text-gray-700">{evt.Accion}</p>
-                              <p className="text-[10px] text-gray-500 italic">{evt.NombreUsuario} — {evt.Comentario || 'Sin observaciones'}</p>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </section>
-              </div>
-           )}
+              {/* Historial / Trazabilidad */}
+              <section className="max-w-4xl mx-auto w-full border-t border-gray-300 pt-8 mt-8">
+                <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+                  <History size={16} /> Trazabilidad del Documento
+                </h3>
+                <div className="flex flex-col gap-4">
+                  {historial.map((evt, i) => (
+                    <div key={i} className="flex gap-4 items-start border-l-2 border-blue-200 pl-4 py-1">
+                      <div className="min-w-[100px] text-[10px] text-gray-400 font-bold uppercase">{new Date(evt.FechaEvento).toLocaleString()}</div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-700">{evt.Accion}</p>
+                        <p className="text-[10px] text-gray-500 italic">{evt.NombreUsuario} — {evt.Comentario || 'Sin observaciones'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
         </div>
       </div>
 
@@ -358,24 +590,21 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
       <AnimatePresence>
         {confirmConfig && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setConfirmConfig(null)}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
-            {/* Dialog Content */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="relative w-full max-w-md bg-slate-900/95 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-md overflow-hidden"
             >
-              {/* Top accent glow line */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-indigo-500" />
-              
+
               <div className="flex items-center gap-3 mb-4">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -391,21 +620,21 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated }) => 
               </p>
 
               <div className="flex justify-end gap-3">
-                <button 
+                <button
                   type="button"
-                  onClick={() => setConfirmConfig(null)} 
+                  onClick={() => setConfirmConfig(null)}
                   className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     confirmConfig.onConfirm();
                     setConfirmConfig(null);
-                  }} 
+                  }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider text-white rounded-xl shadow-lg hover:shadow-xl transition-all ${
-                    confirmConfig.btnClass?.includes('btn-error') 
-                      ? 'bg-rose-600 hover:bg-rose-500 hover:shadow-rose-600/20' 
+                    confirmConfig.btnClass?.includes('btn-error')
+                      ? 'bg-rose-600 hover:bg-rose-500 hover:shadow-rose-600/20'
                       : 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-emerald-600/20'
                   }`}
                 >
