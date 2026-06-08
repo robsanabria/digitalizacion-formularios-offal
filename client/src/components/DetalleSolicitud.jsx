@@ -216,7 +216,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     const parseLen = (v) => { try { return (Array.isArray(v) ? v : JSON.parse(v || '[]')).length; } catch { return 0; } };
     if (parseLen(edit011Data.motivo) === 0) faltan.push('Motivo del cambio (al menos uno)');
     if (parseLen(edit011Data.impresoras) === 0) faltan.push('Impresoras afectadas (al menos una)');
-    if (!adjuntos.some(a => a.TipoAdjunto === 'ORIGINAL')) faltan.push('Formato Original (archivo de etiqueta)');
+    // El Formato Original (archivo) es OPCIONAL.
     if (faltan.length > 0) {
       toast.error('Faltan completar campos obligatorios: ' + faltan.join(', '));
       return;
