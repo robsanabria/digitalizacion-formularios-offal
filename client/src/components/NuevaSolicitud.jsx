@@ -141,8 +141,9 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             {/* Upload adicional */}
             <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
                <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Cargar Formato Original (Etiqueta de Referencia):</label>
-               <input 
-                  type="file" 
+               <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
                   onChange={e => setFile(e.target.files[0])}
                   className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                />

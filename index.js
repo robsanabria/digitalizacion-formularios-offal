@@ -25,6 +25,16 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/dist')));
 
+// Health check público y liviano (para el probe del App Service). No expone detalles internos.
+app.get('/health', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        res.status(pool ? 200 : 503).json({ status: pool ? 'ok' : 'degraded', db: !!pool });
+    } catch {
+        res.status(503).json({ status: 'degraded', db: false });
+    }
+});
+
 // Endpoint de identidad (debe ir antes del middleware global si quieres que sea público, pero aquí lo protegemos)
 app.get('/api/auth/me', authMiddleware, (req, res) => {
     res.json(req.user);
@@ -39,33 +49,6 @@ app.use('/api/solicitudes', solicitudesRoutes);
 app.get('/api/users', checkRole(['ADMIN']), usersController.getUsers);
 app.put('/api/users/:id/role', checkRole(['ADMIN']), usersController.updateUserRole);
 
-
-// Endpoint de prueba de conexión y tablas
-app.get('/api/test-db', async (req, res) => {
-    const sql = require('mssql');
-    // Leemos la config directamente para el reintento
-    const { poolPromise } = require('./config/db');
-    
-    try {
-        const pool = await poolPromise;
-        if (!pool) {
-            // Si el pool inicial falló, intentamos uno nuevo para ver el error real
-            // Nota: El config/db.js ya exporta 'sql', pero necesitamos ver por qué falla
-            return res.status(500).json({ 
-                error: 'La conexión inicial falló', 
-                ayuda: 'Revisa el Log Stream de Azure para ver el error de mssql.connect' 
-            });
-        }
-        const result = await pool.request().query("SELECT TOP 5 * FROM Usuarios");
-        res.json({ mensaje: 'Conexión exitosa', usuarios: result.recordset });
-    } catch (err) {
-        res.status(500).json({ 
-            error: 'Fallo técnico en la consulta', 
-            detalle: err.message,
-            stack: err.stack 
-        });
-    }
-});
 
 // Servir el frontend en producción (React)
 app.get('*', (req, res) => {

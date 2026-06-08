@@ -193,7 +193,7 @@ const REG007PaperForm = ({
             ) : (
               canEditOriginal && onUploadAdjunto ? (
                 <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner animate-in fade-in duration-300">
-                  <input type="file" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
+                  <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
                   <div className="bg-blue-100 p-3 rounded-full mb-2">
                     <Plus className="text-blue-600 animate-pulse" size={24} />
                   </div>
@@ -247,7 +247,7 @@ const REG007PaperForm = ({
             {/* Botón de carga integrado como placeholder en papel */}
             {canEditProposed && sistemasAdjuntos.length < 9 && (
               <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
-                <input type="file" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
+                <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
                 <div className="bg-blue-100 p-3 rounded-full mb-2">
                   <Plus className="text-blue-600 animate-pulse" size={24} />
                 </div>

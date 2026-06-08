@@ -10,9 +10,15 @@ const getUsers = async (req, res) => {
     }
 };
 
+const ROLES_VALIDOS = ['CALIDAD', 'SISTEMAS', 'ADMIN'];
+
 const updateUserRole = async (req, res) => {
     const { id } = req.params;
     const { rol } = req.body;
+
+    if (!ROLES_VALIDOS.includes(rol)) {
+        return res.status(400).json({ error: 'Rol inválido', detalle: `Debe ser uno de: ${ROLES_VALIDOS.join(', ')}` });
+    }
 
     try {
         const pool = await poolPromise;
