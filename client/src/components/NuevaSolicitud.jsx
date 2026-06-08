@@ -57,15 +57,24 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     ['cambioSolicitado', 'Cambio Solicitado'],
   ];
 
+  // motivo/impresoras pueden venir como array o como string JSON ('["SENASA"]').
+  const cantSeleccionados = (v) => {
+    if (Array.isArray(v)) return v.length;
+    if (typeof v === 'string' && v.trim()) {
+      try { const a = JSON.parse(v); return Array.isArray(a) ? a.length : 1; } catch { return 1; }
+    }
+    return 0;
+  };
+
   const getFaltantes = () => {
     const faltan = [];
     for (const [campo, label] of CAMPOS_REQUERIDOS) {
       const v = formData[campo];
       if (!v || String(v).trim() === '') faltan.push(label);
     }
-    if (!Array.isArray(formData.motivo) || formData.motivo.length === 0) faltan.push('Motivo del cambio (al menos uno)');
-    if (!Array.isArray(formData.impresoras) || formData.impresoras.length === 0) faltan.push('Impresoras afectadas (al menos una)');
-    if (!file) faltan.push('Formato Original (archivo de etiqueta)');
+    if (cantSeleccionados(formData.motivo) === 0) faltan.push('Motivo del cambio (al menos uno)');
+    if (cantSeleccionados(formData.impresoras) === 0) faltan.push('Impresoras afectadas (al menos una)');
+    // El Formato Original (archivo) es OPCIONAL al crear el REG-11.
     return faltan;
   };
 
@@ -140,7 +149,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             
             {/* Upload adicional */}
             <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
-               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Cargar Formato Original (Etiqueta de Referencia):</label>
+               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Cargar Formato Original (Etiqueta de Referencia) — opcional:</label>
                <input
                   type="file"
                   accept="image/jpeg,image/png,application/pdf"
