@@ -15,6 +15,31 @@
   --glass-blur: 12px;
 }
 
+/* ── Tokens shadcn/ui (paleta oscura "Pro Slate"). Namespaced --sh-* para
+   convivir con DaisyUI y las variables legacy. Primary = indigo del tema. ── */
+:root {
+  --sh-background: 222 47% 11%;
+  --sh-foreground: 210 40% 98%;
+  --sh-card: 222 33% 15%;
+  --sh-card-foreground: 210 40% 98%;
+  --sh-popover: 222 40% 13%;
+  --sh-popover-foreground: 210 40% 98%;
+  --sh-primary: 239 84% 67%;
+  --sh-primary-foreground: 0 0% 100%;
+  --sh-secondary: 217 33% 18%;
+  --sh-secondary-foreground: 210 40% 98%;
+  --sh-muted: 217 33% 18%;
+  --sh-muted-foreground: 215 20% 65%;
+  --sh-accent: 217 33% 22%;
+  --sh-accent-foreground: 210 40% 98%;
+  --sh-destructive: 0 72% 51%;
+  --sh-destructive-foreground: 210 40% 98%;
+  --sh-border: 217 33% 24%;
+  --sh-input: 217 33% 24%;
+  --sh-ring: 239 84% 67%;
+  --sh-radius: 0.5rem;
+}
+
 * {
   margin: 0;
   padding: 0;
