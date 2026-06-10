@@ -418,8 +418,8 @@ function NavItem({ icon, label, active = false, onClick, className = "", trailin
 const ESTADO_META = {
   'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/20 text-amber-400' },
   'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/20 text-orange-400' },
-  'REG-011-APROBADO': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/20 text-cyan-400' },
-  'REG-011-PENDIENTE': { label: 'Pendiente REG-07', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-07', cls: 'bg-cyan-500/20 text-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-07', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
   'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/20 text-blue-400' },
   'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/20 text-green-400' },
   'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/20 text-red-400' },

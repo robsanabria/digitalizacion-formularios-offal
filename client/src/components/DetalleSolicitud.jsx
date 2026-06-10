@@ -9,8 +9,8 @@ import REG007PaperForm from './REG007PaperForm';
 const ESTADOS_APROBACION = {
   'REG-011-PENDIENTE-APROBACION': { label: 'REG-11: Pendiente Aprob. Sistemas', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
   'REG-011-OBSERVADO': { label: 'REG-11: Observado (devuelto a Calidad)', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-  'REG-011-APROBADO': { label: 'REG-11: Aprobado — Pendiente REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-  'REG-011-PENDIENTE': { label: 'REG-11: Pendiente REG-07 (Sistemas)', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
   'REG-007-PENDIENTE-APROBACION': { label: 'REG-07: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   'APROBADO': { label: '✅ Finalizado / Aprobado', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
   'RECHAZADO': { label: '❌ Rechazado', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
@@ -25,6 +25,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   const [statusLoading, setStatusLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
+  const [confirmComment, setConfirmComment] = useState('');
 
   // Estado para la respuesta de Sistemas (REG-007)
   const [isResponding, setIsResponding] = useState(false);
@@ -300,7 +301,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
             <div className={`px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest ${estadoInfo.bg} ${estadoInfo.color}`}>
               {estadoInfo.label}
             </div>
-            <h2 className="text-xl font-bold text-gray-800">{solicitud?.nombreProducto}</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              Solicitud #{(solicitud?.solicitudId || '').slice(0, 8).toUpperCase() || '—'}
+            </h2>
           </div>
           <div className="flex gap-3 items-center flex-wrap justify-end">
 
@@ -309,12 +312,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               <>
                 <button
                   disabled={statusLoading}
-                  onClick={() => setConfirmConfig({
+                  onClick={() => { setConfirmComment(''); setConfirmConfig({
                     title: "Observar / Devolver REG-11",
-                    message: "¿Desea devolver este REG-11 a Calidad para su corrección? Quedará en estado 'Observado' y Calidad podrá ajustarlo y reenviarlo.",
+                    message: "Indicá el motivo del rechazo. El REG-11 volverá a Calidad como 'Observado' para que lo corrija y reenvíe.",
                     btnClass: "btn-error text-white",
-                    onConfirm: () => handleStatusUpdate('rechazar_reg11', 'REG-11 devuelto a Calidad para corrección')
-                  })}
+                    withComment: true,
+                    commentLabel: "Motivo del rechazo",
+                    commentRequired: true,
+                    onConfirm: (comentario) => handleStatusUpdate('rechazar_reg11', 'REG-11 observado por Sistemas', comentario)
+                  }); }}
                   className="bg-orange-100 text-orange-600 px-5 py-2 rounded-lg font-bold uppercase text-xs hover:bg-orange-200 transition-all flex items-center gap-2 border border-orange-200"
                 >
                   <ThumbsDown size={14} /> Observar REG-11
@@ -719,9 +725,25 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                 </h3>
               </div>
 
-              <p className="text-sm text-slate-300 font-medium mb-6 leading-relaxed">
+              <p className="text-sm text-slate-300 font-medium mb-4 leading-relaxed">
                 {confirmConfig.message}
               </p>
+
+              {confirmConfig.withComment && (
+                <div className="mb-6">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                    {confirmConfig.commentLabel || 'Comentario'}{confirmConfig.commentRequired && <span className="text-rose-400"> *</span>}
+                  </label>
+                  <textarea
+                    autoFocus
+                    rows={3}
+                    value={confirmComment}
+                    onChange={(e) => setConfirmComment(e.target.value)}
+                    placeholder="Escribí el motivo..."
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3">
                 <button
@@ -733,7 +755,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                 </button>
                 <button
                   onClick={() => {
-                    confirmConfig.onConfirm();
+                    if (confirmConfig.commentRequired && !confirmComment.trim()) {
+                      toast.error('Ingresá el motivo del rechazo.');
+                      return;
+                    }
+                    confirmConfig.onConfirm(confirmComment.trim());
                     setConfirmConfig(null);
                   }}
                   className={`px-4 py-2 text-xs font-bold uppercase tracking-wider text-white rounded-xl shadow-lg hover:shadow-xl transition-all ${
