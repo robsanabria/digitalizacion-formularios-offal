@@ -125,6 +125,14 @@ table { border-collapse: collapse; }
   body * {
     visibility: hidden;
   }
+
+  /* Ocultar por completo el shell de la app (sidebar, topbar, bottom-nav) para
+     que NO reserven espacio y no empujen el documento ni generen páginas en blanco. */
+  aside,
+  header.sticky,
+  nav.fixed {
+    display: none !important;
+  }
   
   /* Mostrar solo el contenedor del formulario y su contenido */
   #paper-form-container, #paper-form-container * {
@@ -218,10 +226,12 @@ table { border-collapse: collapse; }
     background: white !important;
   }
 
-  /* Asegurar dimensiones de página y que el formulario ocupe el ancho imprimible */
+  /* El tamaño de página lo controla @page (legal). NO fijar height aquí:
+     un alto fijo recorta los documentos multipágina (p. ej. el REG-07 de 3 hojas). */
   html, body {
-    width: 8.5in !important;
-    height: 14in !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   #paper-form-container {

@@ -37,9 +37,16 @@ const REG011PaperForm = ({
   const toggleOption = (field, option) => {
     if (readOnly) return;
     const current = parseArray(data[field]);
-    const updated = current.includes(option)
-      ? current.filter(o => o !== option)
-      : [...current, option];
+    let updated;
+    if (field === 'motivo') {
+      // Motivo del cambio: selección ÚNICA (no se pueden marcar varios/todos).
+      updated = current.includes(option) ? [] : [option];
+    } else {
+      // Impresoras: selección múltiple.
+      updated = current.includes(option)
+        ? current.filter(o => o !== option)
+        : [...current, option];
+    }
     onChange(field, JSON.stringify(updated));
   };
 
@@ -88,16 +95,10 @@ const REG011PaperForm = ({
       <div className="flex border-b-[2px] border-black text-xs font-bold">
         <div className="w-1/2 p-2 border-r-[2px] border-black flex gap-2 items-center">
           <span>Fecha de Solicitud:</span>
-          {readOnly ? (
-            <span className="flex-1 border-b border-black/20 px-2">{data.fechaSolicitud ? new Date(data.fechaSolicitud).toLocaleDateString() : ''}</span>
-          ) : (
-            <input 
-              type="date" 
-              className="flex-1 bg-blue-50/50 outline-none px-1" 
-              value={data.fechaSolicitud || ''} 
-              onChange={e => onChange('fechaSolicitud', e.target.value)}
-            />
-          )}
+          {/* La fecha NO es editable: la toma del sistema (no se habilita el calendario). */}
+          <span className="flex-1 border-b border-black/20 px-2">
+            {data.fechaSolicitud ? new Date(data.fechaSolicitud).toLocaleDateString() : new Date().toLocaleDateString()}
+          </span>
         </div>
         <div className="w-1/2 p-2 flex gap-2 items-center">
           <span>Sector Solicitante:</span>
