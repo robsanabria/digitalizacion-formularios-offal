@@ -37,7 +37,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Validación: todos los campos del REG-11 son obligatorios.
+  // Validación: todos los campos del REG-SIS-011 son obligatorios.
   const CAMPOS_REQUERIDOS = [
     ['fechaSolicitud', 'Fecha de Solicitud'],
     ['sectorSolicitante', 'Sector Solicitante'],
@@ -74,7 +74,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     }
     if (cantSeleccionados(formData.motivo) === 0) faltan.push('Motivo del cambio (al menos uno)');
     if (cantSeleccionados(formData.impresoras) === 0) faltan.push('Impresoras afectadas (al menos una)');
-    // El Formato Original (archivo) es OPCIONAL al crear el REG-11.
+    // El Formato Original (archivo) es OPCIONAL al crear el REG-SIS-011.
     return faltan;
   };
 
@@ -91,7 +91,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     if (e && e.preventDefault) e.preventDefault();
     setLoading(true);
     try {
-      // 1. Crear la solicitud base (REG-011)
+      // 1. Crear la solicitud base (REG-SIS-011)
       const res = await axios.post('/api/solicitudes', { ...formData });
       const solicitudId = res.data.solicitudId;
 
@@ -106,7 +106,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
       onCreated();
       onClose();
     } catch (err) {
-      toast.error("Error al crear el registro REG-011: " + (err.response?.data?.detalle || err.response?.data?.error || err.message));
+      toast.error("Error al crear el registro REG-SIS-011: " + (err.response?.data?.detalle || err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }

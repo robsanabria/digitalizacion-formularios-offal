@@ -7,11 +7,11 @@ import REG011PaperForm from './REG011PaperForm';
 import REG007PaperForm from './REG007PaperForm';
 
 const ESTADOS_APROBACION = {
-  'REG-011-PENDIENTE-APROBACION': { label: 'REG-11: Pendiente Aprob. Sistemas', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-  'REG-011-OBSERVADO': { label: 'REG-11: Observado (devuelto a Calidad)', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
-  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-07', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
-  'REG-007-PENDIENTE-APROBACION': { label: 'REG-07: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+  'REG-011-PENDIENTE-APROBACION': { label: 'REG-SIS-011: Pendiente Aprob. Sistemas', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+  'REG-011-OBSERVADO': { label: 'REG-SIS-011: Observado (devuelto a Calidad)', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
+  'REG-007-PENDIENTE-APROBACION': { label: 'REG-SIS-007: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
   'APROBADO': { label: '✅ Finalizado / Aprobado', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
   'RECHAZADO': { label: '❌ Rechazado', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
 };
@@ -27,7 +27,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   const [confirmConfig, setConfirmConfig] = useState(null);
   const [confirmComment, setConfirmComment] = useState('');
 
-  // Estado para la respuesta de Sistemas (REG-007)
+  // Estado para la respuesta de Sistemas (REG-SIS-007)
   const [isResponding, setIsResponding] = useState(false);
   const [responseData, setResponseData] = useState({
     fechaPresentacion: new Date().toISOString().split('T')[0],
@@ -35,11 +35,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     correspondeSolicitud: ''
   });
 
-  // Estado para que Calidad corrija y reenvíe un REG-11 observado
+  // Estado para que Calidad corrija y reenvíe un REG-SIS-011 observado
   const [isEditing011, setIsEditing011] = useState(false);
   const [edit011Data, setEdit011Data] = useState({});
 
-  // Documento mostrado en el panel (REG-11 / REG-07). Se inicializa con el foco
+  // Documento mostrado en el panel (REG-SIS-011 / REG-SIS-007). Se inicializa con el foco
   // que pide el submenú, pero el usuario puede alternar dentro de la ventana.
   const [localFocus, setLocalFocus] = useState(focusForm);
 
@@ -87,7 +87,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
       setAdjuntos(adjRes.data);
       setHistorial(histRes.data);
 
-      // Copia editable del REG-11 para el flujo de corrección de Calidad
+      // Copia editable del REG-SIS-011 para el flujo de corrección de Calidad
       setEdit011Data({
         fechaSolicitud: normalized.fechaSolicitud ? new Date(normalized.fechaSolicitud).toISOString().split('T')[0] : '',
         sectorSolicitante: normalized.sectorSolicitante || '',
@@ -174,15 +174,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   };
 
   const handleSystemsResponse = async () => {
-    // Validación REG-07: campos obligatorios + al menos una etiqueta propuesta.
+    // Validación REG-SIS-007: campos obligatorios + al menos una etiqueta propuesta.
     const faltan = [];
     if (!responseData.fechaPresentacion?.trim?.()) faltan.push('Fecha de presentación');
     if (!responseData.codigoTwins?.trim?.()) faltan.push('Código TWINS');
     if (!responseData.correspondeSolicitud?.trim?.()) faltan.push('Corresponde a Solicitud');
     const tieneEtiqueta = adjuntos.some(a => a.TipoAdjunto === 'PROPUESTO');
-    if (!tieneEtiqueta) faltan.push('al menos una etiqueta técnica (subir en el REG-07)');
+    if (!tieneEtiqueta) faltan.push('al menos una etiqueta técnica (subir en el REG-SIS-007)');
     if (faltan.length > 0) {
-      toast.error('Faltan completar campos del REG-07: ' + faltan.join(', '));
+      toast.error('Faltan completar campos del REG-SIS-007: ' + faltan.join(', '));
       return;
     }
     setStatusLoading(true);
@@ -203,7 +203,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   };
 
   const handleResend011 = async () => {
-    // Validación REG-11: todos los campos obligatorios + adjunto original.
+    // Validación REG-SIS-011: todos los campos obligatorios + adjunto original.
     const req = [
       ['fechaSolicitud', 'Fecha de Solicitud'], ['sectorSolicitante', 'Sector Solicitante'],
       ['nombreProducto', 'Nombre Producto'], ['codigoProducto', 'Código Producto'],
@@ -228,12 +228,12 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
         ...edit011Data,
         intent: 'reenviar_reg11'
       });
-      toast.success("REG-11 corregido y reenviado a Sistemas");
+      toast.success("REG-SIS-011 corregido y reenviado a Sistemas");
       setIsEditing011(false);
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
-      toast.error('Error al reenviar el REG-11: ' + (err.response?.data?.detalle || err.response?.data?.error || err.message));
+      toast.error('Error al reenviar el REG-SIS-011: ' + (err.response?.data?.detalle || err.response?.data?.error || err.message));
     } finally {
       setStatusLoading(false);
     }
@@ -284,11 +284,11 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   // Etapas del circuito
   const esReg11PendienteAprob = estado === 'REG-011-PENDIENTE-APROBACION';
   const esReg11Observado = estado === 'REG-011-OBSERVADO';
-  const esReg11Aprobado = estado === 'REG-011-APROBADO' || estado === 'REG-011-PENDIENTE'; // listo para REG-07 (incl. legacy)
+  const esReg11Aprobado = estado === 'REG-011-APROBADO' || estado === 'REG-011-PENDIENTE'; // listo para REG-SIS-007 (incl. legacy)
   const esReg07Pendiente = estado === 'REG-007-PENDIENTE-APROBACION';
   const esFinalizado = estado === 'APROBADO' || estado === 'RECHAZADO';
 
-  // ¿Ya existe un REG-07 generado por Sistemas?
+  // ¿Ya existe un REG-SIS-007 generado por Sistemas?
   const tieneReg07 = esReg07Pendiente || esFinalizado;
 
   return (
@@ -307,41 +307,41 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
           </div>
           <div className="flex gap-3 items-center flex-wrap justify-end">
 
-            {/* ── Compuerta REG-11: aprobación de Sistemas ── */}
+            {/* ── Compuerta REG-SIS-011: aprobación de Sistemas ── */}
             {esSistemas && esReg11PendienteAprob && (
               <>
                 <button
                   disabled={statusLoading}
                   onClick={() => { setConfirmComment(''); setConfirmConfig({
-                    title: "Observar / Devolver REG-11",
-                    message: "Indicá el motivo del rechazo. El REG-11 volverá a Calidad como 'Observado' para que lo corrija y reenvíe.",
+                    title: "Observar / Devolver REG-SIS-011",
+                    message: "Indicá el motivo del rechazo. El REG-SIS-011 volverá a Calidad como 'Observado' para que lo corrija y reenvíe.",
                     btnClass: "btn-error text-white",
                     withComment: true,
                     commentLabel: "Motivo del rechazo",
                     commentRequired: true,
-                    onConfirm: (comentario) => handleStatusUpdate('rechazar_reg11', 'REG-11 observado por Sistemas', comentario)
+                    onConfirm: (comentario) => handleStatusUpdate('rechazar_reg11', 'REG-SIS-011 observado por Sistemas', comentario)
                   }); }}
                   className="bg-orange-100 text-orange-600 px-5 py-2 rounded-lg font-bold uppercase text-xs hover:bg-orange-200 transition-all flex items-center gap-2 border border-orange-200"
                 >
-                  <ThumbsDown size={14} /> Observar REG-11
+                  <ThumbsDown size={14} /> Observar REG-SIS-011
                 </button>
                 <button
                   disabled={statusLoading}
                   onClick={() => setConfirmConfig({
-                    title: "Aprobar REG-11",
-                    message: "¿Confirma la aprobación del REG-11? Una vez aprobado, Sistemas podrá completar el REG-07 con las etiquetas técnicas.",
+                    title: "Aprobar REG-SIS-011",
+                    message: "¿Confirma la aprobación del REG-SIS-011? Una vez aprobado, Sistemas podrá completar el REG-SIS-007 con las etiquetas técnicas.",
                     btnClass: "btn-success",
-                    onConfirm: () => handleStatusUpdate('aprobar_reg11', 'REG-11 aprobado por Sistemas')
+                    onConfirm: () => handleStatusUpdate('aprobar_reg11', 'REG-SIS-011 aprobado por Sistemas')
                   })}
                   className="bg-green-600 text-white px-5 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
                 >
                   {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <ThumbsUp size={14} />}
-                  Aprobar REG-11
+                  Aprobar REG-SIS-011
                 </button>
               </>
             )}
 
-            {/* ── Sistemas: completar REG-07 (sólo si el REG-11 ya fue aprobado) ── */}
+            {/* ── Sistemas: completar REG-SIS-007 (sólo si el REG-SIS-011 ya fue aprobado) ── */}
             {esSistemas && esReg11Aprobado && !isResponding && (
               <button
                 onClick={() => setIsResponding(true)}
@@ -370,18 +370,18 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                   className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2"
                 >
                   {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
-                  Enviar REG-007 a Calidad
+                  Enviar REG-SIS-007 a Calidad
                 </button>
               </>
             )}
 
-            {/* ── Calidad: corregir y reenviar un REG-11 observado ── */}
+            {/* ── Calidad: corregir y reenviar un REG-SIS-011 observado ── */}
             {esCalidad && esReg11Observado && !isEditing011 && (
               <button
                 onClick={() => setIsEditing011(true)}
                 className="bg-orange-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-orange-700 transition-all flex items-center gap-2"
               >
-                <RotateCcw size={14} /> Corregir y Reenviar REG-11
+                <RotateCcw size={14} /> Corregir y Reenviar REG-SIS-011
               </button>
             )}
 
@@ -396,8 +396,8 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                 <button
                   disabled={statusLoading}
                   onClick={() => setConfirmConfig({
-                    title: "Reenviar REG-11 a Sistemas",
-                    message: "¿Confirma el reenvío del REG-11 corregido? Volverá a quedar pendiente de aprobación por parte de Sistemas.",
+                    title: "Reenviar REG-SIS-011 a Sistemas",
+                    message: "¿Confirma el reenvío del REG-SIS-011 corregido? Volverá a quedar pendiente de aprobación por parte de Sistemas.",
                     btnClass: "btn-success",
                     onConfirm: handleResend011
                   })}
@@ -409,7 +409,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               </>
             )}
 
-            {/* ── Calidad: aprobación final del REG-07 ── */}
+            {/* ── Calidad: aprobación final del REG-SIS-007 ── */}
             {esCalidad && esReg07Pendiente && (
               <>
                 <button
@@ -486,7 +486,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                         </div>
                       </div>
                     </div>
-                    {/* Selector REG-11 / REG-07 */}
+                    {/* Selector REG-SIS-011 / REG-SIS-007 */}
                     <div className="flex bg-white rounded-lg p-1 border border-gray-200 self-start sm:self-auto">
                       <button
                         onClick={() => setLocalFocus('REG011')}
@@ -494,7 +494,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                           localFocus === 'REG011' ? 'bg-amber-500 text-white shadow' : 'text-gray-500 hover:bg-gray-100'
                         }`}
                       >
-                        <FileText size={14} /> REG-11
+                        <FileText size={14} /> REG-SIS-011
                       </button>
                       <button
                         onClick={() => setLocalFocus('REG007')}
@@ -502,7 +502,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                           localFocus === 'REG007' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:bg-gray-100'
                         }`}
                       >
-                        <FileCheck size={14} /> REG-07
+                        <FileCheck size={14} /> REG-SIS-007
                       </button>
                     </div>
                   </div>
@@ -517,15 +517,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                 <span>↔️ Desliza horizontalmente para ver el documento completo</span>
               </div>
 
-              {/* Aviso cuando se pide ver REG-07 pero todavía no fue generado */}
+              {/* Aviso cuando se pide ver REG-SIS-007 pero todavía no fue generado */}
               {!isResponding && !isEditing011 && localFocus === 'REG007' && !tieneReg07 && (
                 <div className="no-print bg-cyan-50 border border-cyan-200 text-cyan-700 text-xs font-bold p-3 rounded-lg flex flex-col sm:flex-row items-center justify-center gap-3 text-center uppercase tracking-wide">
-                  <span>El REG-07 aún no fue completado por Sistemas. Se muestra una vista previa con los datos disponibles.</span>
+                  <span>El REG-SIS-007 aún no fue completado por Sistemas. Se muestra una vista previa con los datos disponibles.</span>
                   <button
                     onClick={() => setLocalFocus('REG011')}
                     className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-md text-[11px] font-black flex items-center gap-1.5"
                   >
-                    <FileText size={13} /> Ver REG-11 con datos
+                    <FileText size={13} /> Ver REG-SIS-011 con datos
                   </button>
                 </div>
               )}
@@ -534,7 +534,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               <div className="relative overflow-x-auto pb-4 custom-scrollbar">
                 <div className="min-w-[800px] md:min-w-0">
 
-                  {/* CASO 1: Calidad corrige un REG-11 observado */}
+                  {/* CASO 1: Calidad corrige un REG-SIS-011 observado */}
                   {isEditing011 ? (
                     <div className="animate-in fade-in slide-in-from-bottom-4">
                       <div className="text-center mb-4">
@@ -559,7 +559,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                   ) : isResponding ? (
                     /* CASO 2: Sistemas responde (011 referencia arriba + 007 editable) */
                     <>
-                      {/* Referencia REG-11 mientras Sistemas completa: no se imprime (el PDF es sólo el REG-07) */}
+                      {/* Referencia REG-SIS-011 mientras Sistemas completa: no se imprime (el PDF es sólo el REG-SIS-007) */}
                       <div className="animate-in fade-in slide-in-from-bottom-4 mb-12 no-print">
                         <div className="text-center mb-4">
                           <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span>
@@ -597,7 +597,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                       </div>
                     </>
                   ) : localFocus === 'REG007' ? (
-                    /* CASO 3: Submenú REG-07 → mostrar el REG-007 (solo lectura) */
+                    /* CASO 3: Submenú REG-SIS-007 → mostrar el REG-SIS-007 (solo lectura) */
                     <div className="animate-in fade-in zoom-in-95 duration-300">
                       <div className="text-center mb-4">
                         <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span>
@@ -616,7 +616,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                       />
                     </div>
                   ) : (
-                    /* CASO 4 (por defecto): Submenú REG-11 → mostrar el REG-011 */
+                    /* CASO 4 (por defecto): Submenú REG-SIS-011 → mostrar el REG-SIS-011 */
                     <div className="animate-in fade-in slide-in-from-bottom-4">
                       <div className="text-center mb-4">
                         <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento: REG-SIS-011</span>
@@ -782,9 +782,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
 // ── Stepper visual del circuito ────────────────────────────────────────────────
 const stepStatuses = (estado) => {
   const base = [
-    { label: 'Solicitud REG-11', role: 'Calidad' },
+    { label: 'Solicitud REG-SIS-011', role: 'Calidad' },
     { label: 'Aprob. Sistemas', role: 'Sistemas' },
-    { label: 'Respuesta REG-07', role: 'Sistemas' },
+    { label: 'Respuesta REG-SIS-007', role: 'Sistemas' },
     { label: 'Aprob. Calidad', role: 'Calidad' },
   ];
   let st;

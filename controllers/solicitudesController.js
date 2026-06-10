@@ -45,7 +45,7 @@ const createSolicitud = async (req, res) => {
     const solicitadoPor = req.user.UsuarioId;
     const rolSolicitante = req.user.Rol;
 
-    // Validación: todos los campos del REG-11 son obligatorios.
+    // Validación: todos los campos del REG-SIS-011 son obligatorios.
     const tieneTexto = (v) => v != null && String(v).trim() !== '';
     const tieneItems = (v) => {
         if (Array.isArray(v)) return v.length > 0;
@@ -71,7 +71,7 @@ const createSolicitud = async (req, res) => {
         if (!pool) throw new Error('No hay conexión con la base de datos');
 
         // Estado inicial: el REG-SIS-011 creado por Calidad queda pendiente de
-        // aprobación por parte de Sistemas (nueva compuerta previa al REG-007).
+        // aprobación por parte de Sistemas (nueva compuerta previa al REG-SIS-007).
         const estadoInicial = 'REG-011-PENDIENTE-APROBACION';
 
         const result = await pool.request()
@@ -132,7 +132,7 @@ const createSolicitud = async (req, res) => {
     }
 };
 
-// Estados en los que Sistemas tiene habilitado completar el REG-007.
+// Estados en los que Sistemas tiene habilitado completar el REG-SIS-007.
 // Incluye el legacy 'REG-011-PENDIENTE' por retrocompatibilidad con registros previos.
 const ESTADOS_REG011_APROBADO = ['REG-011-APROBADO', 'REG-011-PENDIENTE'];
 
@@ -155,13 +155,13 @@ const updateSolicitud = async (req, res) => {
         }
         const estadoActual = solRes.recordset[0].Estado;
 
-        // ── Caso A: Calidad corrige y reenvía un REG-11 observado ──────────────
+        // ── Caso A: Calidad corrige y reenvía un REG-SIS-011 observado ──────────────
         if (b.intent === 'reenviar_reg11' || estadoActual === 'REG-011-OBSERVADO') {
             if (!['CALIDAD', 'ADMIN'].includes(Rol)) {
-                return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Calidad puede corregir y reenviar el REG-11.' });
+                return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Calidad puede corregir y reenviar el REG-SIS-011.' });
             }
             if (estadoActual !== 'REG-011-OBSERVADO') {
-                return res.status(400).json({ error: 'Operación no permitida', detalle: 'El REG-11 no está observado, no puede reenviarse.' });
+                return res.status(400).json({ error: 'Operación no permitida', detalle: 'El REG-SIS-011 no está observado, no puede reenviarse.' });
             }
 
             const nuevoEstado = 'REG-011-PENDIENTE-APROBACION';
@@ -215,28 +215,28 @@ const updateSolicitud = async (req, res) => {
                 .input('usuarioId', sql.UniqueIdentifier, UsuarioId)
                 .input('estadoAnterior', sql.NVarChar, estadoActual)
                 .input('estadoNuevo', sql.NVarChar, nuevoEstado)
-                .input('accion', sql.NVarChar, 'REG-11 corregido y reenviado a Sistemas')
+                .input('accion', sql.NVarChar, 'REG-SIS-011 corregido y reenviado a Sistemas')
                 .input('comentario', sql.NVarChar, b.comentario || null)
                 .query(`
                     INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion, Comentario)
                     VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion, @comentario)
                 `);
 
-            return res.json({ mensaje: 'REG-11 corregido y reenviado a Sistemas', nuevoEstado });
+            return res.json({ mensaje: 'REG-SIS-011 corregido y reenviado a Sistemas', nuevoEstado });
         }
 
-        // ── Caso B: Sistemas completa el REG-007 ───────────────────────────────
+        // ── Caso B: Sistemas completa el REG-SIS-007 ───────────────────────────────
         if (!['SISTEMAS', 'ADMIN'].includes(Rol)) {
-            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas puede completar el REG-007.' });
+            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas puede completar el REG-SIS-007.' });
         }
         if (!ESTADOS_REG011_APROBADO.includes(estadoActual)) {
             return res.status(400).json({
                 error: 'Operación no permitida',
-                detalle: 'El REG-11 debe estar aprobado por Sistemas antes de completar el REG-007.'
+                detalle: 'El REG-SIS-011 debe estar aprobado por Sistemas antes de completar el REG-SIS-007.'
             });
         }
 
-        // Validación: campos del REG-007 obligatorios + al menos una etiqueta propuesta.
+        // Validación: campos del REG-SIS-007 obligatorios + al menos una etiqueta propuesta.
         const reg07Texto = (v) => v != null && String(v).trim() !== '';
         const faltan07 = [];
         if (!reg07Texto(b.fechaPresentacion)) faltan07.push('fechaPresentacion');
@@ -250,7 +250,7 @@ const updateSolicitud = async (req, res) => {
             faltan07.push('al menos una etiqueta técnica (Formato Propuesto)');
         }
         if (faltan07.length > 0) {
-            return res.status(400).json({ error: 'REG-007 incompleto', detalle: `Faltan: ${faltan07.join(', ')}` });
+            return res.status(400).json({ error: 'REG-SIS-007 incompleto', detalle: `Faltan: ${faltan07.join(', ')}` });
         }
 
         const nuevoEstado = b.estado || 'REG-007-PENDIENTE-APROBACION';
@@ -280,7 +280,7 @@ const updateSolicitud = async (req, res) => {
                 VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion)
             `);
 
-        res.json({ mensaje: 'Solicitud actualizada (REG-007 completado)' });
+        res.json({ mensaje: 'Solicitud actualizada (REG-SIS-007 completado)' });
     } catch (err) {
         console.error('[Controller] Error en updateSolicitud:', err);
         res.status(500).json({ error: 'Error al actualizar la solicitud', detalle: err.message });
@@ -440,9 +440,9 @@ const transitionSolicitud = async (req, res) => {
 
     const esSistemas = Rol === 'SISTEMAS' || Rol === 'ADMIN';
     const esCalidad = Rol === 'CALIDAD' || Rol === 'ADMIN';
-    // Estados desde los que Sistemas puede aprobar/rechazar el REG-11.
+    // Estados desde los que Sistemas puede aprobar/rechazar el REG-SIS-011.
     // El legacy 'REG-011-PENDIENTE' NO entra aquí: predata la compuerta y se trata
-    // como ya aprobado (listo para completar el REG-07).
+    // como ya aprobado (listo para completar el REG-SIS-007).
     const PENDIENTE_REG11 = ['REG-011-PENDIENTE-APROBACION'];
 
     try {
@@ -466,36 +466,36 @@ const transitionSolicitud = async (req, res) => {
 
         switch (action) {
             case 'aprobar_reg11':
-                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede aprobar el REG-11' });
+                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede aprobar el REG-SIS-011' });
                 if (!PENDIENTE_REG11.includes(estadoActual)) {
-                    return res.status(400).json({ error: 'El REG-11 no está pendiente de aprobación de Sistemas' });
+                    return res.status(400).json({ error: 'El REG-SIS-011 no está pendiente de aprobación de Sistemas' });
                 }
                 nuevoEstado = 'REG-011-APROBADO';
-                accionDescripcion = 'REG-11 aprobado por Sistemas';
+                accionDescripcion = 'REG-SIS-011 aprobado por Sistemas';
                 break;
 
             case 'rechazar_reg11':
-                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede observar el REG-11' });
+                if (!esSistemas) return res.status(403).json({ error: 'Solo Sistemas puede observar el REG-SIS-011' });
                 if (!PENDIENTE_REG11.includes(estadoActual)) {
-                    return res.status(400).json({ error: 'El REG-11 no está pendiente de aprobación de Sistemas' });
+                    return res.status(400).json({ error: 'El REG-SIS-011 no está pendiente de aprobación de Sistemas' });
                 }
                 nuevoEstado = 'REG-011-OBSERVADO';
-                accionDescripcion = 'REG-11 observado por Sistemas (devuelto a Calidad)';
+                accionDescripcion = 'REG-SIS-011 observado por Sistemas (devuelto a Calidad)';
                 break;
 
             case 'approve':
                 if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede dar la aprobación final' });
                 if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
-                    return res.status(400).json({ error: 'El REG-07 no está pendiente de aprobación de Calidad' });
+                    return res.status(400).json({ error: 'El REG-SIS-007 no está pendiente de aprobación de Calidad' });
                 }
                 nuevoEstado = 'APROBADO';
                 accionDescripcion = 'Aprobado por Calidad → Finalizado';
                 break;
 
             case 'reject':
-                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede rechazar el REG-07' });
+                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede rechazar el REG-SIS-007' });
                 if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
-                    return res.status(400).json({ error: 'El REG-07 no está pendiente de aprobación de Calidad' });
+                    return res.status(400).json({ error: 'El REG-SIS-007 no está pendiente de aprobación de Calidad' });
                 }
                 nuevoEstado = 'RECHAZADO';
                 accionDescripcion = 'Rechazado por Calidad';

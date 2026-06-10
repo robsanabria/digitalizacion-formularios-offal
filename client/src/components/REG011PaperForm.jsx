@@ -14,15 +14,17 @@ const REG011PaperForm = ({
   onDeleteAdjunto,
   uploadLoading = false
 }) => {
-  // Firma del solicitante: usuario que creó el REG-11.
+  // Firma del solicitante: usuario que creó el REG-SIS-011.
   const solicitanteNombre = data.solicitanteNombre || '';
   const solicitanteRol = data.rolSolicitante || '';
   const solicitanteFecha = data.fechaCreacion || data.fechaSolicitud || null;
 
-  // Firma de Sistemas: se completa cuando Sistemas aprueba el REG-11.
+  // Firma de Sistemas: se completa cuando Sistemas aprueba el REG-SIS-011.
   const sistemasFirma = (() => {
     if (!Array.isArray(historial)) return null;
-    const ev = historial.find(h => h.Accion?.includes('REG-11 aprobado por Sistemas'));
+    // Robusto: coincide con registros nuevos ('REG-SIS-011 aprobado por Sistemas')
+    // y con datos previos ('REG-11 aprobado por Sistemas').
+    const ev = historial.find(h => h.Accion?.includes('aprobado por Sistemas'));
     return ev ? { user: ev.NombreUsuario, date: ev.FechaEvento } : null;
   })();
   const parseArray = (val) => {
@@ -292,7 +294,7 @@ const REG011PaperForm = ({
 
       {/* Footer / Signatures Area */}
       <div className="flex border-t-[3px] border-black min-h-[96px]">
-        {/* Solicitante: usuario que generó el REG-11 */}
+        {/* Solicitante: usuario que generó el REG-SIS-011 */}
         <div className="w-2/3 border-r-[2px] border-black flex flex-col p-2">
           <div className="text-[9px] font-bold uppercase">Solicitante (Calidad):</div>
           <div className="flex-1 flex flex-col items-center justify-center py-1">
@@ -309,14 +311,14 @@ const REG011PaperForm = ({
             Fecha de generación: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}
           </div>
         </div>
-        {/* Sistemas: se completa al aprobar el REG-11 */}
+        {/* Sistemas: se completa al aprobar el REG-SIS-011 */}
         <div className="w-1/3 flex flex-col p-2">
           <div className="text-[9px] font-bold uppercase">Sistemas (Receptor):</div>
           <div className="flex-1 flex flex-col items-center justify-center py-1">
             {sistemasFirma ? (
               <div className="text-center">
                 <div className="font-serif italic text-sm text-green-900 border-b border-green-200 px-4 font-black py-0.5 transform rotate-[-2deg]">{sistemasFirma.user}</div>
-                <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">REG-11 Aprobado</div>
+                <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">REG-SIS-011 Aprobado</div>
               </div>
             ) : (
               <div className="text-[8px] text-gray-400 italic uppercase text-center">Pendiente de aprobación de Sistemas</div>
