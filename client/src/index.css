@@ -170,7 +170,8 @@ table { border-collapse: collapse; }
     width: 100% !important;
   }
   #paper-form-container .overflow-x-auto,
-  #paper-form-container .overflow-x-hidden {
+  #paper-form-container .overflow-x-hidden,
+  #paper-form-container .overflow-hidden {
     overflow: visible !important;
   }
 
@@ -227,7 +228,7 @@ table { border-collapse: collapse; }
   }
 
   /* El tamaño de página lo controla @page (legal). NO fijar height aquí:
-     un alto fijo recorta los documentos multipágina (p. ej. el REG-07 de 3 hojas). */
+     un alto fijo recorta los documentos multipágina (p. ej. el REG-SIS-007 de 3 hojas). */
   html, body {
     width: auto !important;
     height: auto !important;

@@ -61,7 +61,7 @@ function App() {
     init();
   }, []);
 
-  // Abre el panel de detalle enfocando el formulario REG-11 o REG-07.
+  // Abre el panel de detalle enfocando el formulario REG-SIS-011 o REG-SIS-007.
   // Si print=true, dispara la impresión robusta dentro de DetalleSolicitud.
   const openDetail = (id, focus = 'REG011', print = false) => {
     setSelectedSolicitudId(id);
@@ -71,14 +71,14 @@ function App() {
     if (print) setPrintSignal(p => p + 1);
   };
 
-  // Foco por defecto según un registro: si ya tiene REG-07, mostrarlo; si no, el REG-11.
+  // Foco por defecto según un registro: si ya tiene REG-SIS-007, mostrarlo; si no, el REG-SIS-011.
   const focusFor = (estado) =>
     (estado === 'REG-007-PENDIENTE-APROBACION' || estado === 'APROBADO' || estado === 'RECHAZADO')
       ? 'REG007' : 'REG011';
 
   const listFocus = activeTab === 'reg07' ? 'REG007' : 'REG011';
 
-  // Navega a una lista (REG-11/REG-07) preseleccionando uno o más estados en el data grid.
+  // Navega a una lista (REG-SIS-011/REG-SIS-007) preseleccionando uno o más estados en el data grid.
   const goToList = (tab, estados = []) => {
     setActiveTab(tab);
     setPresetEstado(estados);
@@ -107,18 +107,18 @@ function App() {
   // Tarjetas "Pendientes de MI acción" según el rol.
   const misPendientes = [];
   if (rol === 'SISTEMAS' || rol === 'ADMIN') {
-    misPendientes.push({ label: 'REG-11 por aprobar', value: reg11PorAprobar, color: '#f59e0b', hint: 'Revisá y aprobá u observá la solicitud', onClick: () => goToList('reg11', ['REG-011-PENDIENTE-APROBACION']) });
-    misPendientes.push({ label: 'REG-07 por completar', value: reg07PorCompletar, color: '#06b6d4', hint: 'Cargá la respuesta técnica y etiquetas', onClick: () => goToList('reg11', ['REG-011-APROBADO', 'REG-011-PENDIENTE']) });
+    misPendientes.push({ label: 'REG-SIS-011 por aprobar', value: reg11PorAprobar, color: '#f59e0b', hint: 'Revisá y aprobá u observá la solicitud', onClick: () => goToList('reg11', ['REG-011-PENDIENTE-APROBACION']) });
+    misPendientes.push({ label: 'REG-SIS-007 por completar', value: reg07PorCompletar, color: '#06b6d4', hint: 'Cargá la respuesta técnica y etiquetas', onClick: () => goToList('reg11', ['REG-011-APROBADO', 'REG-011-PENDIENTE']) });
   }
   if (rol === 'CALIDAD' || rol === 'ADMIN') {
-    misPendientes.push({ label: 'REG-07 por aprobar', value: reg07PorAprobar, color: '#3b82f6', hint: 'Aprobación final de Calidad', onClick: () => goToList('reg07', ['REG-007-PENDIENTE-APROBACION']) });
-    misPendientes.push({ label: 'REG-11 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', ['REG-011-OBSERVADO']) });
+    misPendientes.push({ label: 'REG-SIS-007 por aprobar', value: reg07PorAprobar, color: '#3b82f6', hint: 'Aprobación final de Calidad', onClick: () => goToList('reg07', ['REG-007-PENDIENTE-APROBACION']) });
+    misPendientes.push({ label: 'REG-SIS-011 observados', value: observados, color: '#f97316', hint: 'Corregí y reenviá a Sistemas', onClick: () => goToList('reg11', ['REG-011-OBSERVADO']) });
   }
 
-  // Un registro "tiene REG-07" cuando Sistemas ya respondió (pendiente, aprobado o rechazado).
+  // Un registro "tiene REG-SIS-007" cuando Sistemas ya respondió (pendiente, aprobado o rechazado).
   const tieneReg07 = (estado) => ['REG-007-PENDIENTE-APROBACION', 'APROBADO', 'RECHAZADO'].includes(estado);
 
-  // La vista REG-07 sólo muestra registros con REG-07 ya generado. El resto del
+  // La vista REG-SIS-007 sólo muestra registros con REG-SIS-007 ya generado. El resto del
   // filtrado (búsqueda, estado, fechas) vive dentro del data grid.
   const listData = activeTab === 'reg07'
     ? solicitudes.filter(s => tieneReg07(s.Estado))
@@ -153,7 +153,7 @@ function App() {
             active={activeTab === 'dashboard'} 
             onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }}
           />
-          {/* Grupo Solicitudes con submenús REG-11 / REG-07 */}
+          {/* Grupo Solicitudes con submenús REG-SIS-011 / REG-SIS-007 */}
           <div>
             <NavItem
               icon={<List size={20} />}
@@ -166,13 +166,13 @@ function App() {
               <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
                 <NavItem
                   icon={<FileText size={18} />}
-                  label="REG-11"
+                  label="REG-SIS-011"
                   active={activeTab === 'reg11'}
                   onClick={() => { switchTab('reg11'); }}
                 />
                 <NavItem
                   icon={<FileCheck size={18} />}
-                  label="REG-07"
+                  label="REG-SIS-007"
                   active={activeTab === 'reg07'}
                   onClick={() => { switchTab('reg07'); }}
                 />
@@ -333,8 +333,8 @@ function App() {
             </h3>
             <p className="text-text-muted text-sm mb-8">
               {activeTab === 'reg07'
-                ? 'Cada registro abre directamente su formulario REG-07 (respuesta técnica de Sistemas).'
-                : 'Cada registro abre directamente su formulario REG-11 (solicitud original de Calidad).'}
+                ? 'Cada registro abre directamente su formulario REG-SIS-007 (respuesta técnica de Sistemas).'
+                : 'Cada registro abre directamente su formulario REG-SIS-011 (solicitud original de Calidad).'}
             </p>
 
             <SolicitudesDataTable
@@ -358,11 +358,11 @@ function App() {
         </button>
         <button onClick={() => { switchTab('reg11'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg11' ? 'text-primary' : 'text-text-muted'}`}>
           <FileText size={20} />
-          <span className="text-[10px] mt-1 font-medium">REG-11</span>
+          <span className="text-[10px] mt-1 font-medium">REG-SIS-011</span>
         </button>
         <button onClick={() => { switchTab('reg07'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg07' ? 'text-primary' : 'text-text-muted'}`}>
           <FileCheck size={20} />
-          <span className="text-[10px] mt-1 font-medium">REG-07</span>
+          <span className="text-[10px] mt-1 font-medium">REG-SIS-007</span>
         </button>
         <button onClick={() => setIsModalOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
           <PlusCircle size={20} />
@@ -418,8 +418,8 @@ function NavItem({ icon, label, active = false, onClick, className = "", trailin
 const ESTADO_META = {
   'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/20 text-amber-400' },
   'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/20 text-orange-400' },
-  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-07', cls: 'bg-cyan-500/20 text-cyan-400' },
-  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-07', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
   'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/20 text-blue-400' },
   'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/20 text-green-400' },
   'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/20 text-red-400' },
