@@ -18,6 +18,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     vidaUtil: '',
     codigoSenasa: '',
     impresoras: [],
+    tipoEtiqueta: [],
     tara: '',
     pesoMinimo: '',
     pesoMaximo: '',
@@ -74,6 +75,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     }
     if (cantSeleccionados(formData.motivo) === 0) faltan.push('Motivo del cambio (al menos uno)');
     if (cantSeleccionados(formData.impresoras) === 0) faltan.push('Impresoras afectadas (al menos una)');
+    if (cantSeleccionados(formData.tipoEtiqueta) === 0) faltan.push('Tipo de etiqueta a modificar (al menos uno)');
     // El Formato Original (archivo) es OPCIONAL al crear el REG-SIS-011.
     return faltan;
   };

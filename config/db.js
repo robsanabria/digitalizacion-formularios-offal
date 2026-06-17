@@ -29,8 +29,21 @@ const poolPromise = sql.connect(dbConfig)
                 END
             `);
             console.log('✅ Columna TipoAdjunto verificada/creada en la tabla Adjuntos');
+
+            // Verificar y crear la columna TipoEtiqueta (tipo de etiqueta a modificar) si no existe
+            await pool.request().query(`
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns
+                    WHERE object_id = OBJECT_ID(N'[dbo].[Solicitudes]')
+                    AND name = 'TipoEtiqueta'
+                )
+                BEGIN
+                    ALTER TABLE Solicitudes ADD TipoEtiqueta NVARCHAR(MAX) NULL;
+                END
+            `);
+            console.log('✅ Columna TipoEtiqueta verificada/creada en la tabla Solicitudes');
         } catch (err) {
-            console.error('⚠️ Error al verificar columna TipoAdjunto:', err.message);
+            console.error('⚠️ Error al verificar columnas:', err.message);
         }
         return pool;
     })

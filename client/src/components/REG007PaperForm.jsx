@@ -27,6 +27,7 @@ const REG007PaperForm = ({
 
   const selectedMotivos = parseArray(data.motivo);
   const selectedImpresoras = parseArray(data.impresoras);
+  const selectedTipoEtiqueta = parseArray(data.tipoEtiqueta);
 
   // Calidad's uploaded reference
   let calidadAdjunto = adjuntos && adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL');
@@ -157,6 +158,12 @@ const REG007PaperForm = ({
         <div className="flex border-b-[2px] border-black text-[9px] font-bold p-2 gap-2 items-center">
           <span>Impresoras afectadas:</span>
           <span className="flex-1 uppercase tracking-tight">{selectedImpresoras.join(' / ')}</span>
+        </div>
+
+        {/* Row 5b: Tipo de etiqueta a modificar */}
+        <div className="flex border-b-[2px] border-black text-[9px] font-bold p-2 gap-2 items-center">
+          <span>Tipo de etiqueta a modificar:</span>
+          <span className="flex-1 uppercase tracking-tight">{selectedTipoEtiqueta.join(' / ')}</span>
         </div>
 
         {/* Formato Original Area */}
