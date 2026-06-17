@@ -35,6 +35,11 @@ const REG011PaperForm = ({
 
   const selectedMotivos = parseArray(data.motivo);
   const selectedImpresoras = parseArray(data.impresoras);
+  const selectedTipoEtiqueta = parseArray(data.tipoEtiqueta);
+  const selectedFor = (field) =>
+    field === 'motivo' ? selectedMotivos
+    : field === 'impresoras' ? selectedImpresoras
+    : selectedTipoEtiqueta;
 
   const toggleOption = (field, option) => {
     if (readOnly) return;
@@ -58,7 +63,7 @@ const REG011PaperForm = ({
       onClick={() => toggleOption(field, option)}
     >
       <div className={`w-5 h-5 border-2 border-black flex items-center justify-center bg-white`}>
-        {(field === 'motivo' ? selectedMotivos : selectedImpresoras).includes(option) && <Check size={16} strokeWidth={3} className="text-black" />}
+        {selectedFor(field).includes(option) && <Check size={16} strokeWidth={3} className="text-black" />}
       </div>
       <span className="text-xs font-bold uppercase">{label}</span>
     </div>
@@ -119,6 +124,16 @@ const REG011PaperForm = ({
         <Checkbox label="Nuevo producto" field="motivo" option="Nuevo producto" />
         <Checkbox label="Modificación de existente" field="motivo" option="Modificación de existente" />
         <Checkbox label="Reactivación" field="motivo" option="Reactivación" />
+      </div>
+
+      {/* Row 2b: Tipo de etiqueta a modificar */}
+      <div className="flex border-b-[2px] border-black p-2 gap-4 flex-wrap items-center">
+        <span className="text-[10px] font-bold uppercase mr-1">Tipo de etiqueta a modificar:</span>
+        <Checkbox label="Alto Impacto" field="tipoEtiqueta" option="Alto Impacto" />
+        <Checkbox label="Etiqueta Final" field="tipoEtiqueta" option="Etiqueta Final" />
+        <Checkbox label="Pre etiqueta" field="tipoEtiqueta" option="Pre etiqueta" />
+        <Checkbox label="Etiqueta Primaria" field="tipoEtiqueta" option="Etiqueta Primaria" />
+        <Checkbox label="Etiqueta Interna" field="tipoEtiqueta" option="Etiqueta Interna" />
       </div>
 
       {/* Row 3: Nombre y Codigo Prod */}

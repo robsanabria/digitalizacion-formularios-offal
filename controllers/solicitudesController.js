@@ -39,7 +39,8 @@ const createSolicitud = async (req, res) => {
     const {
         fechaSolicitud, sectorSolicitante, motivo, nombreProducto, codigoProducto,
         destino, vidaUtil, codigoSenasa, impresoras, tara, pesoMinimo, pesoMaximo,
-        pesoEstandar, numCaja, faja, codigoExterno, comentariosSolicitante, cambioSolicitado
+        pesoEstandar, numCaja, faja, codigoExterno, comentariosSolicitante, cambioSolicitado,
+        tipoEtiqueta
     } = req.body;
 
     const solicitadoPor = req.user.UsuarioId;
@@ -62,6 +63,7 @@ const createSolicitud = async (req, res) => {
         .map(([k]) => k);
     if (!tieneItems(motivo)) faltantes.push('motivo');
     if (!tieneItems(impresoras)) faltantes.push('impresoras');
+    if (!tieneItems(tipoEtiqueta)) faltantes.push('tipo de etiqueta a modificar');
     if (faltantes.length > 0) {
         return res.status(400).json({ error: 'Campos obligatorios incompletos', detalle: `Faltan: ${faltantes.join(', ')}` });
     }
@@ -86,6 +88,7 @@ const createSolicitud = async (req, res) => {
             .input('vidaUtil', sql.NVarChar, vidaUtil)
             .input('codigoSenasa', sql.NVarChar, codigoSenasa)
             .input('impresoras', sql.NVarChar, typeof impresoras === 'string' ? impresoras : JSON.stringify(impresoras))
+            .input('tipoEtiqueta', sql.NVarChar, typeof tipoEtiqueta === 'string' ? tipoEtiqueta : JSON.stringify(tipoEtiqueta))
             .input('tara', sql.NVarChar, tara)
             .input('pesoMinimo', sql.NVarChar, pesoMinimo)
             .input('pesoMaximo', sql.NVarChar, pesoMaximo)
@@ -98,16 +101,16 @@ const createSolicitud = async (req, res) => {
             .input('estado', sql.NVarChar, estadoInicial)
             .query(`
                 INSERT INTO Solicitudes (
-                    SolicitadoPor, RolSolicitante, FechaSolicitud, SectorSolicitante, Motivo, 
-                    NombreProducto, CodigoProducto, Destino, VidaUtil, CodigoSenasa, 
-                    Impresoras, Tara, PesoMinimo, PesoMaximo, PesoEstandar, 
+                    SolicitadoPor, RolSolicitante, FechaSolicitud, SectorSolicitante, Motivo,
+                    NombreProducto, CodigoProducto, Destino, VidaUtil, CodigoSenasa,
+                    Impresoras, TipoEtiqueta, Tara, PesoMinimo, PesoMaximo, PesoEstandar,
                     NumCaja, Faja, CodigoExterno, ComentariosSolicitante, CambioSolicitado, Estado
-                ) 
+                )
                 OUTPUT INSERTED.SolicitudId
                 VALUES (
-                    @solicitadoPor, @rolSolicitante, @fechaSolicitud, @sectorSolicitante, @motivo, 
-                    @nombreProducto, @codigoProducto, @destino, @vidaUtil, @codigoSenasa, 
-                    @impresoras, @tara, @pesoMinimo, @pesoMaximo, @pesoEstandar, 
+                    @solicitadoPor, @rolSolicitante, @fechaSolicitud, @sectorSolicitante, @motivo,
+                    @nombreProducto, @codigoProducto, @destino, @vidaUtil, @codigoSenasa,
+                    @impresoras, @tipoEtiqueta, @tara, @pesoMinimo, @pesoMaximo, @pesoEstandar,
                     @numCaja, @faja, @codigoExterno, @comentariosSolicitante, @cambioSolicitado, @estado
                 )
             `);
@@ -176,6 +179,7 @@ const updateSolicitud = async (req, res) => {
                 .input('vidaUtil', sql.NVarChar, b.vidaUtil)
                 .input('codigoSenasa', sql.NVarChar, b.codigoSenasa)
                 .input('impresoras', sql.NVarChar, b.impresoras == null ? null : (typeof b.impresoras === 'string' ? b.impresoras : JSON.stringify(b.impresoras)))
+                .input('tipoEtiqueta', sql.NVarChar, b.tipoEtiqueta == null ? null : (typeof b.tipoEtiqueta === 'string' ? b.tipoEtiqueta : JSON.stringify(b.tipoEtiqueta)))
                 .input('tara', sql.NVarChar, b.tara)
                 .input('pesoMinimo', sql.NVarChar, b.pesoMinimo)
                 .input('pesoMaximo', sql.NVarChar, b.pesoMaximo)
@@ -197,6 +201,7 @@ const updateSolicitud = async (req, res) => {
                         VidaUtil = ISNULL(@vidaUtil, VidaUtil),
                         CodigoSenasa = ISNULL(@codigoSenasa, CodigoSenasa),
                         Impresoras = ISNULL(@impresoras, Impresoras),
+                        TipoEtiqueta = ISNULL(@tipoEtiqueta, TipoEtiqueta),
                         Tara = ISNULL(@tara, Tara),
                         PesoMinimo = ISNULL(@pesoMinimo, PesoMinimo),
                         PesoMaximo = ISNULL(@pesoMaximo, PesoMaximo),
