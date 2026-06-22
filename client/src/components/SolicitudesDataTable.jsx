@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import {
-  ArrowUpDown, Eye, Download, MoreHorizontal, Search, ListFilter, Calendar,
+  ArrowUpDown, Eye, Printer, MoreHorizontal, Search, ListFilter, Calendar,
   ChevronLeft, ChevronRight, Inbox, X, Check,
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -152,8 +152,8 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title="Previsualizar" onClick={() => onOpen(row.original.SolicitudId, focus)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-400" title="Descargar PDF" onClick={() => onPrint(row.original.SolicitudId, focus)}>
-            <Download className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-400" title="Imprimir" onClick={() => onPrint(row.original.SolicitudId, focus)}>
+            <Printer className="h-4 w-4" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -163,7 +163,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
               <DropdownMenuLabel>Acciones</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => onOpen(row.original.SolicitudId, focus)}><Eye className="h-4 w-4" /> Previsualizar</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onPrint(row.original.SolicitudId, focus)}><Download className="h-4 w-4" /> Descargar PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onPrint(row.original.SolicitudId, focus)}><Printer className="h-4 w-4" /> Imprimir</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -391,7 +391,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
                     <Eye className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-green-400" onClick={(e) => { e.stopPropagation(); onPrint(s.SolicitudId, focus); }}>
-                    <Download className="h-4 w-4" />
+                    <Printer className="h-4 w-4" />
                   </Button>
                 </span>
               </div>

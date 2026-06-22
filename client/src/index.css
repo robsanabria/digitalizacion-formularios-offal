@@ -237,10 +237,12 @@ table { border-collapse: collapse; }
 
   #paper-form-container {
     box-sizing: border-box !important;
-    /* Restar márgenes: 6mm arriba + 6mm abajo => 12mm total horizontal */
-    width: calc(8.5in - 12mm) !important;
-    max-width: calc(8.5in - 12mm) !important;
-    margin: 0 auto !important;
+    /* Ocupar el 100% del área imprimible (el ancho lo define @page/los márgenes
+       del navegador). Un ancho fijo en pulgadas chocaba con el margen elegido en
+       el diálogo de impresión y recortaba el formulario. */
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
   }
