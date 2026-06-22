@@ -323,7 +323,7 @@ const REG011PaperForm = ({
             </div>
           ) : onLocalFileChange ? (
             /* Creación: caja "+" para elegir el archivo local (misma experiencia que REG-SIS-007) */
-            <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
               <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onLocalFileChange(e.target.files[0] || null)} />
               <div className="bg-blue-100 p-3 rounded-full mb-2">
                 <Plus className="text-blue-600 animate-pulse" size={24} />
@@ -331,7 +331,7 @@ const REG011PaperForm = ({
               <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
             </label>
           ) : canEditOriginal && onUploadAdjunto ? (
-            <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
               <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
               <div className="bg-blue-100 p-3 rounded-full mb-2">
                 <Plus className="text-blue-600 animate-pulse" size={24} />

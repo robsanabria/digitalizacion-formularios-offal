@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Download, Loader2, Check, History, Send, RotateCcw, ThumbsUp, ThumbsDown, FileText, FileCheck, AlertTriangle } from 'lucide-react';
+import { X, Printer, Loader2, Check, History, Send, RotateCcw, ThumbsUp, ThumbsDown, FileText, FileCheck, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -445,9 +445,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
             <button
               onClick={waitForImagesAndPrint}
               className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-              title="Descargar / Imprimir PDF"
+              title="Imprimir"
             >
-              <Download size={24} />
+              <Printer size={24} />
             </button>
 
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">

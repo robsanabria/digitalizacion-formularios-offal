@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, Users, LogOut, Eye, Download, ChevronDown, FileText, FileCheck } from 'lucide-react';
+import { Layout, PlusCircle, List, Activity, Settings, Users, LogOut, Eye, Printer, ChevronDown, FileText, FileCheck } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -310,9 +310,9 @@ function App() {
                               <button
                                 onClick={() => openDetail(s.SolicitudId, focusFor(s.Estado), true)}
                                 className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
-                                title="Descargar PDF"
+                                title="Imprimir"
                               >
-                                <Download size={18} />
+                                <Printer size={18} />
                               </button>
                             </div>
                           </td>
