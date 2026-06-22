@@ -556,7 +556,61 @@ const getHistorial = async (req, res) => {
     }
 };
 
-/* exportSolicitud removed — keeping backend minimal per user's request */
+// ─── Exportar PDF (Puppeteer / Chrome headless) ────────────────────────────────
+/**
+ * GET /api/solicitudes/:id/pdf?doc=REG007|REG011
+ * Renderiza la página interna /print/:id con Chrome headless y devuelve un PDF
+ * tamaño Legal, consistente y sin depender del diálogo del navegador del usuario.
+ * Requiere PRINT_SECRET en el entorno (token que usa Puppeteer para leer datos
+ * e imágenes vía el bypass del authMiddleware).
+ */
+const exportPdf = async (req, res) => {
+    const { id } = req.params;
+    const doc = req.query.doc === 'REG007' ? 'REG007' : 'REG011';
+    const PRINT_SECRET = process.env.PRINT_SECRET;
+
+    if (!PRINT_SECRET) {
+        return res.status(503).json({
+            error: 'Generación de PDF no configurada',
+            detalle: 'Falta la variable de entorno PRINT_SECRET.'
+        });
+    }
+
+    const port = process.env.PORT || 3001;
+    const url = `http://127.0.0.1:${port}/print/${id}?doc=${doc}&k=${encodeURIComponent(PRINT_SECRET)}`;
+
+    let browser;
+    try {
+        const puppeteer = require('puppeteer');
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+        const page = await browser.newPage();
+        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+        // La página de impresión expone #print-ready cuando los datos e imágenes cargaron.
+        await page.waitForSelector('#print-ready', { timeout: 60000 }).catch(() => {});
+
+        const pdf = await page.pdf({
+            format: 'Legal',
+            printBackground: true,
+            preferCSSPageSize: false,
+            margin: { top: '6mm', bottom: '6mm', left: '6mm', right: '6mm' }
+        });
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="${doc}-${String(id).slice(0, 8)}.pdf"`,
+            'Content-Length': pdf.length
+        });
+        res.send(pdf);
+    } catch (err) {
+        console.error('[PDF] Error generando PDF:', err.message);
+        res.status(500).json({ error: 'No se pudo generar el PDF', detalle: err.message });
+    } finally {
+        if (browser) { try { await browser.close(); } catch {} }
+    }
+};
 
 const deleteAdjunto = async (req, res) => {
     const { id, adjuntoId } = req.params;
@@ -636,6 +690,7 @@ module.exports = {
     downloadAdjunto,
     deleteAdjunto,
     transitionSolicitud,
-    getHistorial
+    getHistorial,
+    exportPdf
 };
 

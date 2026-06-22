@@ -23,7 +23,23 @@ const DEV_USER_ROLE = ROLES_VALIDOS.includes((process.env.DEV_USER_ROLE || '').t
 
 const esAdminPorConfig = (email) => ADMIN_EMAILS.has(String(email || '').trim().toLowerCase());
 
+// Token interno para la generación de PDF (Puppeteer accede a la app desde
+// localhost, sin las cabeceras de EasyAuth). Solo se acepta si PRINT_SECRET está
+// configurado y coincide; otorga un usuario "sistema" de solo lectura para render.
+const PRINT_SECRET = process.env.PRINT_SECRET;
+
 const authMiddleware = async (req, res, next) => {
+    // Bypass de impresión: requests internos de Puppeteer con ?k=PRINT_SECRET
+    if (PRINT_SECRET && req.query.k && req.query.k === PRINT_SECRET) {
+        req.user = {
+            UsuarioId: '00000000-0000-0000-0000-000000000000',
+            NombreUsuario: 'PDF Renderer',
+            Email: 'pdf@system',
+            Rol: 'ADMIN'
+        };
+        return next();
+    }
+
     // En Azure, EasyAuth inyecta estas cabeceras
     const userEmail = req.headers['x-ms-client-principal-name'];
 

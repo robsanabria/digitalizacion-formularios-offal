@@ -14,8 +14,10 @@ const REG011PaperForm = ({
   onDeleteAdjunto,
   uploadLoading = false,
   localFile = null,          // archivo seleccionado en modo creación (aún no subido)
-  onLocalFileChange = null   // setter del archivo local (creación)
+  onLocalFileChange = null,  // setter del archivo local (creación)
+  printToken = ''            // token para que Puppeteer cargue las imágenes en el PDF
 }) => {
+  const imgSrc = (adjId) => `/api/solicitudes/${solicitudId}/adjuntos/${adjId}/descargar${printToken ? `?k=${encodeURIComponent(printToken)}` : ''}`;
   // Vista previa del archivo local (creación) sin subirlo todavía.
   const localPreview = useMemo(
     () => (localFile && localFile.type?.startsWith('image/') ? URL.createObjectURL(localFile) : null),
@@ -286,7 +288,7 @@ const REG011PaperForm = ({
               )}
               {calidadAdjunto.TipoContenido?.startsWith('image/') ? (
                 <img 
-                  src={`/api/solicitudes/${solicitudId}/adjuntos/${calidadAdjunto.AdjuntoId}/descargar`}
+                  src={imgSrc(calidadAdjunto.AdjuntoId)}
                   className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
                   alt="Referencia Original"
                   loading="eager"

@@ -45,6 +45,9 @@ router.post('/:id/transition', checkRole(['CALIDAD', 'SISTEMAS', 'ADMIN']), soli
 // Historial de cambios de una solicitud
 router.get('/:id/historial', solicitudesController.getHistorial);
 
+// Exportar PDF (Puppeteer / Chrome headless)
+router.get('/:id/pdf', solicitudesController.exportPdf);
+
 // Rutas para adjuntos
 router.get('/:id/adjuntos', solicitudesController.getAdjuntosBySolicitud);
 router.post('/:id/adjuntos', uploadSingle, solicitudesController.addAdjunto);
