@@ -273,31 +273,12 @@ const REG007PaperForm = ({
         </div>
       </div>
 
-      {/* 📄 PÁGINA 4 de 4: FORMATO PROPUESTO Y PANEL DE FIRMAS / TRAZABILIDAD */}
+      {/* 📄 PÁGINA 4 de 4: CAMBIO SOLICITADO Y PANEL DE FIRMAS / TRAZABILIDAD */}
       <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white">
         <PageHeader pageNum={4} />
 
-        {/* Espacio Formato Propuesto */}
-        <div className="relative min-h-[350px] border-b-[2px] border-black flex">
-          <div className="w-8 border-r-[2px] border-black flex items-center justify-center bg-gray-50/50 select-none">
-            <span className="rotate-[-90deg] text-[9px] font-black uppercase tracking-widest whitespace-nowrap text-gray-500">Formato propuesto</span>
-          </div>
-          <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
-            {sistemasAdjuntos.length > 0 ? (
-              <div className="flex flex-col items-center max-w-full">
-                <img 
-                  src={`/api/solicitudes/${solicitudId}/adjuntos/${sistemasAdjuntos[0].AdjuntoId}/descargar`}
-                  className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
-                  alt="Propuesta Principal"
-                  loading="eager"
-                />
-                <span className="text-[8px] mt-2 text-gray-400 font-black uppercase tracking-wider">Muestra Técnica Principal de Etiquetas Modificadas</span>
-              </div>
-            ) : (
-              <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin muestras de formato propuesto</div>
-            )}
-          </div>
-        </div>
+        {/* (Se quitó el "Formato Propuesto": las etiquetas se cargan en la grilla
+            "Etiquetas Técnicas Resultantes" de la página anterior.) */}
 
         {/* Cambio Solicitado Box */}
         <div className="border-b-[2px] border-black p-3 flex flex-col bg-white">
