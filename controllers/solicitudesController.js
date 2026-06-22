@@ -581,11 +581,24 @@ const exportPdf = async (req, res) => {
 
     let browser;
     try {
-        const puppeteer = require('puppeteer');
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        });
+        // Producción (Azure App Service Linux): Chromium empaquetado por
+        // @sparticuz/chromium, sin necesidad de instalar librerías por apt.
+        try {
+            const chromium = require('@sparticuz/chromium');
+            const pcore = require('puppeteer-core');
+            browser = await pcore.launch({
+                args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless
+            });
+        } catch (eSparticuz) {
+            // Fallback local (dev): puppeteer completo si está instalado.
+            const puppeteer = require('puppeteer');
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            });
+        }
         const page = await browser.newPage();
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
         // La página de impresión expone #print-ready cuando los datos e imágenes cargaron.
