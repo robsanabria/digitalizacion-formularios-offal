@@ -307,42 +307,63 @@ const REG011PaperForm = ({
         </div>
       </div>
 
-      {/* Footer / Signatures Area */}
-      <div className="flex border-t-[3px] border-black min-h-[96px]">
-        {/* Solicitante: usuario que generó el REG-SIS-011 */}
-        <div className="w-2/3 border-r-[2px] border-black flex flex-col p-2">
-          <div className="text-[9px] font-bold uppercase">Solicitante (Calidad):</div>
-          <div className="flex-1 flex flex-col items-center justify-center py-1">
-            {solicitanteNombre ? (
-              <div className="text-center">
-                <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-4 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
-                <div className="text-[7px] text-blue-500 uppercase tracking-widest mt-1 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
+      {/* Footer / Firmas — fila de encabezados (SOLICITANTE / SISTEMAS) + fila de firmas */}
+      <div className="border-t-[3px] border-black">
+        {/* Encabezados */}
+        <div className="flex text-[9px] font-black uppercase text-center">
+          <div className="w-2/3 border-r-[2px] border-black p-1">Solicitante:</div>
+          <div className="w-1/3 p-1">Sistemas:</div>
+        </div>
+
+        {/* Firmas */}
+        <div className="flex border-t-[2px] border-black min-h-[110px] text-[8px]">
+          {/* Solicitante: dos sub-columnas (Calidad / Insumos) */}
+          <div className="w-2/3 border-r-[2px] border-black flex">
+            {/* Personal de calidad — con la firma digital del creador */}
+            <div className="w-1/2 border-r border-black/40 flex flex-col p-2">
+              <div className="flex-1 flex items-center justify-center">
+                {solicitanteNombre && (
+                  <div className="text-center">
+                    <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
+                    <div className="text-[6.5px] text-blue-500 uppercase tracking-widest mt-0.5 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-[8px] text-gray-400 italic uppercase">Firma y aclaración del personal de Calidad</div>
-            )}
+              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de calidad</div>
+              <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
+            </div>
+            {/* Personal de insumos — firma manual (en blanco) */}
+            <div className="w-1/2 flex flex-col p-2">
+              <div className="flex-1" />
+              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de Insumos</div>
+            </div>
           </div>
-          <div className="text-[8px] text-gray-500 border-t border-black/20 pt-1">
-            Fecha de generación: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}
+
+          {/* Sistemas: receptor — se completa al aprobar el REG-SIS-011 */}
+          <div className="w-1/3 flex flex-col p-2">
+            <div className="flex-1 flex items-center justify-center">
+              {sistemasFirma && (
+                <div className="text-center">
+                  <div className="font-serif italic text-sm text-green-900 border-b border-green-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{sistemasFirma.user}</div>
+                  <div className="text-[6.5px] text-green-500 uppercase tracking-widest mt-0.5 font-bold">REG-SIS-011 Aprobado</div>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración del receptor</div>
+            <div className="text-center text-gray-500 mt-0.5">Fecha: {sistemasFirma ? new Date(sistemasFirma.date).toLocaleDateString() : '____/____/______'}</div>
           </div>
         </div>
-        {/* Sistemas: se completa al aprobar el REG-SIS-011 */}
-        <div className="w-1/3 flex flex-col p-2">
-          <div className="text-[9px] font-bold uppercase">Sistemas (Receptor):</div>
-          <div className="flex-1 flex flex-col items-center justify-center py-1">
-            {sistemasFirma ? (
-              <div className="text-center">
-                <div className="font-serif italic text-sm text-green-900 border-b border-green-200 px-4 font-black py-0.5 transform rotate-[-2deg]">{sistemasFirma.user}</div>
-                <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">REG-SIS-011 Aprobado</div>
-              </div>
-            ) : (
-              <div className="text-[8px] text-gray-400 italic uppercase text-center">Pendiente de aprobación de Sistemas</div>
-            )}
-          </div>
-          <div className="text-[8px] text-gray-500 border-t border-black/20 pt-1">
-            Fecha: {sistemasFirma ? new Date(sistemasFirma.date).toLocaleDateString() : '____/____/______'}
-          </div>
-        </div>
+      </div>
+
+      {/* Referencias / Notas al pie del formulario */}
+      <div className="border-t-[2px] border-black p-2 text-[7px] leading-snug text-gray-800 text-justify">
+        <span className="font-black">Referencias: </span>
+        <sup>1</sup> BIZERBA (Balanza de menudencias), ZEBRA (alto impacto despostada y menudencias, reproceso, congelado, rechazo despostada, pre etiqueta despostada), KETAN (Pre etiquetas de menudencias), VIDEOJET (Balanza dinámica despostada).{' '}
+        <sup>2</sup> En el caso de que el cambio no requiera ser completado se colocará N/A = No Aplica.{' '}
+        <sup>3</sup> Colocar una cruz (X) en los casilleros correspondientes.{' '}
+        <sup>4</sup> Faja: Rellenar con SI/NO/No Aplica = N/A.{' '}
+        <sup>5</sup> N° de Caja: 1.Chica OFFAL TAVIL, 2.Mediana OFFAL TAVIL, 3.Grande OFFAL TAVIL, 7.Dragon OFFAL TAVIL, 8.Santa Marta TAVIL, 9.Santa Casilda Marron TAVIL, 10.Santa Casilda Blanca TAVIL, 11.Chica LISA TAVIL, 12.Grande LISA TAVIL, 13.Fondo TAVIL, 14.Tapa OFFAL TAVIL.{' '}
+        <sup>6</sup> Vida Útil: Se expresará en meses.
       </div>
     </div>
   );
