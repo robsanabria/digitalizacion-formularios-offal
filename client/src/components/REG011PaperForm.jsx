@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Check, Trash2, Plus, Loader2 } from 'lucide-react';
 
 const REG011PaperForm = ({
@@ -12,8 +12,16 @@ const REG011PaperForm = ({
   historial = [],
   onUploadAdjunto,
   onDeleteAdjunto,
-  uploadLoading = false
+  uploadLoading = false,
+  localFile = null,          // archivo seleccionado en modo creación (aún no subido)
+  onLocalFileChange = null   // setter del archivo local (creación)
 }) => {
+  // Vista previa del archivo local (creación) sin subirlo todavía.
+  const localPreview = useMemo(
+    () => (localFile && localFile.type?.startsWith('image/') ? URL.createObjectURL(localFile) : null),
+    [localFile]
+  );
+  useEffect(() => () => { if (localPreview) URL.revokeObjectURL(localPreview); }, [localPreview]);
   // Firma del solicitante: usuario que creó el REG-SIS-011.
   const solicitanteNombre = data.solicitanteNombre || '';
   const solicitanteRol = data.rolSolicitante || '';
@@ -290,19 +298,49 @@ const REG011PaperForm = ({
                 </div>
               )}
             </div>
-          ) : (
-            canEditOriginal && onUploadAdjunto ? (
-              <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
-                <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
-                <div className="bg-blue-100 p-3 rounded-full mb-2">
-                  <Plus className="text-blue-600 animate-pulse" size={24} />
+          ) : localFile ? (
+            /* Creación: vista previa del archivo local seleccionado (aún no subido) */
+            <div className="flex flex-col items-center max-w-full relative group">
+              {onLocalFileChange && (
+                <button
+                  type="button"
+                  onClick={() => onLocalFileChange(null)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
+                  title="Quitar archivo"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
+              {localPreview ? (
+                <img src={localPreview} className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white" alt="Vista previa" />
+              ) : (
+                <div className="flex flex-col items-center p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
+                  <span className="font-bold text-xs uppercase truncate max-w-full">{localFile.name}</span>
+                  <span className="text-[9px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">Archivo seleccionado</span>
                 </div>
-                <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
-                {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
-              </label>
-            ) : (
-              <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
-            )
+              )}
+              <span className="text-[9px] text-green-600 mt-1.5 font-black italic truncate max-w-full">{localFile.name}</span>
+            </div>
+          ) : onLocalFileChange ? (
+            /* Creación: caja "+" para elegir el archivo local (misma experiencia que REG-SIS-007) */
+            <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+              <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onLocalFileChange(e.target.files[0] || null)} />
+              <div className="bg-blue-100 p-3 rounded-full mb-2">
+                <Plus className="text-blue-600 animate-pulse" size={24} />
+              </div>
+              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+            </label>
+          ) : canEditOriginal && onUploadAdjunto ? (
+            <label className="border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+              <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
+              <div className="bg-blue-100 p-3 rounded-full mb-2">
+                <Plus className="text-blue-600 animate-pulse" size={24} />
+              </div>
+              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+              {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
+            </label>
+          ) : (
+            <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
           )}
         </div>
       </div>
@@ -311,36 +349,28 @@ const REG011PaperForm = ({
       <div className="border-t-[3px] border-black">
         {/* Encabezados */}
         <div className="flex text-[9px] font-black uppercase text-center">
-          <div className="w-2/3 border-r-[2px] border-black p-1">Solicitante:</div>
-          <div className="w-1/3 p-1">Sistemas:</div>
+          <div className="w-1/2 border-r-[2px] border-black p-1">Solicitante:</div>
+          <div className="w-1/2 p-1">Sistemas:</div>
         </div>
 
         {/* Firmas */}
         <div className="flex border-t-[2px] border-black min-h-[110px] text-[8px]">
-          {/* Solicitante: dos sub-columnas (Calidad / Insumos) */}
-          <div className="w-2/3 border-r-[2px] border-black flex">
-            {/* Personal de calidad — con la firma digital del creador */}
-            <div className="w-1/2 border-r border-black/40 flex flex-col p-2">
-              <div className="flex-1 flex items-center justify-center">
-                {solicitanteNombre && (
-                  <div className="text-center">
-                    <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
-                    <div className="text-[6.5px] text-blue-500 uppercase tracking-widest mt-0.5 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de calidad</div>
-              <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
+          {/* Solicitante (Calidad) — con la firma digital del creador */}
+          <div className="w-1/2 border-r-[2px] border-black flex flex-col p-2">
+            <div className="flex-1 flex items-center justify-center">
+              {solicitanteNombre && (
+                <div className="text-center">
+                  <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
+                  <div className="text-[6.5px] text-blue-500 uppercase tracking-widest mt-0.5 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
+                </div>
+              )}
             </div>
-            {/* Personal de insumos — firma manual (en blanco) */}
-            <div className="w-1/2 flex flex-col p-2">
-              <div className="flex-1" />
-              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de Insumos</div>
-            </div>
+            <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración de Personal de calidad</div>
+            <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
           </div>
 
           {/* Sistemas: receptor — se completa al aprobar el REG-SIS-011 */}
-          <div className="w-1/3 flex flex-col p-2">
+          <div className="w-1/2 flex flex-col p-2">
             <div className="flex-1 flex items-center justify-center">
               {sistemasFirma && (
                 <div className="text-center">
