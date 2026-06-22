@@ -349,36 +349,28 @@ const REG011PaperForm = ({
       <div className="border-t-[3px] border-black">
         {/* Encabezados */}
         <div className="flex text-[9px] font-black uppercase text-center">
-          <div className="w-2/3 border-r-[2px] border-black p-1">Solicitante:</div>
-          <div className="w-1/3 p-1">Sistemas:</div>
+          <div className="w-1/2 border-r-[2px] border-black p-1">Solicitante:</div>
+          <div className="w-1/2 p-1">Sistemas:</div>
         </div>
 
         {/* Firmas */}
         <div className="flex border-t-[2px] border-black min-h-[110px] text-[8px]">
-          {/* Solicitante: dos sub-columnas (Calidad / Insumos) */}
-          <div className="w-2/3 border-r-[2px] border-black flex">
-            {/* Personal de calidad — con la firma digital del creador */}
-            <div className="w-1/2 border-r border-black/40 flex flex-col p-2">
-              <div className="flex-1 flex items-center justify-center">
-                {solicitanteNombre && (
-                  <div className="text-center">
-                    <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
-                    <div className="text-[6.5px] text-blue-500 uppercase tracking-widest mt-0.5 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de calidad</div>
-              <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
+          {/* Solicitante (Calidad) — con la firma digital del creador */}
+          <div className="w-1/2 border-r-[2px] border-black flex flex-col p-2">
+            <div className="flex-1 flex items-center justify-center">
+              {solicitanteNombre && (
+                <div className="text-center">
+                  <div className="font-serif italic text-sm text-blue-900 border-b border-blue-200 px-3 font-black py-0.5 transform rotate-[-2deg]">{solicitanteNombre}</div>
+                  <div className="text-[6.5px] text-blue-500 uppercase tracking-widest mt-0.5 font-bold">Generado digitalmente {solicitanteRol ? `· ${solicitanteRol}` : ''}</div>
+                </div>
+              )}
             </div>
-            {/* Personal de insumos — firma manual (en blanco) */}
-            <div className="w-1/2 flex flex-col p-2">
-              <div className="flex-1" />
-              <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración<br />de Personal de Insumos</div>
-            </div>
+            <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración de Personal de calidad</div>
+            <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
           </div>
 
           {/* Sistemas: receptor — se completa al aprobar el REG-SIS-011 */}
-          <div className="w-1/3 flex flex-col p-2">
+          <div className="w-1/2 flex flex-col p-2">
             <div className="flex-1 flex items-center justify-center">
               {sistemasFirma && (
                 <div className="text-center">
