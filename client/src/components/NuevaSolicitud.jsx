@@ -147,19 +147,15 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           </div>
 
           <div className="max-h-[70vh] overflow-y-auto px-2">
-            <REG011PaperForm data={formData} onChange={handleFieldChange} />
-            
-            {/* Upload adicional */}
-            <div className="max-w-4xl mx-auto mt-6 p-4 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
-               <label className="text-sm font-bold text-gray-600 block mb-2 uppercase italic">Cargar Formato Original (Etiqueta de Referencia) — opcional:</label>
-               <input
-                  type="file"
-                  accept="image/jpeg,image/png,application/pdf"
-                  onChange={e => setFile(e.target.files[0])}
-                  className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-               />
-               {file && <p className="mt-2 text-xs text-green-600 font-bold italic">Archivo seleccionado: {file.name}</p>}
-            </div>
+            {/* El "Formato Original" se carga con la caja "+" dentro del propio
+                formulario (misma experiencia que el REG-SIS-007). El archivo queda
+                local y se sube al crear la solicitud. */}
+            <REG011PaperForm
+              data={formData}
+              onChange={handleFieldChange}
+              localFile={file}
+              onLocalFileChange={setFile}
+            />
           </div>
         </div>
       </div>
