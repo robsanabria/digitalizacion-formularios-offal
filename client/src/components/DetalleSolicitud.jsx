@@ -153,11 +153,30 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     window.print();
   };
 
+  // Genera el PDF en el servidor (Puppeteer) y lo abre. Si el backend no tiene
+  // PRINT_SECRET configurado o falla, cae a la impresión del navegador.
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const generarPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const resp = await axios.get(`/api/solicitudes/${solicitudId}/pdf?doc=${localFocus}`, { responseType: 'blob' });
+      const url = URL.createObjectURL(resp.data);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.warn('PDF servidor no disponible, usando impresión del navegador', err);
+      toast.error('No se pudo generar el PDF en el servidor. Se usa la impresión del navegador.');
+      await waitForImagesAndPrint();
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   // Impresión disparada desde el listado (App incrementa printSignal)
   useEffect(() => {
     if (printSignal && printSignal !== printedSignalRef.current && isOpen && !loading && solicitud) {
       printedSignalRef.current = printSignal;
-      waitForImagesAndPrint();
+      generarPdf();
     }
   }, [printSignal, loading, isOpen, solicitud]);
 
@@ -443,11 +462,12 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
             )}
 
             <button
-              onClick={waitForImagesAndPrint}
-              className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-              title="Imprimir"
+              onClick={generarPdf}
+              disabled={pdfLoading}
+              className="p-2 hover:bg-gray-100 rounded-full text-blue-600 transition-colors disabled:opacity-50"
+              title="Imprimir / Descargar PDF"
             >
-              <Printer size={24} />
+              {pdfLoading ? <Loader2 className="animate-spin" size={24} /> : <Printer size={24} />}
             </button>
 
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">

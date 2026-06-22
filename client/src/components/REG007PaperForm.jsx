@@ -12,9 +12,11 @@ const REG007PaperForm = ({
   historial = [], 
   onUploadAdjunto, 
   onDeleteAdjunto,
-  uploadLoading = false 
+  uploadLoading = false,
+  printToken = ''
 }) => {
-  
+  const imgSrc = (adjId) => `/api/solicitudes/${solicitudId}/adjuntos/${adjId}/descargar${printToken ? `?k=${encodeURIComponent(printToken)}` : ''}`;
+
   const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
                           !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
   const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
@@ -185,7 +187,7 @@ const REG007PaperForm = ({
                 )}
                 {calidadAdjunto.TipoContenido?.startsWith('image/') ? (
                   <img 
-                    src={`/api/solicitudes/${solicitudId}/adjuntos/${calidadAdjunto.AdjuntoId}/descargar`}
+                    src={imgSrc(calidadAdjunto.AdjuntoId)}
                     className="max-h-[380px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
                     alt="Referencia Original"
                     loading="eager"
@@ -242,7 +244,7 @@ const REG007PaperForm = ({
                   </button>
                 )}
                 <img 
-                  src={`/api/solicitudes/${solicitudId}/adjuntos/${img.AdjuntoId}/descargar`}
+                  src={imgSrc(img.AdjuntoId)}
                   className="h-[140px] max-w-full object-contain border border-gray-200"
                   alt={`Etiqueta Modificada ${idx + 1}`}
                   loading="eager"
