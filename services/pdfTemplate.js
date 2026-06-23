@@ -94,7 +94,7 @@ function buildReg007Html(d, originalImg, etiquetas, firmas) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>${baseCss}</style></head><body><div class="doc">
     <div class="page">
       ${pageHeader('REG-SIS-007', 1, 4, '08-10-2024', '04-24')}
-      <div class="row"><div class="cell" style="width:50%"><span class="label">Fecha de presentación:</span>${esc(fecha(d.FechaPresentacion))}</div><div class="cell" style="width:50%;border-right:none"><span class="label">Solicitado por:</span><span class="val">${esc(d.SectorSolicitante || 'CALIDAD')}</span></div></div>
+      <div class="row"><div class="cell" style="width:50%"><span class="label">Fecha de presentación:</span>${esc(fecha(d.FechaPresentacion || d.FechaSolicitud || d.FechaCreacion))}</div><div class="cell" style="width:50%;border-right:none"><span class="label">Solicitado por:</span><span class="val">${esc(d.SectorSolicitante || 'CALIDAD')}</span></div></div>
       <div class="row"><div class="cell" style="width:100%;border-right:none"><span class="label">Motivo del cambio:</span>
         <span class="opt">${chk(motivos.includes('SENASA'))}SENASA</span>
         <span class="opt">${chk(motivos.includes('Nuevo producto'))}Nuevo producto</span>
