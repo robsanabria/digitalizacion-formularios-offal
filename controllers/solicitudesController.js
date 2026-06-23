@@ -556,15 +556,22 @@ const getHistorial = async (req, res) => {
     }
 };
 
-// ─── Exportar PDF (Puppeteer / Chrome headless) ────────────────────────────────
+// ─── Exportar PDF (DESHABILITADO) ──────────────────────────────────────────────
 /**
- * GET /api/solicitudes/:id/pdf?doc=REG007|REG011
- * Renderiza la página interna /print/:id con Chrome headless y devuelve un PDF
- * tamaño Legal, consistente y sin depender del diálogo del navegador del usuario.
- * Requiere PRINT_SECRET en el entorno (token que usa Puppeteer para leer datos
- * e imágenes vía el bypass del authMiddleware).
+ * La generación de PDF en el servidor (Puppeteer/Chromium) fue retirada: la
+ * impresión se hace desde el diálogo del navegador (window.print()) tanto para
+ * el REG-SIS-011 como para el REG-SIS-007. Se quitaron las dependencias pesadas
+ * (puppeteer, puppeteer-core, @sparticuz/chromium) para acelerar deploy y arranque.
+ * Este endpoint queda como stub por compatibilidad.
  */
 const exportPdf = async (req, res) => {
+    return res.status(410).json({
+        error: 'Generación de PDF en servidor deshabilitada',
+        detalle: 'La impresión se realiza desde el navegador (Imprimir / Guardar como PDF).'
+    });
+};
+
+const _exportPdfLegacy = async (req, res) => {
     const { id } = req.params;
     const doc = req.query.doc === 'REG007' ? 'REG007' : 'REG011';
     const PRINT_SECRET = process.env.PRINT_SECRET;

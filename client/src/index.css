@@ -133,6 +133,20 @@ table { border-collapse: collapse; }
   nav.fixed {
     display: none !important;
   }
+
+  /* Impresión multipágina: el formulario se clona a #print-root (raíz del <body>)
+     para escapar de los ancestros del modal (transform/fixed) que rompen los
+     saltos de página. Ocultamos la app y mostramos solo el clon. */
+  body.printing #root {
+    display: none !important;
+  }
+  body.printing #print-root {
+    display: block !important;
+  }
+  body.printing #print-root,
+  body.printing #print-root * {
+    visibility: visible !important;
+  }
   
   /* Mostrar solo el contenedor del formulario y su contenido */
   #paper-form-container, #paper-form-container * {

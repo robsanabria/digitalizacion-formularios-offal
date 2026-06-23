@@ -137,20 +137,40 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     setLocalFocus(focusForm);
   }, [focusForm, solicitudId, isOpen]);
 
-  // ── Impresión robusta: espera a que todas las imágenes del formulario carguen ──
+  // ── Impresión robusta ──
+  // 1) Espera a que las imágenes carguen.
+  // 2) CLONA el formulario a la raíz del <body>, fuera del modal. Dentro del modal,
+  //    los ancestros con transform/position:fixed rompen la fragmentación de páginas
+  //    del navegador (los saltos print:break-after-page se ignoran y todo se junta).
+  //    Al imprimir el clon en la raíz, los saltos de página vuelven a funcionar.
   const waitForImagesAndPrint = async () => {
     const container = document.getElementById('paper-form-container');
-    if (container) {
-      const imgs = Array.from(container.querySelectorAll('img'));
-      await Promise.all(
-        imgs.map(img =>
-          img.complete
-            ? Promise.resolve()
-            : new Promise(resolve => { img.onload = img.onerror = resolve; })
-        )
-      );
-    }
+    if (!container) { window.print(); return; }
+
+    const imgs = Array.from(container.querySelectorAll('img'));
+    await Promise.all(
+      imgs.map(img =>
+        img.complete ? Promise.resolve() : new Promise(resolve => { img.onload = img.onerror = resolve; })
+      )
+    );
+
+    const printRoot = document.createElement('div');
+    printRoot.id = 'print-root';
+    printRoot.appendChild(container.cloneNode(true));
+    document.body.appendChild(printRoot);
+    document.body.classList.add('printing');
+
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      document.body.classList.remove('printing');
+      printRoot.remove();
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
     window.print();
+    setTimeout(cleanup, 1500);
   };
 
   // Imprime usando el diálogo del navegador (igual para REG-SIS-011 y REG-SIS-007).
