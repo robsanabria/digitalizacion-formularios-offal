@@ -275,6 +275,17 @@ const REG007PaperForm = ({
         </div>
       </div>
 
+      {/* 📄 PÁGINA 3 de 4: ESPACIO ADICIONAL PARA ETIQUETAS (queda vacío si no hay más) */}
+      <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white print:break-after-page">
+        <PageHeader pageNum={3} />
+        <div className="p-6 min-h-[600px]">
+          <div className="text-center mb-6 border-b border-black pb-2">
+            <h3 className="text-xs font-black uppercase tracking-widest text-gray-700">Etiquetas Técnicas Resultantes (Continuación)</h3>
+            <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Espacio para etiquetas adicionales del circuito</p>
+          </div>
+        </div>
+      </div>
+
       {/* 📄 PÁGINA 4 de 4: CAMBIO SOLICITADO Y PANEL DE FIRMAS / TRAZABILIDAD */}
       <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white">
         <PageHeader pageNum={4} />
