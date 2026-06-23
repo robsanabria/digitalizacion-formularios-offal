@@ -153,25 +153,16 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     window.print();
   };
 
-  // Genera el PDF en el servidor (Puppeteer) y lo abre. Si el backend no tiene
-  // PRINT_SECRET configurado o falla, cae a la impresión del navegador.
+  // Imprime usando el diálogo del navegador (igual para REG-SIS-011 y REG-SIS-007).
+  // El usuario elige "Guardar como PDF" o imprime directo. El @media print de
+  // index.css se encarga del layout (Legal, oculta el shell, acota imágenes).
   const [pdfLoading, setPdfLoading] = useState(false);
   const generarPdf = async () => {
     setPdfLoading(true);
     try {
-      const resp = await axios.get(`/api/solicitudes/${solicitudId}/pdf?doc=${localFocus}`, { responseType: 'blob', timeout: 75000 });
-      const url = URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${localFocus}-${(solicitudId || '').slice(0, 8)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (err) {
-      console.warn('PDF servidor no disponible, usando impresión del navegador', err);
-      toast.error('No se pudo generar el PDF en el servidor. Se usa la impresión del navegador.');
       await waitForImagesAndPrint();
+    } catch (err) {
+      console.warn('Error al imprimir', err);
     } finally {
       setPdfLoading(false);
     }
