@@ -161,7 +161,12 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     try {
       const resp = await axios.get(`/api/solicitudes/${solicitudId}/pdf?doc=${localFocus}`, { responseType: 'blob', timeout: 75000 });
       const url = URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }));
-      window.open(url, '_blank');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${localFocus}-${(solicitudId || '').slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
       console.warn('PDF servidor no disponible, usando impresión del navegador', err);
