@@ -60,6 +60,19 @@ const downloadFile = async (blobName) => {
     }
 };
 
+// Descarga un blob y lo devuelve como data URI base64 (para embeber en el HTML del PDF).
+const streamToBuffer = async (readable) => {
+    const chunks = [];
+    for await (const chunk of readable) chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    return Buffer.concat(chunks);
+};
+
+const downloadBase64 = async (blobName) => {
+    const { readableStream, contentType } = await downloadFile(blobName);
+    const buf = await streamToBuffer(readableStream);
+    return `data:${contentType || 'image/jpeg'};base64,${buf.toString('base64')}`;
+};
+
 const deleteFile = async (blobName) => {
     try {
         console.log(`[Storage] Iniciando eliminación de blob: ${blobName}`);
@@ -75,6 +88,7 @@ const deleteFile = async (blobName) => {
 module.exports = {
     uploadFile,
     downloadFile,
+    downloadBase64,
     deleteFile
 };
 

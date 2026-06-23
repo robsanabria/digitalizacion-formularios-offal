@@ -602,11 +602,58 @@ const exportPdf = async (req, res) => {
         }
         const page = await browser.newPage();
         await page.emulateMediaType('print');
-        console.log('[PDF] navegando a', url);
-        // 'domcontentloaded' evita que networkidle0 cuelgue en una SPA.
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-        // La página de impresión expone #print-ready cuando los datos e imágenes cargaron.
-        await page.waitForSelector('#print-ready', { timeout: 30000 }).catch(() => console.warn('[PDF] sin #print-ready, genero igual'));
+
+        if (doc === 'REG007') {
+            // Template HTML autocontenido (layout oficial fijo, imágenes en base64).
+            console.log('[PDF] armando REG-SIS-007 desde template');
+            const { buildReg007Html } = require('../services/pdfTemplate');
+            const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'regsis-attachments';
+            const toDataUri = async (ruta) => {
+                try {
+                    const parts = String(ruta).split(`/${containerName}/`);
+                    if (parts.length < 2) return null;
+                    return await storageService.downloadBase64(decodeURIComponent(parts[1]));
+                } catch (e) { console.error('[PDF] no se pudo embeber imagen:', e.message); return null; }
+            };
+
+            const pool = await poolPromise;
+            const solRes = await pool.request().input('id', sql.UniqueIdentifier, id)
+                .query('SELECT s.*, u.NombreUsuario AS SolicitanteNombre FROM Solicitudes s LEFT JOIN Usuarios u ON s.SolicitadoPor = u.UsuarioId WHERE s.SolicitudId = @id');
+            if (!solRes.recordset.length) { return res.status(404).json({ error: 'Solicitud no encontrada' }); }
+            const d = solRes.recordset[0];
+
+            const adjRes = await pool.request().input('id', sql.UniqueIdentifier, id)
+                .query('SELECT * FROM Adjuntos WHERE SolicitudId = @id');
+            const adjuntos = adjRes.recordset;
+
+            const histRes = await pool.request().input('id', sql.UniqueIdentifier, id)
+                .query('SELECT h.*, u.NombreUsuario FROM Historial h LEFT JOIN Usuarios u ON h.UsuarioId = u.UsuarioId WHERE h.SolicitudId = @id ORDER BY h.FechaEvento ASC');
+            const historial = histRes.recordset;
+            const findHist = (estados) => historial.find(h => estados.includes(h.EstadoNuevo));
+            const sisHist = findHist(['REG-011-APROBADO']);
+            const calHist = findHist(['APROBADO']);
+            const firmas = {
+                sistemas: sisHist ? { user: sisHist.NombreUsuario, date: sisHist.FechaEvento } : null,
+                calidad: calHist ? { user: calHist.NombreUsuario, date: calHist.FechaEvento } : null,
+            };
+
+            const isImg = (a) => String(a.TipoContenido || '').startsWith('image/');
+            const origAdj = adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL' && isImg(a));
+            const originalImg = origAdj ? await toDataUri(origAdj.RutaArchivo) : null;
+            const etiquetas = [];
+            for (const a of adjuntos.filter(a => a.TipoAdjunto !== 'ORIGINAL' && isImg(a))) {
+                const src = await toDataUri(a.RutaArchivo);
+                if (src) etiquetas.push({ src, name: a.NombreArchivo });
+            }
+
+            const html = buildReg007Html(d, originalImg, etiquetas, firmas);
+            await page.setContent(html, { waitUntil: 'load', timeout: 45000 });
+        } else {
+            // REG-SIS-011: por ahora se renderiza navegando a la página /print.
+            console.log('[PDF] navegando a', url);
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.waitForSelector('#print-ready', { timeout: 30000 }).catch(() => console.warn('[PDF] sin #print-ready, genero igual'));
+        }
         console.log('[PDF] generando pdf...');
 
         const pdf = await page.pdf({
