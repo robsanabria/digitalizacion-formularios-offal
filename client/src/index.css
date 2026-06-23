@@ -175,10 +175,14 @@ table { border-collapse: collapse; }
     overflow: visible !important;
   }
 
-  /* Evitar que las imágenes (etiquetas/adjuntos) se recorten a lo ancho */
+  /* Evitar que las imágenes (etiquetas/adjuntos) se recorten a lo ancho.
+     CRÍTICO: limitar el ALTO. Sin max-height, las imágenes a resolución completa
+     se renderizan a su tamaño natural y desbordan en decenas de páginas (REG-007). */
   #paper-form-container img {
     max-width: 100% !important;
+    max-height: 300px !important;
     height: auto !important;
+    object-fit: contain !important;
   }
 
   /* Colapsar las áreas reservadas para imágenes (Formato original/propuesto,
