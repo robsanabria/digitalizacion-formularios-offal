@@ -85,6 +85,16 @@ export default function PrintView() {
 
   return (
     <div className="bg-white" id="paper-form-container">
+      {/* Estilos propios de la página de impresión (independientes del @media print
+          del modal): acotan ancho e imágenes para que el PDF no explote en páginas. */}
+      <style>{`
+        #paper-form-container { width: 760px; margin: 0 auto; padding: 0; background: #fff; }
+        #paper-form-container .min-w-\\[800px\\] { min-width: 0 !important; width: 100% !important; }
+        #paper-form-container [class*="min-h-"] { min-height: 0 !important; }
+        #paper-form-container img { max-width: 100% !important; max-height: 230px !important; width: auto !important; height: auto !important; object-fit: contain; }
+        #paper-form-container .no-print { display: none !important; }
+        #paper-form-container details, #paper-form-container section { display: none !important; }
+      `}</style>
       <FormCmp
         solicitudId={id}
         data={data}
