@@ -40,11 +40,13 @@ const baseCss = `
   .area { min-height: 360px; display: flex; }
   .area .side { width: 22px; border-right: 2px solid #000; writing-mode: vertical-rl; transform: rotate(180deg); text-align:center; font-size:8px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; color:#555; padding:6px 0; }
   .area .body { flex: 1; padding: 10px; display: flex; align-items: center; justify-content: center; }
-  .area img { max-width: 100%; max-height: 340px; object-fit: contain; border: 1px solid #999; }
+  .area .imgbox { width: 100%; height: 320px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .area .imgbox img { max-width: 100%; max-height: 320px; object-fit: contain; border: 1px solid #999; }
   .empty { color: #ccc; font-size: 12px; font-weight: bold; text-transform: uppercase; border: 2px dashed #ccc; padding: 30px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 12px; min-height: 560px; }
-  .gcell { border: 1px solid #000; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-  .gcell img { max-width: 100%; max-height: 150px; object-fit: contain; }
+  .gcell { border: 1px solid #000; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; height: 175px; overflow: hidden; }
+  .gcell .imgbox { width: 100%; height: 140px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .gcell .imgbox img { max-width: 100%; max-height: 140px; object-fit: contain; }
   .gcell .num { position: absolute; top: 2px; right: 4px; background:#000; color:#fff; font-size:8px; font-weight:bold; padding:1px 4px; }
   .gcell .name { font-size: 7px; margin-top: 4px; text-transform: uppercase; text-align:center; word-break: break-all; }
   .secTitle { text-align:center; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; padding:8px; border-bottom:1px solid #000; }
@@ -80,7 +82,7 @@ function buildReg007Html(d, originalImg, etiquetas, firmas) {
   for (let i = 0; i < Math.max(9, etiquetas.length); i++) {
     const e = etiquetas[i];
     gridCells.push(e
-      ? `<div class="gcell"><span class="num">#${i + 1}</span><img src="${e.src}"/><span class="name">${esc(e.name)}</span></div>`
+      ? `<div class="gcell"><span class="num">#${i + 1}</span><div class="imgbox"><img src="${e.src}"/></div><span class="name">${esc(e.name)}</span></div>`
       : `<div class="gcell"></div>`);
   }
 
@@ -104,7 +106,7 @@ function buildReg007Html(d, originalImg, etiquetas, firmas) {
       <div class="row"><div class="cell" style="width:34%"><span class="label">Destino:</span><span class="val">${esc(d.Destino)}</span></div><div class="cell" style="width:33%"><span class="label">Código TWINS:</span>${esc(d.CodigoTwins || d.CodigoProducto)}</div><div class="cell" style="width:33%;border-right:none"><span class="label">Código SENASA:</span>${esc(d.CodigoSenasa)}</div></div>
       <div class="row"><div class="cell" style="width:100%;border-right:none"><span class="label">Impresoras afectadas:</span><span class="val">${esc(impresoras.join(' / '))}</span></div></div>
       <div class="row"><div class="cell" style="width:100%;border-right:none"><span class="label">Tipo de etiqueta a modificar:</span><span class="val">${esc(tipos.join(' / '))}</span></div></div>
-      <div class="area"><div class="side">Formato original</div><div class="body">${originalImg ? `<img src="${originalImg}"/>` : '<div class="empty">Sin archivo de referencia original</div>'}</div></div>
+      <div class="area"><div class="side">Formato original</div><div class="body">${originalImg ? `<div class="imgbox"><img src="${originalImg}"/></div>` : '<div class="empty">Sin archivo de referencia original</div>'}</div></div>
     </div>
 
     <div class="page">
