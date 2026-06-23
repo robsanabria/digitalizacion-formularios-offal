@@ -592,6 +592,7 @@ const exportPdf = async (req, res) => {
                 headless: chromium.headless
             });
         } catch (eSparticuz) {
+            console.error('[PDF] @sparticuz/chromium falló, intentando puppeteer:', eSparticuz.message);
             // Fallback local (dev): puppeteer completo si está instalado.
             const puppeteer = require('puppeteer');
             browser = await puppeteer.launch({
