@@ -613,8 +613,10 @@ const exportPdf = async (req, res) => {
             format: 'Legal',
             printBackground: true,
             preferCSSPageSize: false,
+            timeout: 45000,
             margin: { top: '6mm', bottom: '6mm', left: '6mm', right: '6mm' }
         });
+        console.log('[PDF] pdf generado, bytes:', pdf.length);
 
         res.set({
             'Content-Type': 'application/pdf',
