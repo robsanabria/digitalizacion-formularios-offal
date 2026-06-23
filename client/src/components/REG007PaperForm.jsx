@@ -107,8 +107,8 @@ const REG007PaperForm = ({
   );
 
   return (
-    <div className="flex flex-col gap-12 max-w-4xl mx-auto">
-      
+    <div className="flex flex-col gap-12 max-w-4xl mx-auto print:block print:gap-0">
+
       {/* 📄 PÁGINA 1 de 4: DATOS DEL REGISTRO Y FORMATO ORIGINAL */}
       <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white print:break-after-page">
         <PageHeader pageNum={1} />
