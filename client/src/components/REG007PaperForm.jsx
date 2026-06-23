@@ -290,6 +290,10 @@ const REG007PaperForm = ({
       <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white">
         <PageHeader pageNum={4} />
 
+        {/* Espaciador solo-impresión: empuja Cambio Solicitado + firmas al pie de la
+            hoja (margen inferior), como en el formulario oficial. */}
+        <div className="hidden print:block print:flex-1" aria-hidden="true" />
+
         {/* (Se quitó el "Formato Propuesto": las etiquetas se cargan en la grilla
             "Etiquetas Técnicas Resultantes" de la página anterior.) */}
 
