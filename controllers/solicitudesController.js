@@ -584,7 +584,7 @@ const exportPdf = async (req, res) => {
         // Producción (Azure App Service Linux): Chromium empaquetado por
         // @sparticuz/chromium, sin necesidad de instalar librerías por apt.
         try {
-            const chromium = require('@sparticuz/chromium');
+            const chromium = require('@sparticuz/chromium').default || require('@sparticuz/chromium');
             const pcore = require('puppeteer-core');
             browser = await pcore.launch({
                 args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
