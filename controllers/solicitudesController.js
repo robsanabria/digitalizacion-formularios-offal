@@ -601,9 +601,13 @@ const exportPdf = async (req, res) => {
             });
         }
         const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+        await page.emulateMediaType('print');
+        console.log('[PDF] navegando a', url);
+        // 'domcontentloaded' evita que networkidle0 cuelgue en una SPA.
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
         // La página de impresión expone #print-ready cuando los datos e imágenes cargaron.
-        await page.waitForSelector('#print-ready', { timeout: 60000 }).catch(() => {});
+        await page.waitForSelector('#print-ready', { timeout: 30000 }).catch(() => console.warn('[PDF] sin #print-ready, genero igual'));
+        console.log('[PDF] generando pdf...');
 
         const pdf = await page.pdf({
             format: 'Legal',
