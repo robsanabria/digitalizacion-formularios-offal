@@ -202,11 +202,23 @@ table { border-collapse: collapse; }
   /* Colapsar las áreas reservadas para imágenes (Formato original/propuesto,
      grilla de etiquetas) cuando están vacías, para que el PDF no salga con
      grandes espacios en blanco. Si hay imagen, el alto se ajusta a ella. */
+  /* Cada hoja del formulario ocupa una página Legal COMPLETA (alto fijo), para que
+     el formulario no se "recorte" cuando hay poca info: el recuadro llega hasta el
+     final de la hoja como en el formulario oficial. */
+  #paper-form-container .border-\[3px\] {
+    min-height: 13in !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* El área principal de cada hoja (formato original / grilla / continuación) crece
+     para llenar el espacio restante de la página. */
   #paper-form-container .min-h-\[460px\],
   #paper-form-container .min-h-\[600px\],
   #paper-form-container .min-h-\[380px\],
   #paper-form-container .min-h-\[350px\] {
-    min-height: 120px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
   }
 
   /* Mantener cada "hoja" del formulario íntegra en una página cuando sea posible */
