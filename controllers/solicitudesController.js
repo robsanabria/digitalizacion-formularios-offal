@@ -621,9 +621,9 @@ const exportPdf = async (req, res) => {
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Disposition': `inline; filename="${doc}-${String(id).slice(0, 8)}.pdf"`,
-            'Content-Length': pdf.length
+            'Content-Length': Buffer.byteLength(pdf)
         });
-        res.send(pdf);
+        res.send(Buffer.from(pdf));
     } catch (err) {
         console.error('[PDF] Error generando PDF:', err.message);
         res.status(500).json({ error: 'No se pudo generar el PDF', detalle: err.message });
