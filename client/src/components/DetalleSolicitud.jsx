@@ -160,7 +160,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     setPdfLoading(true);
     try {
       const resp = await axios.get(`/api/solicitudes/${solicitudId}/pdf?doc=${localFocus}`, { responseType: 'blob', timeout: 75000 });
-      const url = URL.createObjectURL(resp.data);
+      const url = URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }));
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
