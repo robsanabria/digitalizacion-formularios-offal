@@ -117,7 +117,7 @@ const REG007PaperForm = ({
         <div className="flex border-b-[2px] border-black text-[9px] font-bold">
           <div className="w-1/2 p-2 border-r-[2px] border-black flex gap-2 items-center">
             <span>Fecha de presentación:</span>
-            <span>{data.fechaPresentacion ? new Date(data.fechaPresentacion).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+            <span>{data.fechaPresentacion ? new Date(String(data.fechaPresentacion).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-AR') : new Date().toLocaleDateString('es-AR')}</span>
           </div>
           <div className="w-1/2 p-2 flex gap-2 items-center">
             <span>Solicitado por:</span>

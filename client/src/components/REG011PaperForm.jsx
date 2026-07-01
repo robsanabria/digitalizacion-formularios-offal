@@ -109,7 +109,7 @@ const REG011PaperForm = ({
           <span>Fecha de Solicitud:</span>
           {/* La fecha NO es editable: la toma del sistema (no se habilita el calendario). */}
           <span className="flex-1 border-b border-black/20 px-2">
-            {data.fechaSolicitud ? new Date(data.fechaSolicitud).toLocaleDateString() : new Date().toLocaleDateString()}
+            {data.fechaSolicitud ? new Date(String(data.fechaSolicitud).slice(0, 10) + 'T00:00:00').toLocaleDateString('es-AR') : new Date().toLocaleDateString('es-AR')}
           </span>
         </div>
         <div className="w-1/2 p-2 flex gap-2 items-center">
