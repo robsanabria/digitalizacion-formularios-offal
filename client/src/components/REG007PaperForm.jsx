@@ -57,14 +57,20 @@ const REG007PaperForm = ({
         };
       }
 
-      // 2. Firma Calidad: buscar el evento donde aprobó Calidad
-      const evCalidad = historial.find(h => 
-        h.Accion?.includes('Aprobado por Calidad') || h.Accion?.includes('Finalizado') || h.EstadoNuevo === 'APROBADO'
+      // 2. Firma Calidad: última decisión de Calidad sobre el REG-SIS-007
+      //    (aprobado / aprobado parcialmente / rechazado). Se recorre al revés para
+      //    tomar la más reciente y se guarda la decisión + el motivo.
+      const evCalidad = [...historial].reverse().find(h =>
+        ['APROBADO', 'REG-007-PARCIAL', 'RECHAZADO'].includes(h.EstadoNuevo)
       );
       if (evCalidad) {
         calidadFirma = {
           user: evCalidad.NombreUsuario,
-          date: evCalidad.FechaEvento
+          date: evCalidad.FechaEvento,
+          decision: evCalidad.EstadoNuevo === 'APROBADO' ? 'aprobado'
+            : evCalidad.EstadoNuevo === 'REG-007-PARCIAL' ? 'parcial'
+            : 'desaprobado',
+          motivo: evCalidad.Comentario || ''
         };
       }
     }
@@ -343,9 +349,9 @@ const REG007PaperForm = ({
             <div className="border-t border-black/35 pt-1.5">
               <div className="text-gray-500">Fecha: {calidadFirma ? new Date(calidadFirma.date).toLocaleDateString() : '____/____/______'}</div>
               <div className="flex gap-3 mt-1.5">
-                <Checkbox label="Aprobado" checked={!!calidadFirma} />
-                <Checkbox label="Parcialmente" checked={false} />
-                <Checkbox label="Desaprobado" checked={false} />
+                <Checkbox label="Aprobado" checked={calidadFirma?.decision === 'aprobado'} />
+                <Checkbox label="Parcialmente" checked={calidadFirma?.decision === 'parcial'} />
+                <Checkbox label="Desaprobado" checked={calidadFirma?.decision === 'desaprobado'} />
               </div>
             </div>
           </div>
@@ -366,13 +372,23 @@ const REG007PaperForm = ({
             <div className="border-t border-black/35 pt-1.5">
               <div className="text-gray-500">Fecha: {calidadFirma ? new Date(calidadFirma.date).toLocaleDateString() : '____/____/______'}</div>
               <div className="flex gap-3 mt-1.5">
-                <Checkbox label="Aprobado" checked={!!calidadFirma} />
-                <Checkbox label="Parcialmente" checked={false} />
-                <Checkbox label="Desaprobado" checked={false} />
+                <Checkbox label="Aprobado" checked={calidadFirma?.decision === 'aprobado'} />
+                <Checkbox label="Parcialmente" checked={calidadFirma?.decision === 'parcial'} />
+                <Checkbox label="Desaprobado" checked={calidadFirma?.decision === 'desaprobado'} />
               </div>
             </div>
           </div>
         </div>
+
+        {/* Motivo de Calidad cuando la decisión fue parcial o rechazo */}
+        {calidadFirma && (calidadFirma.decision === 'parcial' || calidadFirma.decision === 'desaprobado') && calidadFirma.motivo && (
+          <div className="border-t-[2px] border-black p-2 bg-gray-50">
+            <span className="text-[8px] font-black uppercase tracking-wider text-gray-700">
+              {calidadFirma.decision === 'parcial' ? 'Motivo de la aprobación parcial (Calidad):' : 'Motivo del rechazo (Calidad):'}
+            </span>
+            <p className="text-[9px] text-gray-800 italic mt-0.5 whitespace-pre-wrap">{calidadFirma.motivo}</p>
+          </div>
+        )}
 
         {/* Footer info (Corresponde a Solicitud) */}
         <div className="border-t border-black bg-gray-50 p-2.5 flex justify-between items-center text-[7.5px] font-bold">
