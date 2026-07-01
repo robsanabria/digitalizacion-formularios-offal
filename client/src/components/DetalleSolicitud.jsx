@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Printer, Loader2, Check, History, Send, RotateCcw, ThumbsUp, ThumbsDown, FileText, FileCheck, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
+import { hoyLocal } from '../lib/fecha';
 import { AnimatePresence, motion } from 'framer-motion';
 import REG011PaperForm from './REG011PaperForm';
 import REG007PaperForm from './REG007PaperForm';
@@ -31,7 +32,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   // Estado para la respuesta de Sistemas (REG-SIS-007)
   const [isResponding, setIsResponding] = useState(false);
   const [responseData, setResponseData] = useState({
-    fechaPresentacion: new Date().toISOString().split('T')[0],
+    fechaPresentacion: hoyLocal(),
     codigoTwins: '',
     correspondeSolicitud: ''
   });
@@ -116,7 +117,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
       });
 
       setResponseData({
-        fechaPresentacion: normalized.fechaPresentacion ? new Date(normalized.fechaPresentacion).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        fechaPresentacion: normalized.fechaPresentacion ? new Date(normalized.fechaPresentacion).toISOString().split('T')[0] : hoyLocal(),
         codigoTwins: normalized.codigoTwins || normalized.codigoProducto || '',
         correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0, 8) || ''
       });

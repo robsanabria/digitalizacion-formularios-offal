@@ -3,13 +3,14 @@ import { X, Upload, Save, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import REG011PaperForm from './REG011PaperForm';
 import { useToast } from './Toast';
+import { hoyLocal } from '../lib/fecha';
 
 const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
-    fechaSolicitud: new Date().toISOString().split('T')[0],
+    fechaSolicitud: hoyLocal(),
     sectorSolicitante: '',
     motivo: [],
     nombreProducto: '',
