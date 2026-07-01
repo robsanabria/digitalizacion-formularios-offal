@@ -328,6 +328,22 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   const esReg07Parcial = estado === 'REG-007-PARCIAL'; // aprobado parcial: vuelve a Sistemas a corregir
   const esFinalizado = estado === 'APROBADO' || estado === 'RECHAZADO';
 
+  // Último motivo (observación del 011 / rechazo o aprobación parcial del 007) para
+  // mostrarlo en un aviso visible cuando el registro vuelve con una devolución.
+  const ultimoMotivo = (() => {
+    if (!Array.isArray(historial)) return null;
+    const conMotivo = ['REG-011-OBSERVADO', 'REG-007-PARCIAL', 'RECHAZADO'];
+    for (let i = historial.length - 1; i >= 0; i--) {
+      const h = historial[i];
+      if (conMotivo.includes(h.EstadoNuevo) && h.Comentario && String(h.Comentario).trim()) return h;
+    }
+    return null;
+  })();
+  const mostrarMotivo = ultimoMotivo && (esReg11Observado || esReg07Parcial || estado === 'RECHAZADO');
+  const motivoTitulo = estado === 'RECHAZADO' ? 'Motivo del rechazo'
+    : esReg07Parcial ? 'Motivo de la aprobación parcial'
+    : 'Motivo de la observación';
+
   // ¿Ya existe un REG-SIS-007 generado por Sistemas?
   const tieneReg07 = esReg07Pendiente || esReg07Parcial || esFinalizado;
   // Sistemas puede completar (o corregir) el REG-SIS-007.
@@ -528,6 +544,17 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               {/* ── Cabecera de la ventana: documento actual + selector + circuito ── */}
               {!isResponding && !isEditing011 && (
                 <div className="no-print flex flex-col gap-5">
+                  {/* Aviso con el motivo de la devolución (observación / parcial / rechazo) */}
+                  {mostrarMotivo && (
+                    <div className={`rounded-xl px-5 py-3 border flex gap-3 items-start ${estado === 'RECHAZADO' ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200'}`}>
+                      <AlertTriangle className={`shrink-0 mt-0.5 ${estado === 'RECHAZADO' ? 'text-rose-600' : 'text-amber-600'}`} size={20} />
+                      <div className="min-w-0">
+                        <p className={`text-[11px] font-black uppercase tracking-wider ${estado === 'RECHAZADO' ? 'text-rose-700' : 'text-amber-700'}`}>{motivoTitulo}</p>
+                        <p className="text-sm text-gray-800 font-medium mt-0.5 whitespace-pre-wrap break-words">{ultimoMotivo.Comentario}</p>
+                        <p className="text-[10px] text-gray-500 mt-1">{ultimoMotivo.NombreUsuario} · {new Date(ultimoMotivo.FechaEvento).toLocaleString('es-AR')}</p>
+                      </div>
+                    </div>
+                  )}
                   {/* Cinta identificatoria del documento (color distinto por tipo) */}
                   <div className={`rounded-xl px-5 py-3 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     localFocus === 'REG007'
