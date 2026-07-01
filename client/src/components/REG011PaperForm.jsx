@@ -13,17 +13,17 @@ const REG011PaperForm = ({
   onUploadAdjunto,
   onDeleteAdjunto,
   uploadLoading = false,
-  localFile = null,          // archivo seleccionado en modo creación (aún no subido)
-  onLocalFileChange = null,  // setter del archivo local (creación)
+  localFiles = null,          // archivos seleccionados en modo creación (array, aún no subidos)
+  onLocalFilesChange = null,  // setter de los archivos locales (creación)
   printToken = ''            // token para que Puppeteer cargue las imágenes en el PDF
 }) => {
   const imgSrc = (adjId) => `/api/solicitudes/${solicitudId}/adjuntos/${adjId}/descargar${printToken ? `?k=${encodeURIComponent(printToken)}` : ''}`;
-  // Vista previa del archivo local (creación) sin subirlo todavía.
-  const localPreview = useMemo(
-    () => (localFile && localFile.type?.startsWith('image/') ? URL.createObjectURL(localFile) : null),
-    [localFile]
+  // Vistas previas de los archivos locales (creación) sin subirlos todavía.
+  const localPreviews = useMemo(
+    () => (Array.isArray(localFiles) ? localFiles.map(f => (f.type?.startsWith('image/') ? URL.createObjectURL(f) : null)) : []),
+    [localFiles]
   );
-  useEffect(() => () => { if (localPreview) URL.revokeObjectURL(localPreview); }, [localPreview]);
+  useEffect(() => () => { localPreviews.forEach(u => u && URL.revokeObjectURL(u)); }, [localPreviews]);
   // Firma del solicitante: usuario que creó el REG-SIS-011.
   const solicitanteNombre = data.solicitanteNombre || '';
   const solicitanteRol = data.rolSolicitante || '';
@@ -74,12 +74,10 @@ const REG011PaperForm = ({
     </div>
   );
   // Calidad's uploaded reference
-  let calidadAdjunto = adjuntos && adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL');
-  if (!calidadAdjunto && adjuntos && adjuntos.length > 0) {
-    calidadAdjunto = adjuntos[0];
-  }
+  // Formato propuesto: puede tener VARIAS imágenes (todas las de tipo ORIGINAL de Calidad).
+  const originales = (adjuntos || []).filter(a => a.TipoAdjunto === 'ORIGINAL');
 
-  // Calidad puede gestionar el adjunto "Formato Original" mientras el circuito no esté finalizado.
+  // Calidad puede gestionar el "Formato Propuesto" mientras el circuito no esté finalizado.
   const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
                           !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
 
@@ -263,82 +261,82 @@ const REG011PaperForm = ({
         />
       </div>
 
-      {/* Formato Original Area */}
+      {/* Formato Propuesto Area (admite varias imágenes) */}
       <div className="relative min-h-[350px] flex">
         <div className="w-8 border-r-[2px] border-black flex items-center justify-center bg-gray-50/50 select-none">
-          <span className="rotate-[-90deg] text-[9px] font-black uppercase tracking-widest whitespace-nowrap text-gray-500">Formato original</span>
+          <span className="rotate-[-90deg] text-[9px] font-black uppercase tracking-widest whitespace-nowrap text-gray-500">Formato propuesto</span>
         </div>
-        <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
-          {calidadAdjunto ? (
-            <div className="flex flex-col items-center max-w-full relative group">
+        <div className="flex-1 p-6 flex flex-wrap items-center justify-center gap-4 bg-white">
+          {/* Imágenes ya subidas (registro existente) */}
+          {originales.map(adj => (
+            <div key={adj.AdjuntoId} className="flex flex-col items-center relative group">
               {canEditOriginal && onDeleteAdjunto && (
                 <button
                   type="button"
-                  onClick={() => onDeleteAdjunto(calidadAdjunto.AdjuntoId)}
+                  onClick={() => onDeleteAdjunto(adj.AdjuntoId)}
                   className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
-                  title="Eliminar adjunto original"
+                  title="Eliminar imagen"
                 >
                   <Trash2 size={14} />
                 </button>
               )}
-              {calidadAdjunto.TipoContenido?.startsWith('image/') ? (
-                <img 
-                  src={imgSrc(calidadAdjunto.AdjuntoId)}
-                  className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
-                  alt="Referencia Original"
+              {adj.TipoContenido?.startsWith('image/') ? (
+                <img
+                  src={imgSrc(adj.AdjuntoId)}
+                  className="max-h-[260px] max-w-[280px] object-contain border border-gray-300 shadow-md p-1 bg-white"
+                  alt="Formato propuesto"
                   loading="eager"
                 />
               ) : (
                 <div className="flex flex-col items-center p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
-                  <span className="font-bold text-xs uppercase truncate max-w-full">{calidadAdjunto.NombreArchivo}</span>
-                  <span className="text-[9px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">Archivo de Referencia Calidad</span>
+                  <span className="font-bold text-xs uppercase truncate max-w-full">{adj.NombreArchivo}</span>
                 </div>
               )}
+              <span className="text-[8px] text-gray-500 mt-1 italic truncate max-w-[200px]">{adj.NombreArchivo}</span>
             </div>
-          ) : localFile ? (
-            /* Creación: vista previa del archivo local seleccionado (aún no subido) */
-            <div className="flex flex-col items-center max-w-full relative group">
-              {onLocalFileChange && (
+          ))}
+
+          {/* Archivos locales seleccionados en creación (aún no subidos) */}
+          {Array.isArray(localFiles) && localFiles.map((f, i) => (
+            <div key={`local-${i}`} className="flex flex-col items-center relative group">
+              {onLocalFilesChange && (
                 <button
                   type="button"
-                  onClick={() => onLocalFileChange(null)}
+                  onClick={() => onLocalFilesChange(localFiles.filter((_, j) => j !== i))}
                   className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
                   title="Quitar archivo"
                 >
                   <Trash2 size={14} />
                 </button>
               )}
-              {localPreview ? (
-                <img src={localPreview} className="max-h-[290px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white" alt="Vista previa" />
+              {localPreviews[i] ? (
+                <img src={localPreviews[i]} className="max-h-[260px] max-w-[280px] object-contain border border-gray-300 shadow-md p-1 bg-white" alt="Vista previa" />
               ) : (
                 <div className="flex flex-col items-center p-6 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
-                  <span className="font-bold text-xs uppercase truncate max-w-full">{localFile.name}</span>
-                  <span className="text-[9px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">Archivo seleccionado</span>
+                  <span className="font-bold text-xs uppercase truncate max-w-full">{f.name}</span>
                 </div>
               )}
-              <span className="text-[9px] text-green-600 mt-1.5 font-black italic truncate max-w-full">{localFile.name}</span>
+              <span className="text-[8px] text-green-600 mt-1 font-black italic truncate max-w-[200px]">{f.name}</span>
             </div>
-          ) : onLocalFileChange ? (
-            /* Creación: caja "+" para elegir el archivo local (misma experiencia que REG-SIS-007) */
-            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
-              <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onLocalFileChange(e.target.files[0] || null)} />
-              <div className="bg-blue-100 p-3 rounded-full mb-2">
-                <Plus className="text-blue-600 animate-pulse" size={24} />
-              </div>
-              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+          ))}
+
+          {/* Caja "+" para agregar imágenes (creación: varias a la vez / existente: una por vez) */}
+          {onLocalFilesChange ? (
+            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer w-[150px] h-[150px] active:scale-95 shadow-inner">
+              <input type="file" accept="image/jpeg,image/png,application/pdf" multiple className="hidden" onChange={e => { onLocalFilesChange([...(localFiles || []), ...Array.from(e.target.files)]); e.target.value = ''; }} />
+              <div className="bg-blue-100 p-3 rounded-full mb-2"><Plus className="text-blue-600 animate-pulse" size={24} /></div>
+              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Propuesto</span>
             </label>
           ) : canEditOriginal && onUploadAdjunto ? (
-            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+            <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer w-[150px] h-[150px] active:scale-95 shadow-inner">
               <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
-              <div className="bg-blue-100 p-3 rounded-full mb-2">
-                <Plus className="text-blue-600 animate-pulse" size={24} />
-              </div>
-              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Cargar Formato Original</span>
+              <div className="bg-blue-100 p-3 rounded-full mb-2"><Plus className="text-blue-600 animate-pulse" size={24} /></div>
+              <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Agregar Formato Propuesto</span>
               {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
             </label>
-          ) : (
-            <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
-          )}
+          ) : (originales.length === 0 && (
+            <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin formato propuesto</div>
+          ))}
         </div>
       </div>
 
