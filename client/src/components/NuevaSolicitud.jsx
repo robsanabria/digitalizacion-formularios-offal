@@ -3,13 +3,14 @@ import { X, Upload, Save, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import REG011PaperForm from './REG011PaperForm';
 import { useToast } from './Toast';
+import { hoyLocal } from '../lib/fecha';
 
 const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
-    fechaSolicitud: new Date().toISOString().split('T')[0],
+    fechaSolicitud: hoyLocal(),
     sectorSolicitante: '',
     motivo: [],
     nombreProducto: '',
@@ -30,7 +31,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     cambioSolicitado: ''
   });
 
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
 
   if (!isOpen) return null;
 
@@ -97,11 +98,13 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
       const res = await axios.post('/api/solicitudes', { ...formData });
       const solicitudId = res.data.solicitudId;
 
-      // 2. Si hay archivo inicial (opcional), subirlo
-      if (file && solicitudId) {
-        const formDataFile = new FormData();
-        formDataFile.append('archivo', file);
-        await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=ORIGINAL`, formDataFile);
+      // 2. Si hay imágenes de formato propuesto (opcionales), subirlas todas.
+      if (files.length && solicitudId) {
+        for (const f of files) {
+          const formDataFile = new FormData();
+          formDataFile.append('archivo', f);
+          await axios.post(`/api/solicitudes/${solicitudId}/adjuntos?tipo=ORIGINAL`, formDataFile);
+        }
       }
 
       toast.success("Registro REG-SIS-011 creado. Pendiente de aprobación por Sistemas.");
@@ -153,8 +156,8 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             <REG011PaperForm
               data={formData}
               onChange={handleFieldChange}
-              localFile={file}
-              onLocalFileChange={setFile}
+              localFiles={files}
+              onLocalFilesChange={setFiles}
             />
           </div>
         </div>
