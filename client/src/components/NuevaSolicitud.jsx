@@ -10,7 +10,7 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState({
     fechaSolicitud: new Date().toISOString().split('T')[0],
-    sectorSolicitante: 'Calidad',
+    sectorSolicitante: '',
     motivo: [],
     nombreProducto: '',
     codigoProducto: '',

@@ -12,6 +12,7 @@ const ESTADOS_APROBACION = {
   'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' },
   'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/20' }, // legacy
   'REG-007-PENDIENTE-APROBACION': { label: 'REG-SIS-007: Pendiente Calidad', color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+  'REG-007-PARCIAL': { label: 'REG-SIS-007: Aprobado Parcialmente (a corregir por Sistemas)', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
   'APROBADO': { label: '✅ Finalizado / Aprobado', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
   'RECHAZADO': { label: '❌ Rechazado', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
 };
@@ -323,10 +324,13 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   const esReg11Observado = estado === 'REG-011-OBSERVADO';
   const esReg11Aprobado = estado === 'REG-011-APROBADO' || estado === 'REG-011-PENDIENTE'; // listo para REG-SIS-007 (incl. legacy)
   const esReg07Pendiente = estado === 'REG-007-PENDIENTE-APROBACION';
+  const esReg07Parcial = estado === 'REG-007-PARCIAL'; // aprobado parcial: vuelve a Sistemas a corregir
   const esFinalizado = estado === 'APROBADO' || estado === 'RECHAZADO';
 
   // ¿Ya existe un REG-SIS-007 generado por Sistemas?
-  const tieneReg07 = esReg07Pendiente || esFinalizado;
+  const tieneReg07 = esReg07Pendiente || esReg07Parcial || esFinalizado;
+  // Sistemas puede completar (o corregir) el REG-SIS-007.
+  const puedeCompletarReg07 = esReg11Aprobado || esReg07Parcial;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md">
@@ -378,13 +382,13 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               </>
             )}
 
-            {/* ── Sistemas: completar REG-SIS-007 (sólo si el REG-SIS-011 ya fue aprobado) ── */}
-            {esSistemas && esReg11Aprobado && !isResponding && (
+            {/* ── Sistemas: completar/corregir REG-SIS-007 ── */}
+            {esSistemas && puedeCompletarReg07 && !isResponding && (
               <button
                 onClick={() => setIsResponding(true)}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-blue-700 transition-all flex items-center gap-2"
               >
-                Completar REG-SIS-007
+                {esReg07Parcial ? 'Corregir REG-SIS-007' : 'Completar REG-SIS-007'}
               </button>
             )}
 
@@ -451,15 +455,33 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               <>
                 <button
                   disabled={statusLoading}
-                  onClick={() => setConfirmConfig({
-                    title: "Rechazar Solicitud",
-                    message: "¿Está seguro de que desea rechazar esta solicitud de etiqueta? Se registrará la acción y se cancelará el circuito actual.",
+                  onClick={() => { setConfirmComment(''); setConfirmConfig({
+                    title: "Rechazar REG-SIS-007",
+                    message: "Indicá el motivo del rechazo. Se registrará la acción y se cancelará el circuito actual.",
                     btnClass: "btn-error text-white",
-                    onConfirm: () => handleStatusUpdate('reject', 'Solicitud rechazada')
-                  })}
+                    withComment: true,
+                    commentLabel: "Motivo del rechazo",
+                    commentRequired: true,
+                    onConfirm: (comentario) => handleStatusUpdate('reject', 'Solicitud rechazada', comentario)
+                  }); }}
                   className="bg-red-100 text-red-600 px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-red-200 transition-all flex items-center gap-2 border border-red-200"
                 >
                   Rechazar
+                </button>
+                <button
+                  disabled={statusLoading}
+                  onClick={() => { setConfirmComment(''); setConfirmConfig({
+                    title: "Aprobar Parcialmente el REG-SIS-007",
+                    message: "Indicá el motivo. El registro quedará como 'Aprobado Parcialmente' y volverá a Sistemas para corregir lo observado.",
+                    btnClass: "btn-warning",
+                    withComment: true,
+                    commentLabel: "Motivo de la aprobación parcial",
+                    commentRequired: true,
+                    onConfirm: (comentario) => handleStatusUpdate('aprobar_parcial', 'REG-SIS-007 aprobado parcialmente (devuelto a Sistemas)', comentario)
+                  }); }}
+                  className="bg-amber-100 text-amber-700 px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-amber-200 transition-all flex items-center gap-2 border border-amber-200"
+                >
+                  <ThumbsDown size={14} /> Aprobar Parcialmente
                 </button>
                 <button
                   disabled={statusLoading}
@@ -832,6 +854,7 @@ const stepStatuses = (estado) => {
     case 'REG-011-APROBADO':
     case 'REG-011-PENDIENTE':            st = ['done', 'done', 'active', 'todo']; break;
     case 'REG-007-PENDIENTE-APROBACION': st = ['done', 'done', 'done', 'active']; break;
+    case 'REG-007-PARCIAL':              st = ['done', 'done', 'warn', 'todo']; break;
     case 'APROBADO':                     st = ['done', 'done', 'done', 'done']; break;
     case 'RECHAZADO':                    st = ['done', 'done', 'done', 'error']; break;
     default:                             st = ['active', 'todo', 'todo', 'todo'];

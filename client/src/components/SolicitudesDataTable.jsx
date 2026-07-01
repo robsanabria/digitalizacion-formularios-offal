@@ -31,6 +31,7 @@ const ESTADO_META = {
   'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-400' },
   'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30', dot: 'bg-cyan-400' },
   'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/15 text-blue-400 border-blue-500/30', dot: 'bg-blue-400' },
+  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-500/15 text-amber-400 border-amber-500/30', dot: 'bg-amber-400' },
   'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/15 text-green-400 border-green-500/30', dot: 'bg-green-400' },
   'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/15 text-red-400 border-red-500/30', dot: 'bg-red-400' },
 };

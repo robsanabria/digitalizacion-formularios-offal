@@ -54,16 +54,11 @@ const REG011PaperForm = ({
   const toggleOption = (field, option) => {
     if (readOnly) return;
     const current = parseArray(data[field]);
-    let updated;
-    if (field === 'motivo') {
-      // Motivo del cambio: selección ÚNICA (no se pueden marcar varios/todos).
-      updated = current.includes(option) ? [] : [option];
-    } else {
-      // Impresoras: selección múltiple.
-      updated = current.includes(option)
-        ? current.filter(o => o !== option)
-        : [...current, option];
-    }
+    // Todos los campos (motivo, impresoras, tipo de etiqueta) son de selección MÚLTIPLE.
+    // El motivo permite marcar varios en simultáneo (ej: SENASA + Modificación de existente).
+    const updated = current.includes(option)
+      ? current.filter(o => o !== option)
+      : [...current, option];
     onChange(field, JSON.stringify(updated));
   };
 
@@ -102,8 +97,8 @@ const REG011PaperForm = ({
         </div>
         <div className="w-1/4 flex flex-col text-[10px]">
           <div className="p-1 border-b-[2px] border-black text-center font-bold">REG-SIS-011</div>
-          <div className="p-1 border-b-[2px] border-black text-center">Emisión: 20-02-2025</div>
-          <div className="p-1 border-b-[2px] border-black text-center">Revisión 10-25</div>
+          <div className="p-1 border-b-[2px] border-black text-center">Emisión: 01/07/2026</div>
+          <div className="p-1 border-b-[2px] border-black text-center">Revisión 1</div>
           <div className="p-1 text-center">Página 1 de 1</div>
         </div>
       </div>

@@ -137,7 +137,9 @@ const createSolicitud = async (req, res) => {
 
 // Estados en los que Sistemas tiene habilitado completar el REG-SIS-007.
 // Incluye el legacy 'REG-011-PENDIENTE' por retrocompatibilidad con registros previos.
-const ESTADOS_REG011_APROBADO = ['REG-011-APROBADO', 'REG-011-PENDIENTE'];
+// Se incluye 'REG-007-PARCIAL': cuando Calidad aprueba parcialmente, el REG-SIS-007
+// vuelve a Sistemas para que corrija y lo reenvíe.
+const ESTADOS_REG011_APROBADO = ['REG-011-APROBADO', 'REG-011-PENDIENTE', 'REG-007-PARCIAL'];
 
 const updateSolicitud = async (req, res) => {
     const { id } = req.params;
@@ -438,9 +440,16 @@ const transitionSolicitud = async (req, res) => {
     const { UsuarioId, Rol } = req.user;
 
     // 'approve'/'reject' se mantienen como la aprobación final de Calidad (compatibilidad).
-    const ACCIONES_VALIDAS = ['aprobar_reg11', 'rechazar_reg11', 'approve', 'reject'];
+    // 'aprobar_parcial' = Calidad aprueba parcialmente el REG-SIS-007 (vuelve a Sistemas).
+    const ACCIONES_VALIDAS = ['aprobar_reg11', 'rechazar_reg11', 'approve', 'reject', 'aprobar_parcial'];
     if (!ACCIONES_VALIDAS.includes(action)) {
         return res.status(400).json({ error: `Acción inválida. Use una de: ${ACCIONES_VALIDAS.join(', ')}` });
+    }
+
+    // Acciones que exigen un motivo escrito.
+    const REQUIERE_MOTIVO = ['rechazar_reg11', 'reject', 'aprobar_parcial'];
+    if (REQUIERE_MOTIVO.includes(action) && !(comentario && String(comentario).trim())) {
+        return res.status(400).json({ error: 'Falta el motivo', detalle: 'Esta acción requiere indicar un motivo.' });
     }
 
     const esSistemas = Rol === 'SISTEMAS' || Rol === 'ADMIN';
@@ -504,6 +513,15 @@ const transitionSolicitud = async (req, res) => {
                 }
                 nuevoEstado = 'RECHAZADO';
                 accionDescripcion = 'Rechazado por Calidad';
+                break;
+
+            case 'aprobar_parcial':
+                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede aprobar parcialmente el REG-SIS-007' });
+                if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
+                    return res.status(400).json({ error: 'El REG-SIS-007 no está pendiente de aprobación de Calidad' });
+                }
+                nuevoEstado = 'REG-007-PARCIAL';
+                accionDescripcion = 'Aprobado parcialmente por Calidad (devuelto a Sistemas para corregir)';
                 break;
         }
 

@@ -99,8 +99,8 @@ const REG007PaperForm = ({
       </div>
       <div className="w-1/4 flex flex-col text-[7.5px] font-bold">
         <div className="p-1 border-b border-black text-center font-black bg-gray-50">REG-SIS-007</div>
-        <div className="p-1 border-b border-black text-center">Emisión: 08-10-2024</div>
-        <div className="p-1 border-b border-black text-center">Revisión 04-24</div>
+        <div className="p-1 border-b border-black text-center">Emisión: 01/07/2026</div>
+        <div className="p-1 border-b border-black text-center">Revisión 1</div>
         <div className="p-1 text-center font-black">Página {pageNum} de {totalPages}</div>
       </div>
     </div>
@@ -121,7 +121,7 @@ const REG007PaperForm = ({
           </div>
           <div className="w-1/2 p-2 flex gap-2 items-center">
             <span>Solicitado por:</span>
-            <span className="uppercase text-gray-700">{data.sectorSolicitante || 'CALIDAD'}</span>
+            <span className="uppercase text-gray-700">{data.sectorSolicitante || ''}</span>
           </div>
         </div>
 
