@@ -73,7 +73,7 @@ function App() {
 
   // Foco por defecto según un registro: si ya tiene REG-SIS-007, mostrarlo; si no, el REG-SIS-011.
   const focusFor = (estado) =>
-    (estado === 'REG-007-PENDIENTE-APROBACION' || estado === 'APROBADO' || estado === 'RECHAZADO')
+    (estado === 'REG-007-PENDIENTE-APROBACION' || estado === 'REG-007-PARCIAL' || estado === 'APROBADO' || estado === 'RECHAZADO')
       ? 'REG007' : 'REG011';
 
   const listFocus = activeTab === 'reg07' ? 'REG007' : 'REG011';
@@ -98,7 +98,7 @@ function App() {
   const rol = user?.Rol;
   const cuenta = (pred) => solicitudes.filter(pred).length;
   const reg11PorAprobar = cuenta(s => s.Estado === 'REG-011-PENDIENTE-APROBACION');
-  const reg07PorCompletar = cuenta(s => ['REG-011-APROBADO', 'REG-011-PENDIENTE'].includes(s.Estado));
+  const reg07PorCompletar = cuenta(s => ['REG-011-APROBADO', 'REG-011-PENDIENTE', 'REG-007-PARCIAL'].includes(s.Estado));
   const reg07PorAprobar = cuenta(s => s.Estado === 'REG-007-PENDIENTE-APROBACION');
   const observados = cuenta(s => s.Estado === 'REG-011-OBSERVADO');
   const enCircuito = cuenta(s => s.Estado !== 'APROBADO' && s.Estado !== 'RECHAZADO');
@@ -116,7 +116,7 @@ function App() {
   }
 
   // Un registro "tiene REG-SIS-007" cuando Sistemas ya respondió (pendiente, aprobado o rechazado).
-  const tieneReg07 = (estado) => ['REG-007-PENDIENTE-APROBACION', 'APROBADO', 'RECHAZADO'].includes(estado);
+  const tieneReg07 = (estado) => ['REG-007-PENDIENTE-APROBACION', 'REG-007-PARCIAL', 'APROBADO', 'RECHAZADO'].includes(estado);
 
   // La vista REG-SIS-007 sólo muestra registros con REG-SIS-007 ya generado. El resto del
   // filtrado (búsqueda, estado, fechas) vive dentro del data grid.
@@ -421,6 +421,7 @@ const ESTADO_META = {
   'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' },
   'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
   'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/20 text-blue-400' },
+  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-500/20 text-amber-400' },
   'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/20 text-green-400' },
   'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/20 text-red-400' },
 };
