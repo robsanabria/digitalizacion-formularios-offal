@@ -31,17 +31,13 @@ const REG007PaperForm = ({
   const selectedImpresoras = parseArray(data.impresoras);
   const selectedTipoEtiqueta = parseArray(data.tipoEtiqueta);
 
-  // Calidad's uploaded reference
-  let calidadAdjunto = adjuntos && adjuntos.find(a => a.TipoAdjunto === 'ORIGINAL');
-  if (!calidadAdjunto && adjuntos && adjuntos.length > 0) {
-    calidadAdjunto = adjuntos[0];
-  }
-  
-  // Sistemas' modified label samples
-  let sistemasAdjuntos = adjuntos ? adjuntos.filter(a => a.TipoAdjunto === 'PROPUESTO') : [];
-  if (sistemasAdjuntos.length === 0 && adjuntos && adjuntos.length > 1) {
-    sistemasAdjuntos = adjuntos.slice(1);
-  }
+  // Formato original de Calidad: SOLO adjuntos marcados como ORIGINAL. Sin fallback:
+  // el fallback a adjuntos[0] hacía que una etiqueta resultante de Sistemas (PROPUESTO)
+  // se mostrara por error como "Formato Original" cuando Calidad no había subido ninguno.
+  const calidadAdjunto = (adjuntos || []).find(a => a.TipoAdjunto === 'ORIGINAL') || null;
+
+  // Etiquetas resultantes de Sistemas: SOLO adjuntos PROPUESTO.
+  const sistemasAdjuntos = (adjuntos || []).filter(a => a.TipoAdjunto === 'PROPUESTO');
 
   // Buscar firmas en el historial de trazabilidad de la base de datos
   const parseHistorialFirmas = () => {
