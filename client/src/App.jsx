@@ -143,7 +143,7 @@ function App() {
               </div>
             )}
           </div>
-          <h1 className="font-bold text-xl tracking-tight">Sistemas Offal</h1>
+          <h1 className="font-bold text-xl tracking-tight">Control de Etiquetas</h1>
         </div>
 
         <nav className="flex flex-col gap-2">
@@ -163,7 +163,7 @@ function App() {
               trailing={<ChevronDown size={16} className={`transition-transform duration-300 ${solicitudesOpen ? 'rotate-180' : ''}`} />}
             />
             {solicitudesOpen && (
-              <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-black/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
                 <NavItem
                   icon={<FileText size={18} />}
                   label="REG-SIS-011"
@@ -287,7 +287,7 @@ function App() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.1 }}
-                          className="border-b border-border hover:bg-white/5 transition-colors group"
+                          className="border-b border-border hover:bg-black/[0.04] transition-colors group"
                         >
                           <td className="py-4 font-medium">{s.NombreProducto || 'Sin nombre'}</td>
                           <td className="py-4">
@@ -309,7 +309,7 @@ function App() {
                               </button>
                               <button
                                 onClick={() => openDetail(s.SolicitudId, focusFor(s.Estado), true)}
-                                className="p-2 hover:bg-green-500/20 text-green-400 rounded-full transition-all"
+                                className="p-2 hover:bg-green-100 text-green-700 rounded-full transition-all"
                                 title="Imprimir"
                               >
                                 <Printer size={18} />
@@ -397,7 +397,7 @@ function NavItem({ icon, label, active = false, onClick, className = "", trailin
       className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer select-none transition-all duration-300 relative overflow-hidden group ${
         active
           ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary border border-primary/30 shadow-[0_4px_20px_rgba(99,102,241,0.25)]'
-          : 'text-text-muted hover:bg-white/5 hover:text-white'
+          : 'text-text-muted hover:bg-black/[0.04] hover:text-slate-900'
       } ${className}`}
     >
       {active && (
@@ -406,7 +406,7 @@ function NavItem({ icon, label, active = false, onClick, className = "", trailin
           className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-indigo-400 rounded-r-md"
         />
       )}
-      <div className={`transition-transform duration-300 group-hover:scale-110 ${active ? 'text-primary' : 'text-text-muted group-hover:text-white'}`}>
+      <div className={`transition-transform duration-300 group-hover:scale-110 ${active ? 'text-primary' : 'text-text-muted group-hover:text-slate-900'}`}>
         {icon}
       </div>
       <span className="font-semibold text-sm tracking-wide">{label}</span>
@@ -416,18 +416,18 @@ function NavItem({ icon, label, active = false, onClick, className = "", trailin
 }
 
 const ESTADO_META = {
-  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-500/20 text-amber-400' },
-  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-500/20 text-orange-400' },
-  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' },
-  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-500/20 text-cyan-400' }, // legacy
-  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-500/20 text-blue-400' },
-  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-500/20 text-amber-400' },
-  'APROBADO': { label: 'Aprobado', cls: 'bg-green-500/20 text-green-400' },
-  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-500/20 text-red-400' },
+  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-100 text-amber-700' },
+  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-100 text-orange-700' },
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700' }, // legacy
+  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-100 text-blue-700' },
+  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-100 text-amber-700' },
+  'APROBADO': { label: 'Aprobado', cls: 'bg-green-100 text-green-700' },
+  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-100 text-red-700' },
 };
 
 function EstadoBadge({ estado }) {
-  const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-yellow-500/20 text-yellow-400' };
+  const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-yellow-100 text-yellow-700' };
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-bold ${meta.cls}`}>
       {meta.label}
@@ -444,7 +444,7 @@ function ActionCard({ label, value, color, hint, onClick }) {
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       onClick={onClick}
       className={`glass-card p-6 text-left relative overflow-hidden group shadow-lg transition-all duration-300 border ${
-        tiene ? 'border-white/10 hover:shadow-2xl' : 'border-white/5 opacity-60'
+        tiene ? 'border-black/10 hover:shadow-2xl' : 'border-black/10 opacity-60'
       }`}
     >
       <div
@@ -476,7 +476,7 @@ function ConfigPanel({ user }) {
       <p className="text-text-muted text-sm mb-8">Preferencias de tu cuenta y del sistema.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+        <div className="bg-black/[0.04] border border-black/10 rounded-xl p-5">
           <p className="text-xs font-black uppercase tracking-wider text-text-muted mb-3">Mi cuenta</p>
           <div className="flex items-center gap-3">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white text-sm font-bold">
@@ -489,7 +489,7 @@ function ConfigPanel({ user }) {
           </div>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col justify-center">
+        <div className="bg-black/[0.04] border border-black/10 rounded-xl p-5 flex flex-col justify-center">
           <p className="text-xs font-black uppercase tracking-wider text-text-muted mb-2">Próximamente</p>
           <ul className="text-sm text-text-muted space-y-1 list-disc list-inside">
             <li>Tema claro / oscuro</li>
@@ -507,7 +507,7 @@ function StatCard({ label, value, color }) {
     <motion.div 
       whileHover={{ y: -6, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="glass-card p-6 border border-white/5 relative overflow-hidden group shadow-lg hover:shadow-2xl transition-all duration-300"
+      className="glass-card p-6 border border-black/10 relative overflow-hidden group shadow-lg hover:shadow-2xl transition-all duration-300"
     >
       {/* Glow effect matching indicator color */}
       <div 
