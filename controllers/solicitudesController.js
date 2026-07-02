@@ -56,7 +56,7 @@ const createSolicitud = async (req, res) => {
     const requeridosTexto = {
         fechaSolicitud, sectorSolicitante, nombreProducto, codigoProducto, destino,
         vidaUtil, codigoSenasa, tara, pesoMinimo, pesoMaximo, pesoEstandar,
-        numCaja, faja, codigoExterno, comentariosSolicitante, cambioSolicitado
+        numCaja, faja, codigoExterno, cambioSolicitado
     };
     const faltantes = Object.entries(requeridosTexto)
         .filter(([, v]) => !tieneTexto(v))
@@ -308,8 +308,10 @@ const addAdjunto = async (req, res) => {
     if (tipo === 'ORIGINAL' && !['CALIDAD', 'ADMIN'].includes(Rol)) {
         return res.status(403).json({ error: 'No autorizado', detalle: 'Solo personal de Calidad o Administradores pueden subir archivos originales.' });
     }
-    if (tipo === 'PROPUESTO' && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
-        return res.status(403).json({ error: 'No autorizado', detalle: 'Solo personal de Sistemas o Administradores pueden subir archivos propuestos.' });
+    // 'PROPUESTO' (etiquetas resultantes) y 'ORIGINAL_07' (formato original del
+    // REG-SIS-007) los sube Sistemas.
+    if ((tipo === 'PROPUESTO' || tipo === 'ORIGINAL_07') && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
+        return res.status(403).json({ error: 'No autorizado', detalle: 'Solo personal de Sistemas o Administradores pueden subir estos archivos.' });
     }
 
     try {
@@ -728,8 +730,8 @@ const deleteAdjunto = async (req, res) => {
         if (TipoAdjunto === 'ORIGINAL' && !['CALIDAD', 'ADMIN'].includes(Rol)) {
             return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Calidad o Administradores pueden eliminar archivos originales.' });
         }
-        if (TipoAdjunto === 'PROPUESTO' && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
-            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas o Administradores pueden eliminar archivos propuestos.' });
+        if ((TipoAdjunto === 'PROPUESTO' || TipoAdjunto === 'ORIGINAL_07') && !['SISTEMAS', 'ADMIN'].includes(Rol)) {
+            return res.status(403).json({ error: 'No autorizado', detalle: 'Solo Sistemas o Administradores pueden eliminar estos archivos.' });
         }
 
         // Verificar el estado de la solicitud
