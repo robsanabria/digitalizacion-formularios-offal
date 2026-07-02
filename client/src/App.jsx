@@ -7,6 +7,7 @@ import DetalleSolicitud from './components/DetalleSolicitud';
 import GestionUsuarios from './components/GestionUsuarios';
 import SolicitudesDataTable from './components/SolicitudesDataTable';
 import Topbar from './components/Topbar';
+import SoporteWidget from './components/SoporteWidget';
 // Quitamos el import estático para que el build no falle
 const logoEmpresa = "/logo.png"; 
 
@@ -380,10 +381,13 @@ function App() {
         </button>
       </nav>
 
-      <GestionUsuarios 
+      <GestionUsuarios
         isOpen={isUserMgmtOpen}
         onClose={() => setIsUserMgmtOpen(false)}
       />
+
+      {/* Widget flotante de ayuda / soporte (arma un ticket por mail) */}
+      <SoporteWidget user={user} />
     </div>
   );
 }
