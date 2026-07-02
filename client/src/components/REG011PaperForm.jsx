@@ -355,7 +355,7 @@ const REG011PaperForm = ({
               )}
             </div>
             <div className="border-t border-black/40 pt-1 text-center font-bold">Firma y Aclaración de Personal de calidad</div>
-            <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(solicitanteFecha).toLocaleDateString() : '____/____/______'}</div>
+            <div className="text-center text-gray-500 mt-0.5">Fecha: {solicitanteFecha ? new Date(String(solicitanteFecha).length <= 10 ? String(solicitanteFecha).slice(0, 10) + 'T00:00:00' : solicitanteFecha).toLocaleDateString('es-AR') : '____/____/______'}</div>
           </div>
 
           {/* Sistemas: receptor — se completa al aprobar el REG-SIS-011 */}
