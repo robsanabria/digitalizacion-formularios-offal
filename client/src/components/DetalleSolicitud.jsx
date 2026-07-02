@@ -645,26 +645,9 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                       />
                     </div>
                   ) : isResponding ? (
-                    /* CASO 2: Sistemas responde (011 referencia arriba + 007 editable) */
+                    /* CASO 2: Sistemas responde. Se muestra SOLO el REG-SIS-007 editable
+                       (sin el REG-SIS-011, para que el formato original sea propio del 07). */
                     <>
-                      {/* Referencia REG-SIS-011 mientras Sistemas completa: no se imprime (el PDF es sólo el REG-SIS-007) */}
-                      <div className="animate-in fade-in slide-in-from-bottom-4 mb-12 no-print">
-                        <div className="text-center mb-4">
-                          <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black px-4 py-1 rounded-full border border-yellow-200 uppercase tracking-tighter">Documento de Referencia: REG-SIS-011</span>
-                        </div>
-                        <REG011PaperForm
-                          solicitudId={solicitudId}
-                          data={solicitud}
-                          readOnly={true}
-                          userRole={user?.Rol}
-                          solicitudEstado={estado}
-                          adjuntos={adjuntos}
-                          historial={historial}
-                          onUploadAdjunto={handleUploadEvidencia}
-                          onDeleteAdjunto={handleDeleteAdjunto}
-                          uploadLoading={uploadLoading}
-                        />
-                      </div>
                       <div className="animate-in fade-in zoom-in-95 duration-300">
                         <div className="text-center mb-4">
                           <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-4 py-1 rounded-full border border-blue-200 uppercase tracking-tighter">Documento Resultante: REG-SIS-007</span>

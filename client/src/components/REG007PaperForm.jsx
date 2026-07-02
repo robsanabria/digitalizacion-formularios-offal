@@ -17,7 +17,9 @@ const REG007PaperForm = ({
 }) => {
   const imgSrc = (adjId) => `/api/solicitudes/${solicitudId}/adjuntos/${adjId}/descargar${printToken ? `?k=${encodeURIComponent(printToken)}` : ''}`;
 
-  const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
+  // En el REG-SIS-007 el "Formato Original" lo sube SISTEMAS (no Calidad) y es
+  // independiente del "Formato Propuesto" del REG-SIS-011.
+  const canEditOriginal07 = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN') &&
                           !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
   const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
 
@@ -31,10 +33,9 @@ const REG007PaperForm = ({
   const selectedImpresoras = parseArray(data.impresoras);
   const selectedTipoEtiqueta = parseArray(data.tipoEtiqueta);
 
-  // Formato original de Calidad: SOLO adjuntos marcados como ORIGINAL. Sin fallback:
-  // el fallback a adjuntos[0] hacía que una etiqueta resultante de Sistemas (PROPUESTO)
-  // se mostrara por error como "Formato Original" cuando Calidad no había subido ninguno.
-  const calidadAdjunto = (adjuntos || []).find(a => a.TipoAdjunto === 'ORIGINAL') || null;
+  // Formato original del REG-SIS-007: adjunto propio de tipo 'ORIGINAL_07' que sube
+  // SISTEMAS. NO se toma del REG-SIS-011 (cuyo formato propuesto de Calidad es 'ORIGINAL').
+  const formatoOriginal = (adjuntos || []).find(a => a.TipoAdjunto === 'ORIGINAL_07') || null;
 
   // Etiquetas resultantes de Sistemas: SOLO adjuntos PROPUESTO.
   const sistemasAdjuntos = (adjuntos || []).filter(a => a.TipoAdjunto === 'PROPUESTO');
@@ -176,35 +177,34 @@ const REG007PaperForm = ({
             <span className="rotate-[-90deg] text-[9px] font-black uppercase tracking-widest whitespace-nowrap text-gray-500">Formato original</span>
           </div>
           <div className="flex-1 p-6 flex flex-col items-center justify-center bg-white">
-            {calidadAdjunto ? (
+            {formatoOriginal ? (
               <div className="flex flex-col items-center max-w-full relative group">
-                {canEditOriginal && onDeleteAdjunto && (
+                {canEditOriginal07 && onDeleteAdjunto && (
                   <button
-                    onClick={() => onDeleteAdjunto(calidadAdjunto.AdjuntoId)}
+                    onClick={() => onDeleteAdjunto(formatoOriginal.AdjuntoId)}
                     className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
-                    title="Eliminar adjunto original"
+                    title="Eliminar formato original"
                   >
                     <Trash2 size={14} />
                   </button>
                 )}
-                {calidadAdjunto.TipoContenido?.startsWith('image/') ? (
-                  <img 
-                    src={imgSrc(calidadAdjunto.AdjuntoId)}
+                {formatoOriginal.TipoContenido?.startsWith('image/') ? (
+                  <img
+                    src={imgSrc(formatoOriginal.AdjuntoId)}
                     className="max-h-[380px] max-w-full object-contain border border-gray-300 shadow-md p-1 bg-white"
-                    alt="Referencia Original"
+                    alt="Formato Original"
                     loading="eager"
                   />
                 ) : (
                   <div className="flex flex-col items-center p-8 border border-dashed border-gray-300 rounded-lg bg-gray-50 text-gray-600 max-w-xs text-center shadow-inner">
-                    <span className="font-bold text-xs uppercase truncate max-w-full">{calidadAdjunto.NombreArchivo}</span>
-                    <span className="text-[9px] text-gray-400 mt-1.5 uppercase font-bold tracking-wider">Archivo de Referencia Calidad</span>
+                    <span className="font-bold text-xs uppercase truncate max-w-full">{formatoOriginal.NombreArchivo}</span>
                   </div>
                 )}
               </div>
             ) : (
-              canEditOriginal && onUploadAdjunto ? (
+              canEditOriginal07 && onUploadAdjunto ? (
                 <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner animate-in fade-in duration-300">
-                  <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL')} />
+                  <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'ORIGINAL_07')} />
                   <div className="bg-blue-100 p-3 rounded-full mb-2">
                     <Plus className="text-blue-600 animate-pulse" size={24} />
                   </div>
@@ -212,7 +212,7 @@ const REG007PaperForm = ({
                   {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
                 </label>
               ) : (
-                <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin archivo de referencia original</div>
+                <div className="text-gray-300 font-bold text-base uppercase opacity-30 select-none border-2 border-dashed border-gray-200 p-8 rounded-lg">Sin formato original</div>
               )
             )}
           </div>

@@ -236,25 +236,17 @@ const REG011PaperForm = ({
         </div>
       </div>
 
-      {/* Comentarios */}
-      <div className="p-2 border-b-[2px] border-black">
-        <div className="text-[10px] font-bold mb-1">Comentarios Usuario Solicitante:</div>
-        <textarea 
+      {/* "Comentarios Usuario Solicitante" es el título de la sección, y el
+          "Cambio Solicitado" es su contenido (una sola sección). */}
+      {/* "Comentarios Usuario Solicitante" es SOLO el título de la sección; el
+          contenido es el "Cambio Solicitado (Breve Descripción)". */}
+      <div className="p-2 min-h-[130px] border-b-[2px] border-black">
+        <div className="text-[10px] font-black uppercase mb-1">Comentarios Usuario Solicitante:</div>
+        <div className="text-[10px] font-bold mb-1">Cambio Solicitado (Breve Descripción):</div>
+        <textarea
           readOnly={readOnly}
-          rows={2} 
-          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
-          value={data.comentariosSolicitante || ''}
-          onChange={e => onChange('comentariosSolicitante', e.target.value)}
-        />
-      </div>
-
-      {/* Cambio Solicitado */}
-      <div className="p-2 min-h-[100px] border-b-[2px] border-black">
-        <div className="text-[10px] font-bold mb-1 uppercase">Cambio Solicitado (Breve Descripción):</div>
-        <textarea 
-          readOnly={readOnly}
-          rows={4} 
-          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`} 
+          rows={5}
+          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`}
           value={data.cambioSolicitado || ''}
           placeholder="Describa aquí el cambio..."
           onChange={e => onChange('cambioSolicitado', e.target.value)}

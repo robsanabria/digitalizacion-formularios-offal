@@ -55,7 +55,6 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     ['numCaja', 'N° de Caja'],
     ['faja', 'Faja'],
     ['codigoExterno', 'Código Externo'],
-    ['comentariosSolicitante', 'Comentarios del Solicitante'],
     ['cambioSolicitado', 'Cambio Solicitado'],
   ];
 
