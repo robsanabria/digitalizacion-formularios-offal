@@ -2,41 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Paleta del proyecto Control de Ingreso de Proveedores: tema CLARO azul. */
 :root {
-  /* Paleta del proyecto Control de Ingreso de Proveedores (azul corporativo). */
   --primary: #1565c0;
   --primary-hover: #0d47a1;
   --secondary: #546e7a;
-  --bg-dark: #0f172a;
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.1);
-  --glass: rgba(255, 255, 255, 0.05);
+  --bg-dark: #eceff1;                 /* fondo claro */
+  --bg-card: #ffffff;                 /* tarjetas blancas */
+  --text-main: #1e293b;               /* texto oscuro */
+  --text-muted: #64748b;
+  --border: rgba(15, 23, 42, 0.10);
+  --glass: rgba(15, 23, 42, 0.03);
   --glass-blur: 12px;
 }
 
 /* ── Tokens shadcn/ui (paleta oscura "Pro Slate"). Namespaced --sh-* para
    convivir con DaisyUI y las variables legacy. Primary = indigo del tema. ── */
 :root {
-  --sh-background: 222 47% 11%;
-  --sh-foreground: 210 40% 98%;
-  --sh-card: 222 33% 15%;
-  --sh-card-foreground: 210 40% 98%;
-  --sh-popover: 222 40% 13%;
-  --sh-popover-foreground: 210 40% 98%;
+  --sh-background: 210 20% 96%;
+  --sh-foreground: 222 47% 15%;
+  --sh-card: 0 0% 100%;
+  --sh-card-foreground: 222 47% 15%;
+  --sh-popover: 0 0% 100%;
+  --sh-popover-foreground: 222 47% 15%;
   --sh-primary: 212 80% 42%;
   --sh-primary-foreground: 0 0% 100%;
-  --sh-secondary: 217 33% 18%;
-  --sh-secondary-foreground: 210 40% 98%;
-  --sh-muted: 217 33% 18%;
-  --sh-muted-foreground: 215 20% 65%;
-  --sh-accent: 217 33% 22%;
-  --sh-accent-foreground: 210 40% 98%;
+  --sh-secondary: 210 40% 94%;
+  --sh-secondary-foreground: 222 47% 15%;
+  --sh-muted: 210 40% 94%;
+  --sh-muted-foreground: 215 16% 40%;
+  --sh-accent: 210 40% 92%;
+  --sh-accent-foreground: 222 47% 15%;
   --sh-destructive: 0 72% 51%;
-  --sh-destructive-foreground: 210 40% 98%;
-  --sh-border: 217 33% 24%;
-  --sh-input: 217 33% 24%;
+  --sh-destructive-foreground: 0 0% 100%;
+  --sh-border: 214 32% 88%;
+  --sh-input: 214 32% 88%;
   --sh-ring: 212 80% 42%;
   --sh-radius: 0.5rem;
 }
@@ -52,9 +52,9 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-main);
   min-height: 100vh;
-  background-image: 
-    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(21, 101, 192, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(84, 110, 122, 0.06) 0%, transparent 50%);
 }
 
 /* Utilities are handled by Tailwind CSS */
@@ -66,7 +66,7 @@ body {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border);
   border-radius: 1rem;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px 0 rgba(15, 23, 42, 0.08);
 }
 
 .btn-primary {
@@ -78,12 +78,12 @@ body {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4);
 }
 
 .bg-primary { background-color: var(--primary); }
