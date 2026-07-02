@@ -443,7 +443,9 @@ const transitionSolicitud = async (req, res) => {
 
     // 'approve'/'reject' se mantienen como la aprobación final de Calidad (compatibilidad).
     // 'aprobar_parcial' = Calidad aprueba parcialmente el REG-SIS-007 (vuelve a Sistemas).
-    const ACCIONES_VALIDAS = ['aprobar_reg11', 'rechazar_reg11', 'approve', 'reject', 'aprobar_parcial'];
+    // 'aprobar_propuesto' / 'aprobar_impresion' = los dos chequeos independientes de Calidad;
+    // recién con ambos hechos el REG-SIS-007 queda APROBADO.
+    const ACCIONES_VALIDAS = ['aprobar_reg11', 'rechazar_reg11', 'approve', 'reject', 'aprobar_parcial', 'aprobar_propuesto', 'aprobar_impresion'];
     if (!ACCIONES_VALIDAS.includes(action)) {
         return res.status(400).json({ error: `Acción inválida. Use una de: ${ACCIONES_VALIDAS.join(', ')}` });
     }
@@ -525,6 +527,25 @@ const transitionSolicitud = async (req, res) => {
                 nuevoEstado = 'REG-007-PARCIAL';
                 accionDescripcion = 'Aprobado parcialmente por Calidad (devuelto a Sistemas para corregir)';
                 break;
+
+            case 'aprobar_propuesto':
+            case 'aprobar_impresion': {
+                if (!esCalidad) return res.status(403).json({ error: 'Solo Calidad puede aprobar los chequeos del REG-SIS-007' });
+                if (estadoActual !== 'REG-007-PENDIENTE-APROBACION') {
+                    return res.status(400).json({ error: 'El REG-SIS-007 no está pendiente de aprobación de Calidad' });
+                }
+                const etiquetaEste = action === 'aprobar_propuesto' ? 'Chequeo con formato propuesto' : 'Chequeo en punto de impresión';
+                const etiquetaOtro = action === 'aprobar_propuesto' ? 'Chequeo en punto de impresión' : 'Chequeo con formato propuesto';
+                const histChk = await pool.request().input('id', sql.UniqueIdentifier, id)
+                    .query('SELECT Accion FROM Historial WHERE SolicitudId = @id');
+                const yaEste = histChk.recordset.some(h => (h.Accion || '').includes(`${etiquetaEste} aprobado`));
+                if (yaEste) return res.status(400).json({ error: 'Ese chequeo ya fue aprobado por Calidad' });
+                const otroHecho = histChk.recordset.some(h => (h.Accion || '').includes(`${etiquetaOtro} aprobado`));
+                // Recién con los DOS chequeos hechos el REG-SIS-007 queda finalizado.
+                nuevoEstado = otroHecho ? 'APROBADO' : 'REG-007-PENDIENTE-APROBACION';
+                accionDescripcion = `${etiquetaEste} aprobado por Calidad${otroHecho ? ' → Finalizado' : ''}`;
+                break;
+            }
         }
 
         // 3. Actualizar estado en Solicitudes

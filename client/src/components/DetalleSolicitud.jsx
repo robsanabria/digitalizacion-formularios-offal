@@ -349,6 +349,10 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   // Sistemas puede completar (o corregir) el REG-SIS-007.
   const puedeCompletarReg07 = esReg11Aprobado || esReg07Parcial;
 
+  // Los dos chequeos independientes de Calidad sobre el REG-SIS-007.
+  const chkPropuesto = Array.isArray(historial) && historial.some(h => (h.Accion || '').includes('Chequeo con formato propuesto aprobado'));
+  const chkImpresion = Array.isArray(historial) && historial.some(h => (h.Accion || '').includes('Chequeo en punto de impresión aprobado'));
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md">
       <div className="bg-[#f3f4f6] w-full max-w-5xl h-full shadow-2xl relative overflow-y-auto flex flex-col">
@@ -500,19 +504,37 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                 >
                   <ThumbsDown size={14} /> Aprobar Parcialmente
                 </button>
-                <button
-                  disabled={statusLoading}
-                  onClick={() => setConfirmConfig({
-                    title: "Aprobar Solicitud Final",
-                    message: "¿Confirma la aprobación final de esta solicitud de etiquetas? Esto dará por concluido el circuito técnico de Calidad y Sistemas.",
-                    btnClass: "btn-success",
-                    onConfirm: () => handleStatusUpdate('approve', 'Solicitud aprobada con éxito')
-                  })}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold uppercase text-xs hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
-                >
-                  {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
-                  Aprobar Solicitud Final
-                </button>
+                {/* Dos aprobaciones independientes de Calidad. Recién con las dos, finaliza. */}
+                {!chkPropuesto && (
+                  <button
+                    disabled={statusLoading}
+                    onClick={() => setConfirmConfig({
+                      title: "Aprobar — Chequeo con formato propuesto",
+                      message: "¿Confirma la aprobación del chequeo CON FORMATO PROPUESTO? El REG-SIS-007 recién queda finalizado cuando también se aprueba el chequeo en punto de impresión.",
+                      btnClass: "btn-success",
+                      onConfirm: () => handleStatusUpdate('aprobar_propuesto', 'Chequeo con formato propuesto aprobado')
+                    })}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold uppercase text-[11px] hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
+                  >
+                    {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                    Aprobar Chequeo Formato Propuesto
+                  </button>
+                )}
+                {!chkImpresion && (
+                  <button
+                    disabled={statusLoading}
+                    onClick={() => setConfirmConfig({
+                      title: "Aprobar — Chequeo en punto de impresión",
+                      message: "¿Confirma la aprobación del chequeo EN PUNTO DE IMPRESIÓN? El REG-SIS-007 recién queda finalizado cuando también se aprueba el chequeo con formato propuesto.",
+                      btnClass: "btn-success",
+                      onConfirm: () => handleStatusUpdate('aprobar_impresion', 'Chequeo en punto de impresión aprobado')
+                    })}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold uppercase text-[11px] hover:bg-green-700 transition-all flex items-center gap-2 shadow-lg"
+                  >
+                    {statusLoading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
+                    Aprobar Chequeo Punto de Impresión
+                  </button>
+                )}
               </>
             )}
 
