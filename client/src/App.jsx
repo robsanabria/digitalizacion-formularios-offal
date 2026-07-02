@@ -144,7 +144,7 @@ function App() {
               </div>
             )}
           </div>
-          <h1 className="font-bold text-xl tracking-tight">Sistemas Offal</h1>
+          <h1 className="font-bold text-xl tracking-tight">Control de Etiquetas</h1>
         </div>
 
         <nav className="flex flex-col gap-2">

@@ -3,9 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --secondary: #ec4899;
+  /* Paleta del proyecto Control de Ingreso de Proveedores (azul corporativo). */
+  --primary: #1565c0;
+  --primary-hover: #0d47a1;
+  --secondary: #546e7a;
   --bg-dark: #0f172a;
   --bg-card: rgba(30, 41, 59, 0.7);
   --text-main: #f8fafc;
@@ -24,7 +25,7 @@
   --sh-card-foreground: 210 40% 98%;
   --sh-popover: 222 40% 13%;
   --sh-popover-foreground: 210 40% 98%;
-  --sh-primary: 239 84% 67%;
+  --sh-primary: 212 80% 42%;
   --sh-primary-foreground: 0 0% 100%;
   --sh-secondary: 217 33% 18%;
   --sh-secondary-foreground: 210 40% 98%;
@@ -36,7 +37,7 @@
   --sh-destructive-foreground: 210 40% 98%;
   --sh-border: 217 33% 24%;
   --sh-input: 217 33% 24%;
-  --sh-ring: 239 84% 67%;
+  --sh-ring: 212 80% 42%;
   --sh-radius: 0.5rem;
 }
 
@@ -313,9 +314,9 @@ table { border-collapse: collapse; }
   background: rgba(15, 23, 42, 0.3);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.25);
+  background: rgba(21, 101, 192, 0.30);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.45);
+  background: rgba(21, 101, 192, 0.50);
 }
