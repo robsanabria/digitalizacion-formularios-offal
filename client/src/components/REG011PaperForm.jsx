@@ -98,7 +98,7 @@ const REG011PaperForm = ({
         <div className="w-1/4 flex flex-col text-[10px]">
           <div className="p-1 border-b-[2px] border-black text-center font-bold">REG-SIS-011</div>
           <div className="p-1 border-b-[2px] border-black text-center">Emisión: 01/07/2026</div>
-          <div className="p-1 border-b-[2px] border-black text-center">Revisión 1</div>
+          <div className="p-1 border-b-[2px] border-black text-center">Revisión 11-26</div>
           <div className="p-1 text-center">Página 1 de 1</div>
         </div>
       </div>

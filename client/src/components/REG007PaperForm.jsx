@@ -43,43 +43,45 @@ const REG007PaperForm = ({
   // Buscar firmas en el historial de trazabilidad de la base de datos
   const parseHistorialFirmas = () => {
     let sistemasFirma = null;
-    let calidadFirma = null;
+    // Calidad tiene DOS chequeos independientes: 'con formato propuesto' y 'en punto
+    // de impresión'. Cada uno se firma por separado.
+    let calidadPropuesto = null;
+    let calidadImpresion = null;
+    let calidadNegativa = null; // rechazo / parcial: aplica a ambos chequeos
 
     if (historial && Array.isArray(historial)) {
-      // 1. Firma Sistemas: el evento donde Sistemas completó el REG-SIS-007
-      // (no confundir con 'REG-SIS-011 aprobado por Sistemas', que es la compuerta previa).
+      // 1. Firma Sistemas: el evento donde Sistemas completó el REG-SIS-007.
       const evSistemas = historial.find(h =>
         h.Accion?.includes('Respuesta Sistemas') || h.EstadoNuevo === 'REG-007-PENDIENTE-APROBACION'
       );
-      if (evSistemas) {
-        sistemasFirma = {
-          user: evSistemas.NombreUsuario,
-          date: evSistemas.FechaEvento
-        };
-      }
+      if (evSistemas) sistemasFirma = { user: evSistemas.NombreUsuario, date: evSistemas.FechaEvento };
 
-      // 2. Firma Calidad: última decisión de Calidad sobre el REG-SIS-007
-      //    (aprobado / aprobado parcialmente / rechazado). Se recorre al revés para
-      //    tomar la más reciente y se guarda la decisión + el motivo.
-      const evCalidad = [...historial].reverse().find(h =>
-        ['APROBADO', 'REG-007-PARCIAL', 'RECHAZADO'].includes(h.EstadoNuevo)
-      );
-      if (evCalidad) {
-        calidadFirma = {
-          user: evCalidad.NombreUsuario,
-          date: evCalidad.FechaEvento,
-          decision: evCalidad.EstadoNuevo === 'APROBADO' ? 'aprobado'
-            : evCalidad.EstadoNuevo === 'REG-007-PARCIAL' ? 'parcial'
-            : 'desaprobado',
-          motivo: evCalidad.Comentario || ''
-        };
-      }
+      // 2. Chequeos de Calidad (cada uno su firma).
+      const evProp = historial.find(h => (h.Accion || '').includes('Chequeo con formato propuesto aprobado'));
+      if (evProp) calidadPropuesto = { user: evProp.NombreUsuario, date: evProp.FechaEvento, decision: 'aprobado' };
+
+      const evImp = historial.find(h => (h.Accion || '').includes('Chequeo en punto de impresión aprobado'));
+      if (evImp) calidadImpresion = { user: evImp.NombreUsuario, date: evImp.FechaEvento, decision: 'aprobado' };
+
+      // 3. Rechazo / aprobación parcial (afecta a ambos chequeos).
+      const evNeg = [...historial].reverse().find(h => ['RECHAZADO', 'REG-007-PARCIAL'].includes(h.EstadoNuevo));
+      if (evNeg) calidadNegativa = {
+        user: evNeg.NombreUsuario,
+        date: evNeg.FechaEvento,
+        decision: evNeg.EstadoNuevo === 'REG-007-PARCIAL' ? 'parcial' : 'desaprobado',
+        motivo: evNeg.Comentario || ''
+      };
     }
 
-    return { sistemasFirma, calidadFirma };
+    return {
+      sistemasFirma,
+      firmaPropuesto: calidadPropuesto || calidadNegativa,
+      firmaImpresion: calidadImpresion || calidadNegativa,
+      calidadNegativa
+    };
   };
 
-  const { sistemasFirma, calidadFirma } = parseHistorialFirmas();
+  const { sistemasFirma, firmaPropuesto, firmaImpresion, calidadNegativa } = parseHistorialFirmas();
 
   const Checkbox = ({ label, checked }) => (
     <div className="flex items-center gap-1.5">
@@ -103,7 +105,7 @@ const REG007PaperForm = ({
       <div className="w-1/4 flex flex-col text-[7.5px] font-bold">
         <div className="p-1 border-b border-black text-center font-black bg-gray-50">REG-SIS-007</div>
         <div className="p-1 border-b border-black text-center">Emisión: 01/07/2026</div>
-        <div className="p-1 border-b border-black text-center">Revisión 1</div>
+        <div className="p-1 border-b border-black text-center">Revisión 05-26</div>
         <div className="p-1 text-center font-black">Página {pageNum} de {totalPages}</div>
       </div>
     </div>
@@ -337,9 +339,9 @@ const REG007PaperForm = ({
           <div className="border-r-[2px] border-black flex flex-col justify-between p-3 min-h-[140px] bg-white">
             <div className="text-center border-b border-black pb-1.5 uppercase tracking-wide font-black text-gray-800">Departamento de Calidad<br/><span className="text-[6.5px] font-bold text-gray-500">Chequeo con formato propuesto</span></div>
             <div className="flex flex-col items-center justify-center py-2 flex-1">
-              {calidadFirma ? (
+              {firmaPropuesto ? (
                 <div className="text-center animate-in fade-in zoom-in duration-300">
-                  <div className="font-serif italic text-base text-green-900 border-b border-green-200 px-4 select-none transform rotate-[-2deg] font-black py-0.5">{calidadFirma.user}</div>
+                  <div className="font-serif italic text-base text-green-900 border-b border-green-200 px-4 select-none transform rotate-[-2deg] font-black py-0.5">{firmaPropuesto.user}</div>
                   <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">Firma Digital Verificada</div>
                 </div>
               ) : (
@@ -347,11 +349,11 @@ const REG007PaperForm = ({
               )}
             </div>
             <div className="border-t border-black/35 pt-1.5">
-              <div className="text-gray-500">Fecha: {calidadFirma ? new Date(calidadFirma.date).toLocaleDateString() : '____/____/______'}</div>
+              <div className="text-gray-500">Fecha: {firmaPropuesto ? new Date(firmaPropuesto.date).toLocaleDateString() : '____/____/______'}</div>
               <div className="flex gap-3 mt-1.5">
-                <Checkbox label="Aprobado" checked={calidadFirma?.decision === 'aprobado'} />
-                <Checkbox label="Parcialmente" checked={calidadFirma?.decision === 'parcial'} />
-                <Checkbox label="Desaprobado" checked={calidadFirma?.decision === 'desaprobado'} />
+                <Checkbox label="Aprobado" checked={firmaPropuesto?.decision === 'aprobado'} />
+                <Checkbox label="Parcialmente" checked={firmaPropuesto?.decision === 'parcial'} />
+                <Checkbox label="Desaprobado" checked={firmaPropuesto?.decision === 'desaprobado'} />
               </div>
             </div>
           </div>
@@ -360,9 +362,9 @@ const REG007PaperForm = ({
           <div className="flex flex-col justify-between p-3 min-h-[140px] bg-white">
             <div className="text-center border-b border-black pb-1.5 uppercase tracking-wide font-black text-gray-800">Departamento de Calidad<br/><span className="text-[6.5px] font-bold text-gray-500">Chequeo en punto de impresión</span></div>
             <div className="flex flex-col items-center justify-center py-2 flex-1">
-              {calidadFirma ? (
+              {firmaImpresion ? (
                 <div className="text-center animate-in fade-in zoom-in duration-300">
-                  <div className="font-serif italic text-base text-green-900 border-b border-green-200 px-4 select-none transform rotate-[-2deg] font-black py-0.5">{calidadFirma.user}</div>
+                  <div className="font-serif italic text-base text-green-900 border-b border-green-200 px-4 select-none transform rotate-[-2deg] font-black py-0.5">{firmaImpresion.user}</div>
                   <div className="text-[7px] text-green-500 uppercase tracking-widest mt-1 font-bold">Firma Digital Verificada</div>
                 </div>
               ) : (
@@ -370,23 +372,23 @@ const REG007PaperForm = ({
               )}
             </div>
             <div className="border-t border-black/35 pt-1.5">
-              <div className="text-gray-500">Fecha: {calidadFirma ? new Date(calidadFirma.date).toLocaleDateString() : '____/____/______'}</div>
+              <div className="text-gray-500">Fecha: {firmaImpresion ? new Date(firmaImpresion.date).toLocaleDateString() : '____/____/______'}</div>
               <div className="flex gap-3 mt-1.5">
-                <Checkbox label="Aprobado" checked={calidadFirma?.decision === 'aprobado'} />
-                <Checkbox label="Parcialmente" checked={calidadFirma?.decision === 'parcial'} />
-                <Checkbox label="Desaprobado" checked={calidadFirma?.decision === 'desaprobado'} />
+                <Checkbox label="Aprobado" checked={firmaImpresion?.decision === 'aprobado'} />
+                <Checkbox label="Parcialmente" checked={firmaImpresion?.decision === 'parcial'} />
+                <Checkbox label="Desaprobado" checked={firmaImpresion?.decision === 'desaprobado'} />
               </div>
             </div>
           </div>
         </div>
 
         {/* Motivo de Calidad cuando la decisión fue parcial o rechazo */}
-        {calidadFirma && (calidadFirma.decision === 'parcial' || calidadFirma.decision === 'desaprobado') && calidadFirma.motivo && (
+        {calidadNegativa && calidadNegativa.motivo && (
           <div className="border-t-[2px] border-black p-2 bg-gray-50">
             <span className="text-[8px] font-black uppercase tracking-wider text-gray-700">
-              {calidadFirma.decision === 'parcial' ? 'Motivo de la aprobación parcial (Calidad):' : 'Motivo del rechazo (Calidad):'}
+              {calidadNegativa.decision === 'parcial' ? 'Motivo de la aprobación parcial (Calidad):' : 'Motivo del rechazo (Calidad):'}
             </span>
-            <p className="text-[9px] text-gray-800 italic mt-0.5 whitespace-pre-wrap">{calidadFirma.motivo}</p>
+            <p className="text-[9px] text-gray-800 italic mt-0.5 whitespace-pre-wrap">{calidadNegativa.motivo}</p>
           </div>
         )}
 
