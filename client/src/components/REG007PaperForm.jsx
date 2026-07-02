@@ -92,6 +92,37 @@ const REG007PaperForm = ({
     </div>
   );
 
+  // Se admiten hasta 18 etiquetas resultantes, repartidas entre las páginas 2 y 3
+  // (9 por hoja). Alcanza para los ~15 que se suben habitualmente.
+  const ETQ_POR_HOJA = 9;
+  const MAX_ETIQUETAS = ETQ_POR_HOJA * 2;
+
+  const renderEtiquetaCell = (img, idx) => (
+    <div key={img.AdjuntoId} className="border border-black p-2 flex flex-col items-center relative bg-white max-w-[210px] w-full shadow-sm hover:shadow-md transition-shadow group">
+      <span className="absolute top-1 right-2 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm">#{idx + 1}</span>
+      {canEditProposed && onDeleteAdjunto && (
+        <button
+          onClick={() => onDeleteAdjunto(img.AdjuntoId)}
+          className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
+          title={`Eliminar etiqueta #${idx + 1}`}
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
+      <img src={imgSrc(img.AdjuntoId)} className="h-[140px] max-w-full object-contain border border-gray-200" alt={`Etiqueta Modificada ${idx + 1}`} loading="eager" />
+      <span className="text-[8px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
+    </div>
+  );
+
+  const renderUploadCell = () => (
+    <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+      <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
+      <div className="bg-blue-100 p-3 rounded-full mb-2"><Plus className="text-blue-600 animate-pulse" size={24} /></div>
+      <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Subir Etiqueta #{sistemasAdjuntos.length + 1}</span>
+      {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
+    </label>
+  );
+
   const PageHeader = ({ pageNum, totalPages = 4 }) => (
     <div className="flex border-b-[3px] border-black text-black">
       <div className="w-1/4 p-3 border-r-[3px] border-black flex flex-col items-center justify-center text-center">
@@ -228,46 +259,15 @@ const REG007PaperForm = ({
         <div className="p-6 min-h-[600px] flex flex-col justify-between">
           <div className="text-center mb-6 border-b border-black pb-2">
             <h3 className="text-xs font-black uppercase tracking-widest text-gray-700">Etiquetas Técnicas Resultantes (Modificadas en Planta)</h3>
-            <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Suba capturas individuales de cada una de las etiquetas del circuito (máx. 9)</p>
+            <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Suba capturas individuales de cada etiqueta del circuito (hasta {MAX_ETIQUETAS} entre las hojas 2 y 3)</p>
           </div>
-          
-          {/* Grid de placeholders para subir imágenes */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 items-center justify-items-center">
-            {sistemasAdjuntos.map((img, idx) => (
-              <div key={img.AdjuntoId} className="border border-black p-2 flex flex-col items-center relative bg-white max-w-[210px] w-full shadow-sm hover:shadow-md transition-shadow group">
-                <span className="absolute top-1 right-2 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm">
-                  #{idx + 1}
-                </span>
-                {canEditProposed && onDeleteAdjunto && (
-                  <button
-                    onClick={() => onDeleteAdjunto(img.AdjuntoId)}
-                    className="absolute -top-3 -right-3 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-10 no-print"
-                    title={`Eliminar etiqueta #${idx + 1}`}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-                <img 
-                  src={imgSrc(img.AdjuntoId)}
-                  className="h-[140px] max-w-full object-contain border border-gray-200"
-                  alt={`Etiqueta Modificada ${idx + 1}`}
-                  loading="eager"
-                />
-                <span className="text-[8px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
-              </div>
-            ))}
 
-            {/* Botón de carga integrado como placeholder en papel */}
-            {canEditProposed && sistemasAdjuntos.length < 9 && (
-              <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
-                <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
-                <div className="bg-blue-100 p-3 rounded-full mb-2">
-                  <Plus className="text-blue-600 animate-pulse" size={24} />
-                </div>
-                <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Subir Etiqueta #{sistemasAdjuntos.length + 1}</span>
-                {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
-              </label>
-            )}
+          {/* Grid de etiquetas (1 a 9 en esta hoja) */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 items-center justify-items-center">
+            {sistemasAdjuntos.slice(0, ETQ_POR_HOJA).map((img, idx) => renderEtiquetaCell(img, idx))}
+
+            {/* Caja de carga mientras haya menos de 9 en esta hoja */}
+            {canEditProposed && sistemasAdjuntos.length < ETQ_POR_HOJA && renderUploadCell()}
 
             {/* Placeholder estético si está vacío en lectura */}
             {!canEditProposed && sistemasAdjuntos.length === 0 && (
@@ -282,10 +282,19 @@ const REG007PaperForm = ({
       {/* 📄 PÁGINA 3 de 4: ESPACIO ADICIONAL PARA ETIQUETAS (queda vacío si no hay más) */}
       <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl w-full font-serif shadow-2xl overflow-hidden print:mb-0 print:shadow-none print:bg-white print:break-after-page">
         <PageHeader pageNum={3} />
-        <div className="p-6 min-h-[600px]">
+        <div className="p-6 min-h-[600px] flex flex-col">
           <div className="text-center mb-6 border-b border-black pb-2">
             <h3 className="text-xs font-black uppercase tracking-widest text-gray-700">Etiquetas Técnicas Resultantes (Continuación)</h3>
-            <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Espacio para etiquetas adicionales del circuito</p>
+            <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Etiquetas {ETQ_POR_HOJA + 1} a {MAX_ETIQUETAS} del circuito</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 items-center justify-items-center">
+            {sistemasAdjuntos.slice(ETQ_POR_HOJA, MAX_ETIQUETAS).map((img, i) => renderEtiquetaCell(img, i + ETQ_POR_HOJA))}
+            {canEditProposed && sistemasAdjuntos.length >= ETQ_POR_HOJA && sistemasAdjuntos.length < MAX_ETIQUETAS && renderUploadCell()}
+            {!canEditProposed && sistemasAdjuntos.length <= ETQ_POR_HOJA && (
+              <div className="col-span-full text-center py-16 text-gray-300 font-bold uppercase opacity-30 select-none border-2 border-dashed border-gray-100 p-10 rounded-xl">
+                Sin etiquetas adicionales
+              </div>
+            )}
           </div>
         </div>
       </div>

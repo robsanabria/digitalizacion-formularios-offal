@@ -729,7 +729,7 @@ const _exportPdfLegacy = async (req, res) => {
 
 const deleteAdjunto = async (req, res) => {
     const { id, adjuntoId } = req.params;
-    const { Rol } = req.user;
+    const { Rol, UsuarioId } = req.user;
     console.log(`[Controller] Petición de eliminación para AdjuntoId: ${adjuntoId}`);
     try {
         const pool = await poolPromise;
@@ -738,14 +738,14 @@ const deleteAdjunto = async (req, res) => {
         // 1. Buscar el adjunto y verificar tipo
         const result = await pool.request()
             .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
-            .query('SELECT RutaArchivo, TipoAdjunto FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
+            .query('SELECT RutaArchivo, TipoAdjunto, NombreArchivo FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
 
         if (result.recordset.length === 0) {
             console.warn(`[Controller] Adjunto no encontrado en DB: ${adjuntoId}`);
             return res.status(404).json({ mensaje: 'Archivo no encontrado' });
         }
 
-        const { RutaArchivo, TipoAdjunto } = result.recordset[0];
+        const { RutaArchivo, TipoAdjunto, NombreArchivo } = result.recordset[0];
 
         // Validación de roles de acuerdo al tipo de adjunto a eliminar
         if (TipoAdjunto === 'ORIGINAL' && !['CALIDAD', 'ADMIN'].includes(Rol)) {
@@ -787,6 +787,26 @@ const deleteAdjunto = async (req, res) => {
         await pool.request()
             .input('adjuntoId', sql.UniqueIdentifier, adjuntoId)
             .query('DELETE FROM Adjuntos WHERE AdjuntoId = @adjuntoId');
+
+        // 4. Registrar la eliminación en el Historial (trazabilidad: quién borró qué).
+        const tipoLabel = TipoAdjunto === 'ORIGINAL_07' ? 'Formato Original (Sistemas)'
+            : TipoAdjunto === 'ORIGINAL' ? 'Formato Propuesto (Calidad)'
+            : 'Etiqueta resultante';
+        try {
+            await pool.request()
+                .input('solicitudId', sql.UniqueIdentifier, id)
+                .input('usuarioId', sql.UniqueIdentifier, UsuarioId)
+                .input('estadoAnterior', sql.NVarChar, estado)
+                .input('estadoNuevo', sql.NVarChar, estado)
+                .input('accion', sql.NVarChar, `Eliminó adjunto — ${tipoLabel}`)
+                .input('comentario', sql.NVarChar, NombreArchivo || null)
+                .query(`
+                    INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion, Comentario)
+                    VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion, @comentario)
+                `);
+        } catch (histErr) {
+            console.error('[Controller] No se pudo registrar la eliminación en el historial:', histErr.message);
+        }
 
         res.json({ mensaje: 'Archivo eliminado con éxito' });
     } catch (err) {
