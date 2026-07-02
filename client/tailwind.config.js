@@ -7,6 +7,12 @@ export default {
   ],
   theme: {
     extend: {
+      // Los formularios (REG-SIS-011 / REG-SIS-007) usan `font-serif`. Lo fijamos a
+      // Times New Roman para que TODO el documento use la misma tipografía (como el
+      // formulario oficial) y no se mezclen fuentes.
+      fontFamily: {
+        serif: ['"Times New Roman"', 'Times', 'serif'],
+      },
       // ── Tokens shadcn/ui — namespaced con prefijo --sh- para no colisionar
       //    con las variables legacy (--primary/--border/--secondary) del tema actual.
       colors: {
