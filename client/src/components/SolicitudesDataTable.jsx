@@ -26,19 +26,19 @@ import { cn } from '@/lib/utils';
 
 // ── Meta de estados (pills coloridas + label legible) ──
 const ESTADO_META = {
-  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-400' },
-  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-100 text-orange-700 border-orange-200', dot: 'bg-orange-400' },
-  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200', dot: 'bg-cyan-400' },
-  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200', dot: 'bg-cyan-400' },
-  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-400' },
-  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-100 text-amber-700 border-amber-200', dot: 'bg-amber-400' },
-  'APROBADO': { label: 'Aprobado', cls: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-400' },
-  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-100 text-red-700 border-red-200', dot: 'bg-red-400' },
+  'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30', dot: 'bg-amber-400' },
+  'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-400 dark:border-orange-500/30', dot: 'bg-orange-400' },
+  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30', dot: 'bg-blue-400' },
+  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30', dot: 'bg-amber-400' },
+  'APROBADO': { label: 'Aprobado', cls: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/30', dot: 'bg-green-400' },
+  'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30', dot: 'bg-red-400' },
 };
 const estadoLabel = (e) => ESTADO_META[e]?.label || e;
 
 function EstadoPill({ estado }) {
-  const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-gray-200 text-gray-600 border-gray-300' };
+  const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-white/10 dark:text-white/70 dark:border-white/20' };
   return (
     <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap', meta.cls)}>
       {meta.label}
@@ -153,7 +153,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" title="Previsualizar" onClick={() => onOpen(row.original.SolicitudId, focus)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Imprimir" onClick={() => onPrint(row.original.SolicitudId, focus)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 dark:text-green-400" title="Imprimir" onClick={() => onPrint(row.original.SolicitudId, focus)}>
             <Printer className="h-4 w-4" />
           </Button>
           <DropdownMenu>
@@ -391,7 +391,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={(e) => { e.stopPropagation(); onOpen(s.SolicitudId, focus); }}>
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600" onClick={(e) => { e.stopPropagation(); onPrint(s.SolicitudId, focus); }}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 dark:text-green-400" onClick={(e) => { e.stopPropagation(); onPrint(s.SolicitudId, focus); }}>
                     <Printer className="h-4 w-4" />
                   </Button>
                 </span>

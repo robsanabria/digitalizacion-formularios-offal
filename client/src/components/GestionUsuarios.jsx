@@ -45,7 +45,7 @@ const GestionUsuarios = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-black/60 backdrop-blur-sm">
       <div className="glass-card w-full h-full md:h-auto max-w-2xl md:max-h-[80vh] overflow-hidden flex flex-col p-4 md:p-8 relative rounded-none md:rounded-xl pb-24 md:pb-8">
-        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 text-text-muted hover:text-slate-900 bg-black/20 md:bg-transparent rounded-full p-2 md:p-0 z-10">
+        <button onClick={onClose} className="absolute top-4 right-4 md:top-6 md:right-6 text-text-muted hover:text-slate-900 dark:hover:text-white bg-black/20 md:bg-transparent rounded-full p-2 md:p-0 z-10">
           <X size={24} />
         </button>
 
@@ -66,7 +66,7 @@ const GestionUsuarios = ({ isOpen, onClose }) => {
           ) : (
             <div className="flex flex-col gap-3">
               {users.map((u) => (
-                <div key={u.UsuarioId} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-black/[0.03] border border-border rounded-xl hover:bg-black/[0.06] transition-all gap-4 md:gap-0">
+                <div key={u.UsuarioId} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-black/[0.03] dark:bg-white/5 border border-border rounded-xl hover:bg-black/[0.06] dark:bg-white/10 transition-all gap-4 md:gap-0">
                   <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                       {u.NombreUsuario.charAt(0).toUpperCase()}
@@ -99,7 +99,7 @@ const GestionUsuarios = ({ isOpen, onClose }) => {
         </div>
 
         <div className="mt-6 pt-6 border-t border-border flex justify-end">
-          <button onClick={onClose} className="px-6 py-2 bg-black/[0.06] hover:bg-black/[0.10] rounded-lg transition-all">
+          <button onClick={onClose} className="px-6 py-2 bg-black/[0.06] dark:bg-white/10 hover:bg-black/[0.10] dark:bg-white/20 rounded-lg transition-all">
             Cerrar Panel
           </button>
         </div>
