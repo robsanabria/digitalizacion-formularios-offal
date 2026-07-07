@@ -5,6 +5,10 @@
 
 ---
 
+> 📋 **Novedades recientes:** ver [CHANGELOG.md](CHANGELOG.md) — tema claro, doble aprobación de Calidad, hasta 18 etiquetas por circuito, trazabilidad de eliminaciones y más.
+
+---
+
 ## 🎯 Objetivos del Proyecto
 
 El objetivo principal es **eliminar el uso de formularios de papel físicos** para el circuito de solicitud y modificación de etiquetas en la planta, centralizando el proceso en una plataforma web accesible internamente.
