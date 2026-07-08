@@ -6,6 +6,8 @@
 ---
 
 > 📋 **Novedades recientes:** ver [CHANGELOG.md](CHANGELOG.md) — tema claro, doble aprobación de Calidad, hasta 18 etiquetas por circuito, trazabilidad de eliminaciones y más.
+>
+> 🛠️ **¿Levantar el proyecto localmente?** Guía paso a paso en [docs/INSTALACION-LOCAL.md](docs/INSTALACION-LOCAL.md) · esquema de base en [db/schema.sql](db/schema.sql).
 
 ---
 
