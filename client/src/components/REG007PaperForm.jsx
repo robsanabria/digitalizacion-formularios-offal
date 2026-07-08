@@ -313,7 +313,7 @@ const REG007PaperForm = ({
         {/* Cambio Solicitado Box */}
         <div className="border-b-[2px] border-black p-3 flex flex-col bg-white">
           <span className="text-[8.5px] font-black uppercase tracking-wider text-gray-700">Cambio Solicitado (Breve Descripción):</span>
-          <div className="text-[10px] p-2 font-bold italic text-gray-700 bg-gray-50 border border-gray-200 min-h-[50px] mt-1 select-all">
+          <div className="text-[10px] p-2 font-bold italic text-gray-700 bg-gray-50 border border-gray-200 min-h-[50px] mt-1 select-all whitespace-pre-wrap break-words">
             {data.cambioSolicitado || 'No se detallaron observaciones descriptivas adicionales en el circuito.'}
           </div>
         </div>

@@ -243,14 +243,19 @@ const REG011PaperForm = ({
       <div className="p-2 min-h-[130px] border-b-[2px] border-black">
         <div className="text-[10px] font-black uppercase mb-1">Comentarios Usuario Solicitante:</div>
         <div className="text-[10px] font-bold mb-1">Cambio Solicitado (Breve Descripción):</div>
-        <textarea
-          readOnly={readOnly}
-          rows={5}
-          className={`w-full bg-transparent outline-none text-xs resize-none p-1 rounded transition-colors ${!readOnly ? 'bg-blue-50/20 focus:bg-blue-50/50' : ''}`}
-          value={data.cambioSolicitado || ''}
-          placeholder="Describa aquí el cambio..."
-          onChange={e => onChange('cambioSolicitado', e.target.value)}
-        />
+        {readOnly ? (
+          // En lectura/impresión se muestra el texto COMPLETO (crece con el contenido,
+          // preserva saltos de línea) para no truncar comentarios largos.
+          <div className="w-full text-xs p-1 whitespace-pre-wrap break-words min-h-[80px]">{data.cambioSolicitado || ''}</div>
+        ) : (
+          <textarea
+            rows={5}
+            className="w-full bg-blue-50/20 focus:bg-blue-50/50 outline-none text-xs resize-y p-1 rounded transition-colors"
+            value={data.cambioSolicitado || ''}
+            placeholder="Describa aquí el cambio..."
+            onChange={e => onChange('cambioSolicitado', e.target.value)}
+          />
+        )}
       </div>
 
       {/* Formato Propuesto Area (admite varias imágenes) */}
