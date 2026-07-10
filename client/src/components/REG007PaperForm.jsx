@@ -114,7 +114,6 @@ const REG007PaperForm = ({
 
   const renderEtiquetaCell = (img, idx) => (
     <div key={img.AdjuntoId} className="p-2 flex flex-col items-center relative bg-white max-w-[340px] w-full group">
-      <span className="absolute top-1 right-2 bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-sm">#{idx + 1}</span>
       {canEditProposed && onDeleteAdjunto && (
         <button
           onClick={() => onDeleteAdjunto(img.AdjuntoId)}
@@ -124,8 +123,8 @@ const REG007PaperForm = ({
           <Trash2 size={14} />
         </button>
       )}
-      {/* Solo la imagen: sin recuadro ni nombre de archivo. */}
-      <img src={imgSrc(img.AdjuntoId)} className="h-[200px] max-w-full object-contain" alt={`Etiqueta ${idx + 1}`} loading="eager" />
+      {/* Solo la imagen: sin recuadro, sin nombre de archivo, sin #N. */}
+      <img src={imgSrc(img.AdjuntoId)} className="etq-img h-[200px] max-w-full object-contain" alt={`Etiqueta ${idx + 1}`} loading="eager" />
     </div>
   );
 
