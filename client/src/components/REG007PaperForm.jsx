@@ -113,7 +113,7 @@ const REG007PaperForm = ({
   const etqPag3 = sistemasAdjuntos.slice(cortePag2, MAX_ETIQUETAS);
 
   const renderEtiquetaCell = (img, idx) => (
-    <div key={img.AdjuntoId} className="border border-black p-2 flex flex-col items-center relative bg-white max-w-[340px] w-full shadow-sm hover:shadow-md transition-shadow group">
+    <div key={img.AdjuntoId} className="p-2 flex flex-col items-center relative bg-white max-w-[340px] w-full group">
       <span className="absolute top-1 right-2 bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-sm">#{idx + 1}</span>
       {canEditProposed && onDeleteAdjunto && (
         <button
@@ -124,8 +124,8 @@ const REG007PaperForm = ({
           <Trash2 size={14} />
         </button>
       )}
-      <img src={imgSrc(img.AdjuntoId)} className="h-[200px] max-w-full object-contain border border-gray-200" alt={`Etiqueta Modificada ${idx + 1}`} loading="eager" />
-      <span className="text-[9px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
+      {/* Solo la imagen: sin recuadro ni nombre de archivo. */}
+      <img src={imgSrc(img.AdjuntoId)} className="h-[200px] max-w-full object-contain" alt={`Etiqueta ${idx + 1}`} loading="eager" />
     </div>
   );
 
