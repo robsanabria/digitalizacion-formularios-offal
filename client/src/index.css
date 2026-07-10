@@ -241,6 +241,12 @@ table { border-collapse: collapse; }
     object-fit: contain !important;
   }
 
+  /* Etiquetas resultantes (grilla del REG-007): alto acotado para que entren varias
+     por hoja Legal sin desbordar (en impresión, 'height:auto' las agrandaba). */
+  #paper-form-container img.etq-img {
+    max-height: 200px !important;
+  }
+
   /* Colapsar las áreas reservadas para imágenes (Formato original/propuesto,
      grilla de etiquetas) cuando están vacías, para que el PDF no salga con
      grandes espacios en blanco. Si hay imagen, el alto se ajusta a ella. */
