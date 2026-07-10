@@ -102,14 +102,19 @@ const REG007PaperForm = ({
     </div>
   );
 
-  // Se admiten hasta 18 etiquetas resultantes, repartidas entre las páginas 2 y 3
-  // (9 por hoja). Alcanza para los ~15 que se suben habitualmente.
-  const ETQ_POR_HOJA = 9;
+  // Etiquetas resultantes: 2 columnas, imágenes grandes (legibles). Hasta 8 por hoja
+  // (páginas 2 y 3) → 16 en total. En lectura/impresión se reparten BALANCEADAS entre
+  // las dos hojas (para no dejar 1 sola en la hoja 3); en edición se llenan secuencial.
+  const ETQ_POR_HOJA = 8;
   const MAX_ETIQUETAS = ETQ_POR_HOJA * 2;
+  const totalEtq = sistemasAdjuntos.length;
+  const cortePag2 = readOnly ? Math.min(Math.ceil(totalEtq / 2), ETQ_POR_HOJA) : ETQ_POR_HOJA;
+  const etqPag2 = sistemasAdjuntos.slice(0, cortePag2);
+  const etqPag3 = sistemasAdjuntos.slice(cortePag2, MAX_ETIQUETAS);
 
   const renderEtiquetaCell = (img, idx) => (
-    <div key={img.AdjuntoId} className="border border-black p-2 flex flex-col items-center relative bg-white max-w-[210px] w-full shadow-sm hover:shadow-md transition-shadow group">
-      <span className="absolute top-1 right-2 bg-black text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm">#{idx + 1}</span>
+    <div key={img.AdjuntoId} className="border border-black p-2 flex flex-col items-center relative bg-white max-w-[340px] w-full shadow-sm hover:shadow-md transition-shadow group">
+      <span className="absolute top-1 right-2 bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-sm">#{idx + 1}</span>
       {canEditProposed && onDeleteAdjunto && (
         <button
           onClick={() => onDeleteAdjunto(img.AdjuntoId)}
@@ -119,16 +124,16 @@ const REG007PaperForm = ({
           <Trash2 size={14} />
         </button>
       )}
-      <img src={imgSrc(img.AdjuntoId)} className="h-[140px] max-w-full object-contain border border-gray-200" alt={`Etiqueta Modificada ${idx + 1}`} loading="eager" />
-      <span className="text-[8px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
+      <img src={imgSrc(img.AdjuntoId)} className="h-[200px] max-w-full object-contain border border-gray-200" alt={`Etiqueta Modificada ${idx + 1}`} loading="eager" />
+      <span className="text-[9px] mt-1.5 text-gray-500 font-black truncate max-w-full uppercase tracking-tighter text-center">{img.NombreArchivo}</span>
     </div>
   );
 
   const renderUploadCell = () => (
-    <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[210px] w-full h-[180px] active:scale-95 shadow-inner">
+    <label className="no-print border-2 border-dashed border-blue-400 bg-blue-50/20 hover:bg-blue-50 transition-all rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer max-w-[340px] w-full h-[230px] active:scale-95 shadow-inner">
       <input type="file" accept="image/jpeg,image/png,application/pdf" className="hidden" onChange={e => onUploadAdjunto(e, 'PROPUESTO')} />
       <div className="bg-blue-100 p-3 rounded-full mb-2"><Plus className="text-blue-600 animate-pulse" size={24} /></div>
-      <span className="text-[9px] font-black text-blue-700 uppercase tracking-wider text-center">Subir Etiqueta #{sistemasAdjuntos.length + 1}</span>
+      <span className="text-[10px] font-black text-blue-700 uppercase tracking-wider text-center">Subir Etiqueta #{sistemasAdjuntos.length + 1}</span>
       {uploadLoading && <Loader2 className="animate-spin text-blue-600 mt-2" size={16} />}
     </label>
   );
@@ -272,11 +277,11 @@ const REG007PaperForm = ({
             <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Suba capturas individuales de cada etiqueta del circuito (hasta {MAX_ETIQUETAS} entre las hojas 2 y 3)</p>
           </div>
 
-          {/* Grid de etiquetas (1 a 9 en esta hoja) */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 items-center justify-items-center">
-            {sistemasAdjuntos.slice(0, ETQ_POR_HOJA).map((img, idx) => renderEtiquetaCell(img, idx))}
+          {/* Grid de etiquetas — 2 columnas grandes; se agrupan desde arriba */}
+          <div className="grid grid-cols-2 gap-6 flex-1 content-start justify-items-center">
+            {etqPag2.map((img, idx) => renderEtiquetaCell(img, idx))}
 
-            {/* Caja de carga mientras haya menos de 9 en esta hoja */}
+            {/* Caja de carga mientras se llena esta hoja (solo en edición) */}
             {canEditProposed && sistemasAdjuntos.length < ETQ_POR_HOJA && renderUploadCell()}
 
             {/* Placeholder estético si está vacío en lectura */}
@@ -297,10 +302,10 @@ const REG007PaperForm = ({
             <h3 className="text-xs font-black uppercase tracking-widest text-gray-700">Etiquetas Técnicas Resultantes (Continuación)</h3>
             <p className="text-[8px] text-gray-500 italic mt-0.5 uppercase tracking-tighter">Etiquetas {ETQ_POR_HOJA + 1} a {MAX_ETIQUETAS} del circuito</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1 items-center justify-items-center">
-            {sistemasAdjuntos.slice(ETQ_POR_HOJA, MAX_ETIQUETAS).map((img, i) => renderEtiquetaCell(img, i + ETQ_POR_HOJA))}
+          <div className="grid grid-cols-2 gap-6 flex-1 content-start justify-items-center">
+            {etqPag3.map((img, i) => renderEtiquetaCell(img, i + cortePag2))}
             {canEditProposed && sistemasAdjuntos.length >= ETQ_POR_HOJA && sistemasAdjuntos.length < MAX_ETIQUETAS && renderUploadCell()}
-            {!canEditProposed && sistemasAdjuntos.length <= ETQ_POR_HOJA && (
+            {!canEditProposed && etqPag3.length === 0 && (
               <div className="col-span-full text-center py-16 text-gray-300 font-bold uppercase opacity-30 select-none border-2 border-dashed border-gray-100 p-10 rounded-xl">
                 Sin etiquetas adicionales
               </div>
