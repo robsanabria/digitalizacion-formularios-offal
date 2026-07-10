@@ -47,7 +47,8 @@ CREATE TABLE dbo.Solicitudes (
     FechaPresentacion      DATE             NULL,
     CodigoTwins            NVARCHAR(100)    NULL,
     CorrespondeSolicitud   NVARCHAR(100)    NULL,
-    TipoEtiqueta           NVARCHAR(MAX)    NULL                 -- JSON: ["Etiqueta Final", ...]
+    TipoEtiqueta           NVARCHAR(MAX)    NULL,                -- JSON: ["Etiqueta Final", ...]
+    ObservacionesSistemas  NVARCHAR(MAX)    NULL                 -- observaciones de Sistemas en el REG-007
 );
 
 /* ── Adjuntos (imágenes: formato original/propuesto, etiquetas resultantes) ── */

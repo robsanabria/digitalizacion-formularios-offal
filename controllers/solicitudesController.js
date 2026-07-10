@@ -269,6 +269,7 @@ const updateSolicitud = async (req, res) => {
             .input('codigoTwins', sql.NVarChar, b.codigoTwins)
             .input('correspondeSolicitud', sql.NVarChar, b.correspondeSolicitud)
             .input('motivo', sql.NVarChar, motivoJson)
+            .input('observacionesSistemas', sql.NVarChar, b.observacionesSistemas != null ? String(b.observacionesSistemas) : null)
             .input('estado', sql.NVarChar, nuevoEstado)
             .query(`
                 UPDATE Solicitudes
@@ -276,6 +277,7 @@ const updateSolicitud = async (req, res) => {
                     CodigoTwins = ISNULL(@codigoTwins, CodigoTwins),
                     CorrespondeSolicitud = ISNULL(@correspondeSolicitud, CorrespondeSolicitud),
                     Motivo = ISNULL(@motivo, Motivo),
+                    ObservacionesSistemas = ISNULL(@observacionesSistemas, ObservacionesSistemas),
                     Estado = ISNULL(@estado, Estado)
                 WHERE SolicitudId = @id
             `);
