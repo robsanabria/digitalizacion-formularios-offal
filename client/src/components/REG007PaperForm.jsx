@@ -33,6 +33,16 @@ const REG007PaperForm = ({
   const selectedImpresoras = parseArray(data.impresoras);
   const selectedTipoEtiqueta = parseArray(data.tipoEtiqueta);
 
+  // El "Motivo del cambio" también se puede editar desde el REG-SIS-007 (multi-selección).
+  const motivoEditable = !readOnly && typeof onChange === 'function';
+  const toggleMotivo = (option) => {
+    if (!motivoEditable) return;
+    const updated = selectedMotivos.includes(option)
+      ? selectedMotivos.filter(o => o !== option)
+      : [...selectedMotivos, option];
+    onChange('motivo', JSON.stringify(updated));
+  };
+
   // Formato original del REG-SIS-007: adjunto propio de tipo 'ORIGINAL_07' que sube
   // SISTEMAS. NO se toma del REG-SIS-011 (cuyo formato propuesto de Calidad es 'ORIGINAL').
   const formatoOriginal = (adjuntos || []).find(a => a.TipoAdjunto === 'ORIGINAL_07') || null;
@@ -83,8 +93,8 @@ const REG007PaperForm = ({
 
   const { sistemasFirma, firmaPropuesto, firmaImpresion, calidadNegativa } = parseHistorialFirmas();
 
-  const Checkbox = ({ label, checked }) => (
-    <div className="flex items-center gap-1.5">
+  const Checkbox = ({ label, checked, onClick }) => (
+    <div className={`flex items-center gap-1.5 ${onClick ? 'cursor-pointer select-none' : ''}`} onClick={onClick}>
       <div className={`w-3.5 h-3.5 border border-black flex items-center justify-center bg-white`}>
         {checked && <Check size={11} strokeWidth={4} className="text-black" />}
       </div>
@@ -164,10 +174,10 @@ const REG007PaperForm = ({
         {/* Row 2: Motivos */}
         <div className="flex border-b-[2px] border-black p-2 gap-4 items-center">
           <span className="text-[9px] font-bold mr-2">Motivo del cambio:</span>
-          <Checkbox label="SENASA" checked={selectedMotivos.includes('SENASA')} />
-          <Checkbox label="Nuevo producto" checked={selectedMotivos.includes('Nuevo producto')} />
-          <Checkbox label="Modificación de existente" checked={selectedMotivos.includes('Modificación de existente') || selectedMotivos.length === 0} />
-          <Checkbox label="Reactivación" checked={selectedMotivos.includes('Reactivación')} />
+          <Checkbox label="SENASA" checked={selectedMotivos.includes('SENASA')} onClick={motivoEditable ? () => toggleMotivo('SENASA') : undefined} />
+          <Checkbox label="Nuevo producto" checked={selectedMotivos.includes('Nuevo producto')} onClick={motivoEditable ? () => toggleMotivo('Nuevo producto') : undefined} />
+          <Checkbox label="Modificación de existente" checked={selectedMotivos.includes('Modificación de existente')} onClick={motivoEditable ? () => toggleMotivo('Modificación de existente') : undefined} />
+          <Checkbox label="Reactivación" checked={selectedMotivos.includes('Reactivación')} onClick={motivoEditable ? () => toggleMotivo('Reactivación') : undefined} />
         </div>
 
         {/* Row 3: Nombre Producto */}

@@ -261,17 +261,21 @@ const updateSolicitud = async (req, res) => {
         }
 
         const nuevoEstado = b.estado || 'REG-007-PENDIENTE-APROBACION';
+        // Motivo: editable también desde el REG-SIS-007 (Sistemas puede ajustar/agregar).
+        const motivoJson = b.motivo == null ? null : (typeof b.motivo === 'string' ? b.motivo : JSON.stringify(b.motivo));
         await pool.request()
             .input('id', sql.UniqueIdentifier, id)
             .input('fechaPresentacion', sql.Date, b.fechaPresentacion)
             .input('codigoTwins', sql.NVarChar, b.codigoTwins)
             .input('correspondeSolicitud', sql.NVarChar, b.correspondeSolicitud)
+            .input('motivo', sql.NVarChar, motivoJson)
             .input('estado', sql.NVarChar, nuevoEstado)
             .query(`
                 UPDATE Solicitudes
                 SET FechaPresentacion = ISNULL(@fechaPresentacion, FechaPresentacion),
                     CodigoTwins = ISNULL(@codigoTwins, CodigoTwins),
                     CorrespondeSolicitud = ISNULL(@correspondeSolicitud, CorrespondeSolicitud),
+                    Motivo = ISNULL(@motivo, Motivo),
                     Estado = ISNULL(@estado, Estado)
                 WHERE SolicitudId = @id
             `);
