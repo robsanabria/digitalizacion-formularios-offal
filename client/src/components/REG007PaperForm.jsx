@@ -328,6 +328,24 @@ const REG007PaperForm = ({
           </div>
         </div>
 
+        {/* Observaciones de Sistemas — el que completa el REG-SIS-007 (opcional). */}
+        <div className="border-b-[2px] border-black p-3 flex flex-col bg-white">
+          <span className="text-[8.5px] font-black uppercase tracking-wider text-gray-700">Observaciones de Sistemas:</span>
+          {(!readOnly && typeof onChange === 'function') ? (
+            <textarea
+              rows={3}
+              value={data.observacionesSistemas || ''}
+              onChange={e => onChange('observacionesSistemas', e.target.value)}
+              placeholder="Escribí acá una observación si es necesario…"
+              className="w-full text-[10px] p-2 mt-1 bg-blue-50/20 focus:bg-blue-50/50 border border-gray-200 rounded outline-none resize-y"
+            />
+          ) : (
+            <div className="text-[10px] p-2 font-bold italic text-gray-700 bg-gray-50 border border-gray-200 min-h-[40px] mt-1 whitespace-pre-wrap break-words">
+              {data.observacionesSistemas || '—'}
+            </div>
+          )}
+        </div>
+
         {/* Panel de Firmas y Trazabilidad */}
         <div className="grid grid-cols-3 text-[7.5px] font-bold">
           

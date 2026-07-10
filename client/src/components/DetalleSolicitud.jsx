@@ -81,6 +81,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
         estado: rawData.Estado,
         codigoTwins: rawData.CodigoTwins,
         correspondeSolicitud: rawData.CorrespondeSolicitud,
+        observacionesSistemas: rawData.ObservacionesSistemas,
         solicitanteNombre: rawData.SolicitanteNombre,
         rolSolicitante: rawData.RolSolicitante,
         fechaCreacion: rawData.FechaCreacion
@@ -119,7 +120,8 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
       setResponseData({
         fechaPresentacion: normalized.fechaPresentacion ? new Date(normalized.fechaPresentacion).toISOString().split('T')[0] : hoyLocal(),
         codigoTwins: normalized.codigoTwins || normalized.codigoProducto || '',
-        correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0, 8) || ''
+        correspondeSolicitud: normalized.correspondeSolicitud || normalized.solicitudId?.slice(0, 8) || '',
+        observacionesSistemas: normalized.observacionesSistemas || ''
       });
     } catch (err) {
       console.error('Error al cargar datos', err);

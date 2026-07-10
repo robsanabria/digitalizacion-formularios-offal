@@ -42,6 +42,19 @@ const poolPromise = sql.connect(dbConfig)
                 END
             `);
             console.log('✅ Columna TipoEtiqueta verificada/creada en la tabla Solicitudes');
+
+            // Observaciones que escribe Sistemas al completar el REG-SIS-007.
+            await pool.request().query(`
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns
+                    WHERE object_id = OBJECT_ID(N'[dbo].[Solicitudes]')
+                    AND name = 'ObservacionesSistemas'
+                )
+                BEGIN
+                    ALTER TABLE Solicitudes ADD ObservacionesSistemas NVARCHAR(MAX) NULL;
+                END
+            `);
+            console.log('✅ Columna ObservacionesSistemas verificada/creada en la tabla Solicitudes');
         } catch (err) {
             console.error('⚠️ Error al verificar columnas:', err.message);
         }
