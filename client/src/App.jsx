@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, PlusCircle, List, Activity, Settings, Users, LogOut, Eye, Printer, ChevronDown, FileText, FileCheck } from 'lucide-react';
+import { Activity, Settings, Eye, Printer } from 'lucide-react';
 import axios from 'axios';
 import NuevaSolicitud from './components/NuevaSolicitud';
 import DetalleSolicitud from './components/DetalleSolicitud';
@@ -8,16 +8,12 @@ import GestionUsuarios from './components/GestionUsuarios';
 import SolicitudesDataTable from './components/SolicitudesDataTable';
 import Topbar from './components/Topbar';
 import SoporteWidget from './components/SoporteWidget';
-import ThemeToggle from './components/ThemeToggle';
-// Quitamos el import estático para que el build no falle
-const logoEmpresa = "/logo.png"; 
 
 function App() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [solicitudesOpen, setSolicitudesOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUserMgmtOpen, setIsUserMgmtOpen] = useState(false);
   const [selectedSolicitudId, setSelectedSolicitudId] = useState(null);
@@ -28,7 +24,6 @@ function App() {
   // Estado(s) preseleccionado(s) para el data grid al navegar desde el dashboard.
   const [presetEstado, setPresetEstado] = useState([]);
 
-  const [logoError, setLogoError] = useState(false);
 
   const handleLogout = () => {
     window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
@@ -127,79 +122,17 @@ function App() {
     : solicitudes;
 
   return (
-    <div className="flex min-h-screen pb-20 md:pb-0">
-      {/* Sidebar */}
-      <aside className="w-64 glass-card m-4 mr-0 p-6 flex flex-col gap-8 hidden md:flex">
-        <div className="flex items-center gap-3">
-          <div className="p-1 bg-white rounded-lg overflow-hidden flex items-center justify-center w-12 h-12">
-            {!logoError ? (
-              <img 
-                src={logoEmpresa} 
-                alt="Logo" 
-                className="w-full h-full object-contain" 
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className="p-2 bg-primary w-full h-full flex items-center justify-center">
-                <Layout className="text-white" size={24} />
-              </div>
-            )}
-          </div>
-          <h1 className="font-bold text-xl tracking-tight">Control de Etiquetas</h1>
-        </div>
-
-        <nav className="flex flex-col gap-2">
-          <NavItem 
-            icon={<Activity size={20} />} 
-            label="Dashboard" 
-            active={activeTab === 'dashboard'} 
-            onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }}
-          />
-          {/* Grupo Solicitudes con submenús REG-SIS-011 / REG-SIS-007 */}
-          <div>
-            <NavItem
-              icon={<List size={20} />}
-              label="Solicitudes"
-              active={activeTab === 'reg11' || activeTab === 'reg07'}
-              onClick={() => setSolicitudesOpen(o => !o)}
-              trailing={<ChevronDown size={16} className={`transition-transform duration-300 ${solicitudesOpen ? 'rotate-180' : ''}`} />}
-            />
-            {solicitudesOpen && (
-              <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-black/10 dark:border-white/10 pl-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                <NavItem
-                  icon={<FileText size={18} />}
-                  label="REG-SIS-011"
-                  active={activeTab === 'reg11'}
-                  onClick={() => { switchTab('reg11'); }}
-                />
-                <NavItem
-                  icon={<FileCheck size={18} />}
-                  label="REG-SIS-007"
-                  active={activeTab === 'reg07'}
-                  onClick={() => { switchTab('reg07'); }}
-                />
-              </div>
-            )}
-          </div>
-          {user?.Rol === 'CALIDAD' && (
-            <NavItem 
-              icon={<PlusCircle size={20} />} 
-              label="Nueva Solicitud" 
-              onClick={() => setIsModalOpen(true)} 
-            />
-          )}
-        </nav>
-
-        <ThemeToggle />
-      </aside>
+    <div className="min-h-screen">
 
       {/* Main Content */}
-      <main className="flex-1 w-full overflow-x-hidden flex flex-col min-w-0">
+      <main className="w-full overflow-x-hidden flex flex-col min-w-0">
         {/* Topbar global */}
         <Topbar
           user={user}
           solicitudes={solicitudes}
           pendientes={misPendientes}
+          activeTab={activeTab}
+          onNavigate={switchTab}
           onOpenDetail={(id, f) => openDetail(id, f)}
           onNuevaSolicitud={() => setIsModalOpen(true)}
           onGestionUsuarios={() => setIsUserMgmtOpen(true)}
@@ -354,35 +287,6 @@ function App() {
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-card m-0 rounded-t-2xl rounded-b-none border-t border-border flex justify-around items-center p-2 z-40 pb-4">
-        <button onClick={() => { setActiveTab('dashboard'); setIsModalOpen(false); setIsDetailOpen(false); }} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-primary' : 'text-text-muted'}`}>
-          <Activity size={20} />
-          <span className="text-[10px] mt-1 font-medium">Dashboard</span>
-        </button>
-        <button onClick={() => { switchTab('reg11'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg11' ? 'text-primary' : 'text-text-muted'}`}>
-          <FileText size={20} />
-          <span className="text-[10px] mt-1 font-medium">REG-SIS-011</span>
-        </button>
-        <button onClick={() => { switchTab('reg07'); }} className={`flex flex-col items-center p-2 ${activeTab === 'reg07' ? 'text-primary' : 'text-text-muted'}`}>
-          <FileCheck size={20} />
-          <span className="text-[10px] mt-1 font-medium">REG-SIS-007</span>
-        </button>
-        <button onClick={() => setIsModalOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
-          <PlusCircle size={20} />
-          <span className="text-[10px] mt-1 font-medium">Nueva</span>
-        </button>
-        {user && user.Rol === 'ADMIN' && (
-          <button onClick={() => setIsUserMgmtOpen(true)} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
-            <Users size={20} />
-            <span className="text-[10px] mt-1 font-medium">Usuarios</span>
-          </button>
-        )}
-        <button onClick={handleLogout} className="flex flex-col items-center p-2 text-text-muted hover:text-primary transition-colors">
-          <LogOut size={20} />
-          <span className="text-[10px] mt-1 font-medium">Salir</span>
-        </button>
-      </nav>
 
       <GestionUsuarios
         isOpen={isUserMgmtOpen}
@@ -395,32 +299,6 @@ function App() {
   );
 }
 
-function NavItem({ icon, label, active = false, onClick, className = "", trailing = null }) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.03, x: 6 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer select-none transition-all duration-300 relative overflow-hidden group ${
-        active
-          ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary border border-primary/30 shadow-[0_4px_20px_rgba(99,102,241,0.25)]'
-          : 'text-text-muted hover:bg-black/[0.04] dark:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-      } ${className}`}
-    >
-      {active && (
-        <motion.div
-          layoutId="activeIndicator"
-          className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-indigo-400 rounded-r-md"
-        />
-      )}
-      <div className={`transition-transform duration-300 group-hover:scale-110 ${active ? 'text-primary' : 'text-text-muted group-hover:text-slate-900 dark:hover:text-white'}`}>
-        {icon}
-      </div>
-      <span className="font-semibold text-sm tracking-wide">{label}</span>
-      {trailing && <span className="ml-auto">{trailing}</span>}
-    </motion.div>
-  );
-}
 
 const ESTADO_META = {
   'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' },

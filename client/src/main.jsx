@@ -5,10 +5,11 @@ import App from './App.jsx'
 import PrintView from './PrintView.jsx'
 import { ToastProvider } from './components/Toast'
 
-// Aplicar el tema guardado (claro por defecto) antes de renderizar, para evitar parpadeo.
+// Aplicar el tema antes de renderizar, para evitar parpadeo.
+// Identidad Offal: navy (oscuro) por defecto; solo modo claro si el usuario lo eligió.
 try {
-  if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
-} catch { /* noop */ }
+  if (localStorage.getItem('theme') !== 'light') document.documentElement.classList.add('dark');
+} catch { document.documentElement.classList.add('dark'); }
 
 // Ruta interna de impresión (la usa Puppeteer para generar el PDF).
 const isPrint = window.location.pathname.startsWith('/print/');

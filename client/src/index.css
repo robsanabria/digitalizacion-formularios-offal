@@ -69,42 +69,43 @@ body {
   box-shadow: 0 8px 24px 0 rgba(15, 23, 42, 0.08);
 }
 
-/* ─────────── MODO OSCURO (toggle) — restaura la paleta anterior ─────────── */
+/* ─────────── MODO OSCURO navy (predeterminado) — identidad Offal ─────────── */
+/* Paleta compartida con Control de Lavados: navy #0a1124 + índigo #6366f1 + cian #26b6d9. */
 :root.dark {
   --primary: #6366f1;
   --primary-hover: #4f46e5;
-  --secondary: #ec4899;
-  --bg-dark: #0f172a;
-  --bg-card: rgba(30, 41, 59, 0.7);
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(255, 255, 255, 0.1);
+  --secondary: #26b6d9;
+  --bg-dark: #0a1124;
+  --bg-card: rgba(17, 26, 47, 0.72);
+  --text-main: #e8edf5;
+  --text-muted: #8a97ad;
+  --border: rgba(255, 255, 255, 0.09);
   --glass: rgba(255, 255, 255, 0.05);
 
-  --sh-background: 222 47% 11%;
-  --sh-foreground: 210 40% 98%;
-  --sh-card: 222 33% 15%;
-  --sh-card-foreground: 210 40% 98%;
-  --sh-popover: 222 40% 13%;
-  --sh-popover-foreground: 210 40% 98%;
+  --sh-background: 224 57% 9%;
+  --sh-foreground: 213 33% 93%;
+  --sh-card: 222 47% 13%;
+  --sh-card-foreground: 213 33% 93%;
+  --sh-popover: 222 44% 12%;
+  --sh-popover-foreground: 213 33% 93%;
   --sh-primary: 239 84% 67%;
   --sh-primary-foreground: 0 0% 100%;
-  --sh-secondary: 217 33% 18%;
-  --sh-secondary-foreground: 210 40% 98%;
-  --sh-muted: 217 33% 18%;
-  --sh-muted-foreground: 215 20% 65%;
-  --sh-accent: 217 33% 22%;
-  --sh-accent-foreground: 210 40% 98%;
-  --sh-destructive: 0 72% 51%;
+  --sh-secondary: 218 35% 18%;
+  --sh-secondary-foreground: 213 33% 93%;
+  --sh-muted: 218 35% 18%;
+  --sh-muted-foreground: 215 18% 60%;
+  --sh-accent: 218 35% 22%;
+  --sh-accent-foreground: 213 33% 93%;
+  --sh-destructive: 3 72% 60%;
   --sh-destructive-foreground: 210 40% 98%;
-  --sh-border: 217 33% 24%;
-  --sh-input: 217 33% 24%;
+  --sh-border: 218 35% 21%;
+  --sh-input: 218 35% 21%;
   --sh-ring: 239 84% 67%;
 }
 :root.dark body {
   background-image:
     radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(236, 72, 153, 0.10) 0%, transparent 50%);
+    radial-gradient(circle at 100% 100%, rgba(38, 182, 217, 0.10) 0%, transparent 50%);
 }
 :root.dark .glass-card {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
