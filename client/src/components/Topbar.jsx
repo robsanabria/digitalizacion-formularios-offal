@@ -99,7 +99,7 @@ export default function Topbar({
 
       {/* Marca */}
       <div className="flex items-center gap-2 shrink-0">
-        <div className="p-1 bg-white rounded-md w-8 h-8 flex items-center justify-center overflow-hidden">
+        <div className="p-1 bg-white rounded-full w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
           <img src="/logo.png" alt="Offal" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
         <span className="font-bold text-sm md:text-base whitespace-nowrap">Control de Etiquetas</span>
