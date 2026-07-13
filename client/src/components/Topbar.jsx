@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Search, Bell, Settings, Users, LogOut, Plus, ChevronDown, Layout, FileText, FileCheck } from 'lucide-react';
+import { Search, Bell, Settings, Users, LogOut, Plus, ChevronDown, Menu, Activity, FileText, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -109,24 +109,63 @@ function Notifications({ pendientes = [] }) {
   );
 }
 
+// ── Menú de secciones (reemplaza al sidebar): navegación principal ──
+function SeccionesMenu({ activeTab, onNavigate, esCalidad, onNuevaSolicitud }) {
+  const item = (tab) => cn('gap-2', activeTab === tab && 'text-primary font-semibold');
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Menú de secciones">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel>Secciones</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className={item('dashboard')} onClick={() => onNavigate('dashboard')}>
+          <Activity className="h-4 w-4" /> Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem className={item('reg11')} onClick={() => onNavigate('reg11')}>
+          <FileText className="h-4 w-4" /> REG-SIS-011
+        </DropdownMenuItem>
+        <DropdownMenuItem className={item('reg07')} onClick={() => onNavigate('reg07')}>
+          <FileCheck className="h-4 w-4" /> REG-SIS-007
+        </DropdownMenuItem>
+        {esCalidad && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2" onClick={onNuevaSolicitud}>
+              <Plus className="h-4 w-4" /> Nueva Solicitud
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function Topbar({
-  user, solicitudes = [], pendientes = [],
+  user, solicitudes = [], pendientes = [], activeTab, onNavigate = () => {},
   onOpenDetail, onNuevaSolicitud, onGestionUsuarios, onConfig, onLogout,
 }) {
   const esCalidad = user?.Rol === 'CALIDAD' || user?.Rol === 'ADMIN';
   const esAdmin = user?.Rol === 'ADMIN';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-8 h-16 border-b border-border bg-background/80 backdrop-blur-md">
-      {/* Marca (solo mobile, donde el sidebar está oculto) */}
-      <div className="md:hidden flex items-center gap-2 shrink-0">
-        <div className="p-1 bg-white rounded-md w-8 h-8 flex items-center justify-center">
-          <Layout className="text-primary" size={18} />
+    <header className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-6 h-16 border-b border-border bg-background/80 backdrop-blur-md">
+      {/* Navegación principal (menú de secciones) */}
+      <SeccionesMenu activeTab={activeTab} onNavigate={onNavigate} esCalidad={esCalidad} onNuevaSolicitud={onNuevaSolicitud} />
+
+      {/* Marca */}
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="p-1 bg-white rounded-md w-8 h-8 flex items-center justify-center overflow-hidden">
+          <img src="/logo.png" alt="Offal" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
+        <span className="hidden sm:block font-bold text-sm md:text-base whitespace-nowrap">Control de Etiquetas</span>
       </div>
 
       {/* Buscador global */}
-      <div className="flex-1 flex justify-start">
+      <div className="flex-1 flex justify-center px-1">
         <GlobalSearch solicitudes={solicitudes} onOpenDetail={onOpenDetail} />
       </div>
 
