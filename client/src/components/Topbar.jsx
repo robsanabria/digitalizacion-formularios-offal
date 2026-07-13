@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Search, Bell, Settings, Users, LogOut, Plus, ChevronDown, Menu, Activity, FileText, FileCheck } from 'lucide-react';
+import React from 'react';
+import { Bell, Settings, Users, LogOut, Plus, ChevronDown, Menu, Activity, FileText, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -13,66 +13,12 @@ const iniciales = (nombre = '') => {
   return (nombre || '?').slice(0, 2).toUpperCase();
 };
 
-const focusFor = (estado) =>
-  (estado === 'REG-007-PENDIENTE-APROBACION' || estado === 'APROBADO' || estado === 'RECHAZADO')
-    ? 'REG007' : 'REG011';
-
-// ── Buscador global ──
-function GlobalSearch({ solicitudes, onOpenDetail }) {
-  const [q, setQ] = useState('');
-  const [open, setOpen] = useState(false);
-  const blurTimer = useRef(null);
-
-  const matches = q.trim().length >= 2
-    ? solicitudes.filter((s) => {
-        const t = q.toLowerCase();
-        return [s.NombreProducto, s.CodigoProducto, s.CodigoTwins, s.Motivo]
-          .filter(Boolean).some((v) => String(v).toLowerCase().includes(t));
-      }).slice(0, 6)
-    : [];
-
-  const pick = (s) => {
-    onOpenDetail(s.SolicitudId, focusFor(s.Estado));
-    setQ('');
-    setOpen(false);
-  };
-
-  return (
-    <div className="relative w-full max-w-md"
-      onBlur={() => { blurTimer.current = setTimeout(() => setOpen(false), 120); }}
-      onFocus={() => { if (blurTimer.current) clearTimeout(blurTimer.current); setOpen(true); }}
-    >
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <input
-        value={q}
-        onChange={(e) => { setQ(e.target.value); setOpen(true); }}
-        placeholder="Buscar solicitud, producto, código..."
-        className="w-full h-9 rounded-lg border border-border bg-card/60 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
-      />
-      {open && q.trim().length >= 2 && (
-        <div className="absolute left-0 right-0 top-11 z-50 rounded-lg border border-border bg-popover shadow-xl overflow-hidden">
-          {matches.length === 0 ? (
-            <div className="px-4 py-3 text-xs text-muted-foreground">Sin resultados para “{q}”.</div>
-          ) : matches.map((s) => (
-            <button
-              key={s.SolicitudId}
-              onMouseDown={(e) => { e.preventDefault(); pick(s); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors"
-            >
-              {focusFor(s.Estado) === 'REG007'
-                ? <FileCheck className="h-4 w-4 text-blue-400 shrink-0" />
-                : <FileText className="h-4 w-4 text-amber-400 shrink-0" />}
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-foreground truncate">{s.NombreProducto || 'Sin nombre'}</div>
-                <div className="text-[11px] text-muted-foreground truncate">{s.CodigoProducto || s.CodigoTwins || s.Estado}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+// Secciones: en línea en desktop, hamburguesa en mobile.
+const SECCIONES = [
+  { key: 'dashboard', label: 'Dashboard', icon: Activity },
+  { key: 'reg11', label: 'REG-011', icon: FileText },
+  { key: 'reg07', label: 'REG-007', icon: FileCheck },
+];
 
 // ── Notificaciones (pendientes de mi acción) ──
 function Notifications({ pendientes = [] }) {
@@ -109,65 +55,76 @@ function Notifications({ pendientes = [] }) {
   );
 }
 
-// ── Menú de secciones (reemplaza al sidebar): navegación principal ──
-function SeccionesMenu({ activeTab, onNavigate, esCalidad, onNuevaSolicitud }) {
-  const item = (tab) => cn('gap-2', activeTab === tab && 'text-primary font-semibold');
+// ── Menú de secciones (solo mobile → hamburguesa) ──
+function SeccionesMobile({ activeTab, onNavigate, esCalidad, onNuevaSolicitud }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Menú de secciones">
-          <Menu className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>Secciones</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className={item('dashboard')} onClick={() => onNavigate('dashboard')}>
-          <Activity className="h-4 w-4" /> Dashboard
-        </DropdownMenuItem>
-        <DropdownMenuItem className={item('reg11')} onClick={() => onNavigate('reg11')}>
-          <FileText className="h-4 w-4" /> REG-SIS-011
-        </DropdownMenuItem>
-        <DropdownMenuItem className={item('reg07')} onClick={() => onNavigate('reg07')}>
-          <FileCheck className="h-4 w-4" /> REG-SIS-007
-        </DropdownMenuItem>
-        {esCalidad && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2" onClick={onNuevaSolicitud}>
-              <Plus className="h-4 w-4" /> Nueva Solicitud
+    <div className="md:hidden">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Menú de secciones">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          {SECCIONES.map((s) => (
+            <DropdownMenuItem key={s.key} className={cn('gap-2', activeTab === s.key && 'text-primary font-semibold')} onClick={() => onNavigate(s.key)}>
+              <s.icon className="h-4 w-4" /> {s.label}
             </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          ))}
+          {esCalidad && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2" onClick={onNuevaSolicitud}>
+                <Plus className="h-4 w-4" /> Nueva Solicitud
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
 export default function Topbar({
-  user, solicitudes = [], pendientes = [], activeTab, onNavigate = () => {},
-  onOpenDetail, onNuevaSolicitud, onGestionUsuarios, onConfig, onLogout,
+  user, pendientes = [], activeTab, onNavigate = () => {},
+  onNuevaSolicitud, onGestionUsuarios, onConfig, onLogout,
 }) {
   const esCalidad = user?.Rol === 'CALIDAD' || user?.Rol === 'ADMIN';
   const esAdmin = user?.Rol === 'ADMIN';
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-6 h-16 border-b border-border bg-background/80 backdrop-blur-md">
-      {/* Navegación principal (menú de secciones) */}
-      <SeccionesMenu activeTab={activeTab} onNavigate={onNavigate} esCalidad={esCalidad} onNuevaSolicitud={onNuevaSolicitud} />
+      {/* Navegación mobile (hamburguesa) */}
+      <SeccionesMobile activeTab={activeTab} onNavigate={onNavigate} esCalidad={esCalidad} onNuevaSolicitud={onNuevaSolicitud} />
 
       {/* Marca */}
       <div className="flex items-center gap-2 shrink-0">
         <div className="p-1 bg-white rounded-md w-8 h-8 flex items-center justify-center overflow-hidden">
           <img src="/logo.png" alt="Offal" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         </div>
-        <span className="hidden sm:block font-bold text-sm md:text-base whitespace-nowrap">Control de Etiquetas</span>
+        <span className="font-bold text-sm md:text-base whitespace-nowrap">Control de Etiquetas</span>
       </div>
 
-      {/* Buscador global */}
-      <div className="flex-1 flex justify-center px-1">
-        <GlobalSearch solicitudes={solicitudes} onOpenDetail={onOpenDetail} />
-      </div>
+      {/* Menús en línea: solo desktop */}
+      <nav className="hidden md:flex items-center gap-1 ml-3">
+        {SECCIONES.map((s) => {
+          const activo = activeTab === s.key;
+          return (
+            <button
+              key={s.key}
+              onClick={() => onNavigate(s.key)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                activo ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+              )}
+            >
+              <s.icon className="h-4 w-4" /> {s.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="flex-1" />
 
       {/* Acciones derecha */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -179,7 +136,7 @@ export default function Topbar({
 
         <Notifications pendientes={pendientes} />
 
-        {/* Menú de usuario */}
+        {/* Chip de usuario (avatar + nombre + rol). Menú: Configuración / Usuarios. */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-accent transition-colors">
@@ -193,7 +150,7 @@ export default function Topbar({
               <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuContent align="end" className="w-56">
             <div className="px-2 py-2">
               <p className="text-sm font-semibold text-foreground truncate">{user?.NombreUsuario || '—'}</p>
               <p className="text-[11px] text-muted-foreground">Rol: <span className="text-primary font-bold">{user?.Rol || '—'}</span></p>
@@ -212,12 +169,13 @@ export default function Topbar({
                 <Users className="h-4 w-4" /> Gestionar usuarios
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onLogout} className="text-red-400 focus:text-red-400">
-              <LogOut className="h-4 w-4" /> Cerrar sesión
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Cerrar sesión: visible (como proveedores) */}
+        <Button variant="outline" size="sm" onClick={onLogout} className="gap-2">
+          <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Cerrar sesión</span>
+        </Button>
       </div>
     </header>
   );
