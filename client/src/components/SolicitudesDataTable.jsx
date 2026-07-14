@@ -37,6 +37,18 @@ const ESTADO_META = {
 };
 const estadoLabel = (e) => ESTADO_META[e]?.label || e;
 
+// El Motivo se guarda como array en JSON (p.ej. '["SENASA"]'); a veces quedó
+// vacío o doble-anidado ('[[]]'). Lo mostramos legible, separado por " / ".
+function motivosLegibles(val) {
+  if (val == null || val === '') return '';
+  let parsed = val;
+  if (typeof val === 'string') {
+    try { parsed = JSON.parse(val); } catch { return val; }
+  }
+  const flat = Array.isArray(parsed) ? parsed.flat(Infinity) : [parsed];
+  return flat.filter((x) => x != null && String(x).trim() !== '').map(String).join(' / ');
+}
+
 function EstadoPill({ estado }) {
   const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-white/10 dark:text-white/70 dark:border-white/20' };
   return (
@@ -127,7 +139,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
       header: 'Motivo',
       enableSorting: false,
       cell: ({ row }) => (
-        <span className="text-muted-foreground text-sm line-clamp-1 max-w-[260px]">{row.original.Motivo || '—'}</span>
+        <span className="text-muted-foreground text-sm line-clamp-1 max-w-[260px]">{motivosLegibles(row.original.Motivo) || '—'}</span>
       ),
     },
     {
@@ -384,7 +396,7 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
                 <span className="font-bold text-foreground">{s.NombreProducto || 'Sin nombre'}</span>
                 <EstadoPill estado={s.Estado} />
               </div>
-              {s.Motivo && <span className="text-xs text-muted-foreground line-clamp-2">{s.Motivo}</span>}
+              {motivosLegibles(s.Motivo) && <span className="text-xs text-muted-foreground line-clamp-2">{motivosLegibles(s.Motivo)}</span>}
               <div className="flex items-center justify-between mt-1">
                 <span className="text-[11px] text-muted-foreground">{fechaRelativa(getFecha(s))}</span>
                 <span className="flex items-center gap-1">
