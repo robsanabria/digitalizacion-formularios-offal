@@ -7,6 +7,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
+// Portal / index general de Offal (el logo lleva ahí). Cambiar si el portal muda de dominio.
+const PORTAL_URL = 'https://offal-hsb3c0gebjgbfmae.eastus-01.azurewebsites.net';
+
 const iniciales = (nombre = '') => {
   const parts = String(nombre).trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -99,9 +102,9 @@ export default function Topbar({
 
       {/* Marca */}
       <div className="flex items-center gap-2 shrink-0">
-        <div className="p-1 bg-white rounded-full w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+        <a href={PORTAL_URL} title="Ir al inicio de Offal" className="p-1 bg-white rounded-full w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
           <img src="/logo.png" alt="Offal" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-        </div>
+        </a>
         <span className="font-bold text-sm md:text-base whitespace-nowrap">Control de Etiquetas</span>
       </div>
 
