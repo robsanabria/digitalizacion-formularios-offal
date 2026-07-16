@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Settings, Users, LogOut, Plus, ChevronDown, Menu, Activity, FileText, FileCheck } from 'lucide-react';
+import { Bell, Settings, Users, LogOut, Plus, ChevronDown, Menu, Activity, FileText, FileCheck, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
@@ -131,6 +131,11 @@ export default function Topbar({
 
       {/* Acciones derecha */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Botón Inicio: vuelve al portal general de Offal */}
+        <Button variant="ghost" size="sm" asChild className="gap-2 text-muted-foreground hover:text-foreground">
+          <a href={PORTAL_URL} title="Ir al inicio de Offal"><Home className="h-4 w-4" /> <span className="hidden md:inline">Inicio</span></a>
+        </Button>
+
         {esCalidad && (
           <Button onClick={onNuevaSolicitud} className="hidden sm:inline-flex" size="sm">
             <Plus className="h-4 w-4" /> Nueva Solicitud
