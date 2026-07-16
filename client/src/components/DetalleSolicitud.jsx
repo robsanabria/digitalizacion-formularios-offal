@@ -238,12 +238,24 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     }
   };
 
+  // Cuenta cuántos "motivos del cambio" hay (array o string JSON).
+  const contarMotivos = (v) => {
+    if (v == null || v === '') return 0;
+    let parsed = v;
+    if (typeof v === 'string') { try { parsed = JSON.parse(v); } catch { return v.trim() ? 1 : 0; } }
+    if (!Array.isArray(parsed)) return String(parsed).trim() ? 1 : 0;
+    return parsed.flat(Infinity).filter((x) => x != null && String(x).trim() !== '').length;
+  };
+
   const handleSystemsResponse = async () => {
     // Validación REG-SIS-007: campos obligatorios + al menos una etiqueta propuesta.
     const faltan = [];
     if (!responseData.fechaPresentacion?.trim?.()) faltan.push('Fecha de presentación');
     if (!responseData.codigoTwins?.trim?.()) faltan.push('Código TWINS');
     if (!responseData.correspondeSolicitud?.trim?.()) faltan.push('Corresponde a Solicitud');
+    // Motivo del cambio: se toma el editado (responseData) o el que ya traía la solicitud.
+    const motivoActual = responseData.motivo ?? solicitud?.motivo;
+    if (contarMotivos(motivoActual) === 0) faltan.push('Motivo del cambio (al menos uno)');
     const tieneEtiqueta = adjuntos.some(a => a.TipoAdjunto === 'PROPUESTO');
     if (!tieneEtiqueta) faltan.push('al menos una etiqueta técnica (subir en el REG-SIS-007)');
     if (faltan.length > 0) {
@@ -379,9 +391,15 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
   const chkPropuesto = Array.isArray(historial) && historial.some(h => (h.Accion || '').includes('Chequeo con formato propuesto aprobado'));
   const chkImpresion = Array.isArray(historial) && historial.some(h => (h.Accion || '').includes('Chequeo en punto de impresión aprobado'));
 
+  // Click en el fondo negro cierra la ventana (como la "X"). Si Sistemas está
+  // respondiendo el 007 o Calidad editando el 011, no se cierra para no perder lo cargado.
+  const handleBackdropClick = () => {
+    if (!isResponding && !isEditing011) onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md">
-      <div className="bg-[#f3f4f6] w-full max-w-5xl h-full shadow-2xl relative overflow-y-auto flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-md" onClick={handleBackdropClick}>
+      <div className="bg-[#f3f4f6] w-full max-w-5xl h-full shadow-2xl relative overflow-y-auto flex flex-col" onClick={(e) => e.stopPropagation()}>
 
         {/* Toolbar Superior */}
         <div className="bg-white border-b border-gray-300 p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print">

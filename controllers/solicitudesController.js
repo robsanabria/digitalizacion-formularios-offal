@@ -374,7 +374,7 @@ const getAdjuntosBySolicitud = async (req, res) => {
         if (!pool) throw new Error('No hay conexión con la base de datos');
         const result = await pool.request()
             .input('solicitudId', sql.UniqueIdentifier, id)
-            .query('SELECT * FROM Adjuntos WHERE SolicitudId = @solicitudId');
+            .query('SELECT * FROM Adjuntos WHERE SolicitudId = @solicitudId ORDER BY FechaCarga ASC, AdjuntoId ASC');
 
         res.json(result.recordset);
     } catch (err) {
