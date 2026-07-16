@@ -870,14 +870,14 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="relative w-full max-w-md bg-slate-900/95 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-md overflow-hidden"
             >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-indigo-500" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-[#e11f46]" />
 
               <div className="flex items-center gap-3 mb-4">
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#e11f46] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#c7163a]"></span>
                 </span>
-                <h3 className="font-extrabold text-sm uppercase tracking-wider text-indigo-300">
+                <h3 className="font-extrabold text-sm uppercase tracking-wider text-[#e11f46]">
                   {confirmConfig.title}
                 </h3>
               </div>
@@ -897,7 +897,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
                     value={confirmComment}
                     onChange={(e) => setConfirmComment(e.target.value)}
                     placeholder="Escribí el motivo..."
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#c7163a] resize-none"
                   />
                 </div>
               )}
@@ -961,7 +961,7 @@ const stepStatuses = (estado) => {
 
 const STEP_STYLES = {
   done:   { circle: 'bg-emerald-500 text-white border-emerald-500', label: 'text-emerald-700' },
-  active: { circle: 'bg-indigo-600 text-white border-indigo-600 ring-4 ring-indigo-200 animate-pulse', label: 'text-indigo-700' },
+  active: { circle: 'bg-[#c7163a] text-white border-[#c7163a] ring-4 ring-red-200 animate-pulse', label: 'text-[#c7163a]' },
   warn:   { circle: 'bg-orange-500 text-white border-orange-500', label: 'text-orange-700' },
   error:  { circle: 'bg-rose-600 text-white border-rose-600', label: 'text-rose-700' },
   todo:   { circle: 'bg-white text-gray-400 border-gray-300', label: 'text-gray-400' },
