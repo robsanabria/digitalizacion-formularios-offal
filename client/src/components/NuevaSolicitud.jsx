@@ -28,7 +28,8 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
     faja: '',
     codigoExterno: '',
     comentariosSolicitante: '',
-    cambioSolicitado: ''
+    cambioSolicitado: '',
+    prioridad: 2
   });
 
   const [files, setFiles] = useState([]);
@@ -149,6 +150,20 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
           </div>
 
           <div className="max-h-[70vh] overflow-y-auto px-2">
+            {/* Prioridad (la asigna Calidad; editable luego desde el detalle). */}
+            <div className="px-4 mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Prioridad</label>
+              <select
+                value={formData.prioridad}
+                onChange={(e) => handleFieldChange('prioridad', Number(e.target.value))}
+                className="w-full md:w-56 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value={1}>Alta</option>
+                <option value={2}>Media</option>
+                <option value={3}>Baja</option>
+              </select>
+            </div>
+
             {/* El "Formato Original" se carga con la caja "+" dentro del propio
                 formulario (misma experiencia que el REG-SIS-007). El archivo queda
                 local y se sube al crear la solicitud. */}

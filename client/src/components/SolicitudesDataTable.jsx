@@ -58,6 +58,21 @@ function EstadoPill({ estado }) {
   );
 }
 
+// ── Prioridad (1=Alta, 2=Media, 3=Baja) ──
+const PRIORIDAD_META = {
+  1: { label: 'Alta', cls: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30' },
+  2: { label: 'Media', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30' },
+  3: { label: 'Baja', cls: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-white/10 dark:text-white/70 dark:border-white/20' },
+};
+function PrioridadPill({ prioridad }) {
+  const meta = PRIORIDAD_META[Number(prioridad)] || PRIORIDAD_META[2];
+  return (
+    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap', meta.cls)}>
+      {meta.label}
+    </span>
+  );
+}
+
 // Fecha relativa simple en español
 function fechaRelativa(value) {
   if (!value) return '—';
@@ -147,6 +162,12 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
       header: ({ column }) => <SortHeader column={column}>Estado</SortHeader>,
       filterFn: estadoFilterFn,
       cell: ({ row }) => <EstadoPill estado={row.original.Estado} />,
+    },
+    {
+      accessorKey: 'Prioridad',
+      header: ({ column }) => <SortHeader column={column}>Prioridad</SortHeader>,
+      sortingFn: (a, b) => (Number(a.original.Prioridad) || 2) - (Number(b.original.Prioridad) || 2),
+      cell: ({ row }) => <PrioridadPill prioridad={row.original.Prioridad} />,
     },
     {
       id: 'fecha',
@@ -394,7 +415,10 @@ export default function SolicitudesDataTable({ data, focus = 'REG011', onOpen, o
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="font-bold text-foreground">{s.NombreProducto || 'Sin nombre'}</span>
-                <EstadoPill estado={s.Estado} />
+                <span className="flex items-center gap-1.5 flex-shrink-0">
+                  <PrioridadPill prioridad={s.Prioridad} />
+                  <EstadoPill estado={s.Estado} />
+                </span>
               </div>
               {motivosLegibles(s.Motivo) && <span className="text-xs text-muted-foreground line-clamp-2">{motivosLegibles(s.Motivo)}</span>}
               <div className="flex items-center justify-between mt-1">

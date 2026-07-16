@@ -40,11 +40,14 @@ const createSolicitud = async (req, res) => {
         fechaSolicitud, sectorSolicitante, motivo, nombreProducto, codigoProducto,
         destino, vidaUtil, codigoSenasa, impresoras, tara, pesoMinimo, pesoMaximo,
         pesoEstandar, numCaja, faja, codigoExterno, comentariosSolicitante, cambioSolicitado,
-        tipoEtiqueta
+        tipoEtiqueta, prioridad
     } = req.body;
 
     const solicitadoPor = req.user.UsuarioId;
     const rolSolicitante = req.user.Rol;
+
+    // Prioridad: 1=Alta, 2=Media, 3=Baja. Si no viene o es inválida, Media.
+    const prioridadNum = [1, 2, 3].includes(Number(prioridad)) ? Number(prioridad) : 2;
 
     // Validación: todos los campos del REG-SIS-011 son obligatorios.
     const tieneTexto = (v) => v != null && String(v).trim() !== '';
@@ -99,19 +102,20 @@ const createSolicitud = async (req, res) => {
             .input('comentariosSolicitante', sql.NVarChar, comentariosSolicitante)
             .input('cambioSolicitado', sql.NVarChar, cambioSolicitado)
             .input('estado', sql.NVarChar, estadoInicial)
+            .input('prioridad', sql.Int, prioridadNum)
             .query(`
                 INSERT INTO Solicitudes (
                     SolicitadoPor, RolSolicitante, FechaSolicitud, SectorSolicitante, Motivo,
                     NombreProducto, CodigoProducto, Destino, VidaUtil, CodigoSenasa,
                     Impresoras, TipoEtiqueta, Tara, PesoMinimo, PesoMaximo, PesoEstandar,
-                    NumCaja, Faja, CodigoExterno, ComentariosSolicitante, CambioSolicitado, Estado
+                    NumCaja, Faja, CodigoExterno, ComentariosSolicitante, CambioSolicitado, Estado, Prioridad
                 )
                 OUTPUT INSERTED.SolicitudId
                 VALUES (
                     @solicitadoPor, @rolSolicitante, @fechaSolicitud, @sectorSolicitante, @motivo,
                     @nombreProducto, @codigoProducto, @destino, @vidaUtil, @codigoSenasa,
                     @impresoras, @tipoEtiqueta, @tara, @pesoMinimo, @pesoMaximo, @pesoEstandar,
-                    @numCaja, @faja, @codigoExterno, @comentariosSolicitante, @cambioSolicitado, @estado
+                    @numCaja, @faja, @codigoExterno, @comentariosSolicitante, @cambioSolicitado, @estado, @prioridad
                 )
             `);
 
@@ -821,11 +825,69 @@ const deleteAdjunto = async (req, res) => {
     }
 };
 
+const PRIORIDAD_LABELS = { 1: 'Alta', 2: 'Media', 3: 'Baja' };
+
+/** POST /:id/prioridad — cambia la prioridad (1-3) y lo deja asentado en el historial. */
+const cambiarPrioridad = async (req, res) => {
+    const { id } = req.params;
+    const { prioridad } = req.body;
+    const usuarioId = req.user.UsuarioId;
+
+    const nueva = [1, 2, 3].includes(Number(prioridad)) ? Number(prioridad) : null;
+    if (nueva === null) {
+        return res.status(400).json({ error: 'Prioridad inválida (debe ser 1=Alta, 2=Media o 3=Baja).' });
+    }
+
+    try {
+        const pool = await poolPromise;
+        if (!pool) throw new Error('No hay conexión con la base de datos');
+
+        const actual = await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .query('SELECT Estado, Prioridad FROM Solicitudes WHERE SolicitudId = @id');
+        if (actual.recordset.length === 0) {
+            return res.status(404).json({ error: 'Solicitud no encontrada.' });
+        }
+        const { Estado: estado, Prioridad: anterior } = actual.recordset[0];
+        if (Number(anterior) === nueva) {
+            return res.json({ mensaje: 'La prioridad ya tenía ese valor.', prioridad: nueva });
+        }
+
+        await pool.request()
+            .input('id', sql.UniqueIdentifier, id)
+            .input('prioridad', sql.Int, nueva)
+            .query('UPDATE Solicitudes SET Prioridad = @prioridad WHERE SolicitudId = @id');
+
+        // Trazabilidad: mismo Estado, el cambio va en la Accion (de → a).
+        try {
+            await pool.request()
+                .input('solicitudId', sql.UniqueIdentifier, id)
+                .input('usuarioId', sql.UniqueIdentifier, usuarioId)
+                .input('estadoAnterior', sql.NVarChar, estado)
+                .input('estadoNuevo', sql.NVarChar, estado)
+                .input('accion', sql.NVarChar, `Cambió la prioridad — ${PRIORIDAD_LABELS[anterior] || anterior} → ${PRIORIDAD_LABELS[nueva]}`)
+                .input('comentario', sql.NVarChar, null)
+                .query(`
+                    INSERT INTO Historial (SolicitudId, UsuarioId, EstadoAnterior, EstadoNuevo, Accion, Comentario)
+                    VALUES (@solicitudId, @usuarioId, @estadoAnterior, @estadoNuevo, @accion, @comentario)
+                `);
+        } catch (histErr) {
+            console.error('[Controller] No se pudo registrar el cambio de prioridad en el historial:', histErr.message);
+        }
+
+        res.json({ mensaje: 'Prioridad actualizada', prioridad: nueva });
+    } catch (err) {
+        console.error('Error en cambiarPrioridad:', err);
+        res.status(500).json({ error: 'Error al cambiar la prioridad', detalle: err.message });
+    }
+};
+
 module.exports = {
     getSolicitudes,
     getSolicitudById,
     createSolicitud,
     updateSolicitud,
+    cambiarPrioridad,
     addAdjunto,
     getAdjuntosBySolicitud,
     downloadAdjunto,

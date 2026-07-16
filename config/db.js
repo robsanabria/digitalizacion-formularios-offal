@@ -55,6 +55,19 @@ const poolPromise = sql.connect(dbConfig)
                 END
             `);
             console.log('✅ Columna ObservacionesSistemas verificada/creada en la tabla Solicitudes');
+
+            // Prioridad de la solicitud (1=Alta, 2=Media, 3=Baja). Default Media.
+            await pool.request().query(`
+                IF NOT EXISTS (
+                    SELECT * FROM sys.columns
+                    WHERE object_id = OBJECT_ID(N'[dbo].[Solicitudes]')
+                    AND name = 'Prioridad'
+                )
+                BEGIN
+                    ALTER TABLE Solicitudes ADD Prioridad INT NOT NULL DEFAULT 2;
+                END
+            `);
+            console.log('✅ Columna Prioridad verificada/creada en la tabla Solicitudes');
         } catch (err) {
             console.error('⚠️ Error al verificar columnas:', err.message);
         }

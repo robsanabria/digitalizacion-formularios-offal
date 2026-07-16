@@ -18,6 +18,14 @@ const ESTADOS_APROBACION = {
   'RECHAZADO': { label: '❌ Rechazado', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
 };
 
+// Prioridad (1=Alta, 2=Media, 3=Baja).
+const PRIORIDAD_LABEL = { 1: 'Alta', 2: 'Media', 3: 'Baja' };
+const PRIORIDAD_CLS = {
+  1: 'bg-red-100 text-red-700 border-red-200',
+  2: 'bg-amber-100 text-amber-700 border-amber-200',
+  3: 'bg-gray-200 text-gray-600 border-gray-300',
+};
+
 const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focusForm = 'REG011', printSignal = 0 }) => {
   const toast = useToast();
   const [solicitud, setSolicitud] = useState(null);
@@ -79,6 +87,7 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
         comentariosSolicitante: rawData.ComentariosSolicitante,
         cambioSolicitado: rawData.CambioSolicitado,
         estado: rawData.Estado,
+        prioridad: rawData.Prioridad ?? 2,
         codigoTwins: rawData.CodigoTwins,
         correspondeSolicitud: rawData.CorrespondeSolicitud,
         observacionesSistemas: rawData.ObservacionesSistemas,
@@ -205,6 +214,21 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
     try {
       await axios.post(`/api/solicitudes/${solicitudId}/transition`, { action, comentario });
       toast.success(successMsg);
+      if (onUpdated) onUpdated();
+      await fetchData();
+    } catch (err) {
+      toast.error('Error: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleCambiarPrioridad = async (nueva) => {
+    if (Number(nueva) === Number(solicitud?.prioridad)) return;
+    setStatusLoading(true);
+    try {
+      await axios.post(`/api/solicitudes/${solicitudId}/prioridad`, { prioridad: Number(nueva) });
+      toast.success('Prioridad actualizada.');
       if (onUpdated) onUpdated();
       await fetchData();
     } catch (err) {
@@ -368,6 +392,26 @@ const DetalleSolicitud = ({ solicitudId, isOpen, onClose, user, onUpdated, focus
             <h2 className="text-xl font-bold text-gray-800">
               Solicitud #{(solicitud?.solicitudId || '').slice(0, 8).toUpperCase() || '—'}
             </h2>
+            {/* Prioridad: Calidad la edita (queda en el historial); el resto la ve. */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Prioridad</span>
+              {esCalidad ? (
+                <select
+                  value={solicitud?.prioridad ?? 2}
+                  disabled={statusLoading}
+                  onChange={(e) => handleCambiarPrioridad(Number(e.target.value))}
+                  className="border border-gray-300 rounded-lg px-2 py-1 text-xs font-bold text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+                >
+                  <option value={1}>Alta</option>
+                  <option value={2}>Media</option>
+                  <option value={3}>Baja</option>
+                </select>
+              ) : (
+                <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${PRIORIDAD_CLS[solicitud?.prioridad ?? 2]}`}>
+                  {PRIORIDAD_LABEL[solicitud?.prioridad ?? 2]}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex gap-3 items-center flex-wrap justify-end">
 

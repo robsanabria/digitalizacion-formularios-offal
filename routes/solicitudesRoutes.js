@@ -42,6 +42,9 @@ router.put('/:id', checkRole(['CALIDAD', 'SISTEMAS', 'ADMIN']), solicitudesContr
 // Transición de estados (máquina de estados con validación de rol)
 router.post('/:id/transition', checkRole(['CALIDAD', 'SISTEMAS', 'ADMIN']), solicitudesController.transitionSolicitud);
 
+// Cambiar la prioridad de la solicitud (solo Calidad/Admin). Queda en el historial.
+router.post('/:id/prioridad', checkRole(['CALIDAD', 'ADMIN']), solicitudesController.cambiarPrioridad);
+
 // Historial de cambios de una solicitud
 router.get('/:id/historial', solicitudesController.getHistorial);
 
