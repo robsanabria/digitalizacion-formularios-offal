@@ -28,10 +28,10 @@ import { cn } from '@/lib/utils';
 const ESTADO_META = {
   'REG-011-PENDIENTE-APROBACION': { label: 'Pendiente Aprob. Sistemas', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30', dot: 'bg-amber-400' },
   'REG-011-OBSERVADO': { label: 'Observado', cls: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-500/15 dark:text-orange-400 dark:border-orange-500/30', dot: 'bg-orange-400' },
-  'REG-011-APROBADO': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
-  'REG-011-PENDIENTE': { label: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-011-APROBADO': { label: 'Pendiente REG-007', full: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
+  'REG-011-PENDIENTE': { label: 'Pendiente REG-007', full: 'Aprobado - Pendiente de REG-SIS-007', cls: 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/15 dark:text-cyan-400 dark:border-cyan-500/30', dot: 'bg-cyan-400' },
   'REG-007-PENDIENTE-APROBACION': { label: 'Pendiente Calidad', cls: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30', dot: 'bg-blue-400' },
-  'REG-007-PARCIAL': { label: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30', dot: 'bg-amber-400' },
+  'REG-007-PARCIAL': { label: 'Aprobado parcial', full: 'Aprobado Parcialmente (a corregir)', cls: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30', dot: 'bg-amber-400' },
   'APROBADO': { label: 'Aprobado', cls: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/30', dot: 'bg-green-400' },
   'RECHAZADO': { label: 'Rechazado', cls: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30', dot: 'bg-red-400' },
 };
@@ -52,7 +52,10 @@ function motivosLegibles(val) {
 function EstadoPill({ estado }) {
   const meta = ESTADO_META[estado] || { label: estado || '-', cls: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-white/10 dark:text-white/70 dark:border-white/20' };
   return (
-    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap', meta.cls)}>
+    <span
+      title={meta.full || meta.label}
+      className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap', meta.cls)}
+    >
       {meta.label}
     </span>
   );

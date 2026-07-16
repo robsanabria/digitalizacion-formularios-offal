@@ -38,9 +38,16 @@ const REG011PaperForm = ({
     return ev ? { user: ev.NombreUsuario, date: ev.FechaEvento } : null;
   })();
   const parseArray = (val) => {
-    if (!val) return [];
-    if (Array.isArray(val)) return val;
-    try { return JSON.parse(val); } catch { return [val]; }
+    if (val == null || val === '') return [];
+    let parsed = val;
+    if (typeof val === 'string') {
+      try { parsed = JSON.parse(val); } catch { return [val]; }
+    }
+    const flat = Array.isArray(parsed) ? parsed.flat(Infinity) : [parsed];
+    return flat.filter((x) => {
+      const s = x == null ? '' : String(x).trim();
+      return s !== '' && s !== '[]' && s !== '[[]]';
+    });
   };
 
   const selectedMotivos = parseArray(data.motivo);
