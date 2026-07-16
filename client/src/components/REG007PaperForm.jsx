@@ -24,9 +24,18 @@ const REG007PaperForm = ({
   const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
 
   const parseArray = (val) => {
-    if (!val) return [];
-    if (Array.isArray(val)) return val;
-    try { return JSON.parse(val); } catch { return [val]; }
+    if (val == null || val === '') return [];
+    let parsed = val;
+    if (typeof val === 'string') {
+      try { parsed = JSON.parse(val); } catch { return [val]; }
+    }
+    const flat = Array.isArray(parsed) ? parsed.flat(Infinity) : [parsed];
+    // Filtra vacíos y restos de arrays serializados ("[]", "[[]]") que si no
+    // aparecían como corchetes en el join cuando el motivo estaba vacío.
+    return flat.filter((x) => {
+      const s = x == null ? '' : String(x).trim();
+      return s !== '' && s !== '[]' && s !== '[[]]';
+    });
   };
 
   const selectedMotivos = parseArray(data.motivo);

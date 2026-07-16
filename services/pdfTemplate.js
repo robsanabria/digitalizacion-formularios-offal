@@ -6,9 +6,17 @@ const esc = (v) => String(v == null ? '' : v)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const parseArr = (v) => {
-  if (!v) return [];
-  if (Array.isArray(v)) return v;
-  try { const a = JSON.parse(v); return Array.isArray(a) ? a : [v]; } catch { return [v]; }
+  if (v == null || v === '') return [];
+  let parsed = v;
+  if (typeof v === 'string') {
+    try { parsed = JSON.parse(v); } catch { return [v]; }
+  }
+  const flat = Array.isArray(parsed) ? parsed.flat(Infinity) : [parsed];
+  // Filtra vacíos y restos de arrays serializados para que el join no muestre corchetes.
+  return flat.filter((x) => {
+    const s = x == null ? '' : String(x).trim();
+    return s !== '' && s !== '[]' && s !== '[[]]';
+  });
 };
 
 const chk = (on) => `<span class="chk">${on ? '<span class="x">X</span>' : ''}</span>`;

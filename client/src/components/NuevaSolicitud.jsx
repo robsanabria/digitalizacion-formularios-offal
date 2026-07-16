@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Upload, Save, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Upload, Save, Loader2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import REG011PaperForm from './REG011PaperForm';
 import { useToast } from './Toast';
@@ -33,11 +33,15 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   });
 
   const [files, setFiles] = useState([]);
+  const [errores, setErrores] = useState([]);
+  const bodyRef = useRef(null);
 
   if (!isOpen) return null;
 
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Al corregir, limpiamos el aviso para que no quede pegado.
+    if (errores.length) setErrores([]);
   };
 
   // Validación: todos los campos del REG-SIS-011 son obligatorios.
@@ -84,9 +88,12 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
   const handleIntentarGuardar = () => {
     const faltan = getFaltantes();
     if (faltan.length > 0) {
-      toast.error('Faltan completar campos obligatorios: ' + faltan.join(', '));
+      setErrores(faltan);
+      bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.error(`Faltan ${faltan.length} campo(s) obligatorio(s).`);
       return;
     }
+    setErrores([]);
     setShowConfirm(true);
   };
 
@@ -149,7 +156,19 @@ const NuevaSolicitud = ({ isOpen, onClose, onCreated }) => {
             </div>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto px-2">
+          <div ref={bodyRef} className="max-h-[70vh] overflow-y-auto px-2">
+            {/* Aviso de campos faltantes: claro y agrupado, en vez de un toast largo. */}
+            {errores.length > 0 && (
+              <div className="mx-4 mb-4 rounded-lg border border-red-300 bg-red-50 p-3">
+                <p className="flex items-center gap-2 text-sm font-bold text-red-700">
+                  <AlertTriangle size={16} /> Faltan completar {errores.length} campo(s) obligatorio(s):
+                </p>
+                <ul className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 text-sm text-red-700 list-disc list-inside">
+                  {errores.map((e) => <li key={e}>{e}</li>)}
+                </ul>
+              </div>
+            )}
+
             {/* Prioridad (la asigna Calidad; editable luego desde el detalle). */}
             <div className="px-4 mb-4">
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Prioridad</label>
