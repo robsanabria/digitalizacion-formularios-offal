@@ -779,6 +779,20 @@ const deleteAdjunto = async (req, res) => {
             return res.status(400).json({ error: 'Operación no permitida', detalle: 'No se pueden eliminar archivos de una solicitud finalizada.' });
         }
 
+        // Candado por estado + tipo (regla del ticket):
+        //  - Fotos de Calidad (ORIGINAL): solo se pueden eliminar cuando la
+        //    solicitud volvió a Calidad (Observada). Una vez enviada a Sistemas,
+        //    quedan bloqueadas hasta que Sistemas la observe y la devuelva.
+        //  - Fotos de Sistemas (PROPUESTO/ORIGINAL_07): solo mientras Sistemas
+        //    trabaja el REG-SIS-007 (antes de enviarlo a Calidad y de aprobarse).
+        const ESTADOS_SISTEMAS_EDITA = ['REG-011-APROBADO', 'REG-011-PENDIENTE', 'REG-007-PARCIAL'];
+        if (TipoAdjunto === 'ORIGINAL' && estado !== 'REG-011-OBSERVADO') {
+            return res.status(400).json({ error: 'Operación no permitida', detalle: 'La solicitud ya fue enviada a Sistemas. Las imágenes solo se pueden modificar si Sistemas la observa y vuelve a Calidad.' });
+        }
+        if ((TipoAdjunto === 'PROPUESTO' || TipoAdjunto === 'ORIGINAL_07') && !ESTADOS_SISTEMAS_EDITA.includes(estado)) {
+            return res.status(400).json({ error: 'Operación no permitida', detalle: 'Las imágenes del REG-SIS-007 no se pueden modificar en este estado.' });
+        }
+
         // 2. Intentar eliminar de Azure Blob Storage (si tiene ruta)
         if (RutaArchivo) {
             const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'regsis-attachments';

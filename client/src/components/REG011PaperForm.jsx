@@ -85,8 +85,11 @@ const REG011PaperForm = ({
   const originales = (adjuntos || []).filter(a => a.TipoAdjunto === 'ORIGINAL');
 
   // Calidad puede gestionar el "Formato Propuesto" mientras el circuito no esté finalizado.
+  // Las fotos de Calidad solo se pueden agregar/eliminar cuando la solicitud
+  // volvió a Calidad (Observada). Una vez enviada a Sistemas quedan bloqueadas.
+  // (La carga inicial en creación usa archivos locales, no esta condición.)
   const canEditOriginal = (userRole === 'CALIDAD' || userRole === 'ADMIN') &&
-                          !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
+                          solicitudEstado === 'REG-011-OBSERVADO';
 
   return (
     <div className="bg-white text-black p-0 border-[3px] border-black max-w-4xl mx-auto font-serif shadow-2xl overflow-hidden mb-10">

@@ -21,7 +21,8 @@ const REG007PaperForm = ({
   // independiente del "Formato Propuesto" del REG-SIS-011.
   const canEditOriginal07 = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN') &&
                           !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
-  const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN');
+  const canEditProposed = !readOnly && (userRole === 'SISTEMAS' || userRole === 'ADMIN') &&
+                          !['APROBADO', 'RECHAZADO'].includes(solicitudEstado);
 
   const parseArray = (val) => {
     if (val == null || val === '') return [];
